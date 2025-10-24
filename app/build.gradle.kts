@@ -62,6 +62,7 @@ dependencies {
 
     // kotlin serialization dependency
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    // adding the retrofit Dependency for networking
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
@@ -69,6 +70,4 @@ dependencies {
     implementation(libs.androidx.datastore)
     // add preferences type of datastore
     implementation(libs.androidx.preferences)
-
-
 }
