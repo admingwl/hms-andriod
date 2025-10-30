@@ -70,4 +70,9 @@ dependencies {
     implementation(libs.androidx.datastore)
     // add preferences type of datastore
     implementation(libs.androidx.preferences)
+
+
+    // adding the coil library
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 }
