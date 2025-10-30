@@ -239,4 +239,21 @@ class SingUp_From1_ViewModel : ViewModel() {
             )
         }
     }
+
+    // function to update the date fields
+    fun onDateOfBirthChange(newDateOfBirth:String){
+        personalInformationState.update { it->
+            it.copy(
+             dateOfBirth = newDateOfBirth
+            )
+        }
+    }
+
+    fun onDateOfJoiningChange(newDateOfJoining:String){
+        professionalDetailState.update { it->
+            it.copy(
+                dateOfJoining = newDateOfJoining
+            )
+        }
+    }
 }

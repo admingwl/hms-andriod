@@ -4,12 +4,14 @@ data class PersonalInformation(
     val firstName: String = "",
     val middleName: String = "",
     val lastName: String = "",
+    val dateOfBirth:String=""
 
     )
 
 data class ProfessionalDetail(
     val contactNumber: String = "",
     val email: String = "",
+    val dateOfJoining:String=""
 
     )
 

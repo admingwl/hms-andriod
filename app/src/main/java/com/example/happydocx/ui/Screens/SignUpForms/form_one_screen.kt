@@ -19,6 +19,10 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerColors
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -29,10 +33,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,6 +54,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.happydocx.ui.ViewModels.SingUp_From1_ViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Preview
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,6 +89,15 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
         viewModel._bloodGroupState.collectAsStateWithLifecycle().value
     val addressState =
         viewModel._addressState.collectAsStateWithLifecycle().value
+
+    // date picker state
+    val openDatePickerState_DateOfBirth = remember { mutableStateOf(false) }
+    val datePickerState_DateOfBirth = rememberDatePickerState()
+
+
+    // date picker for date of joining
+    val openDatePicker_DateOfJoining = remember{mutableStateOf(false)}
+    val datePickerState_DateOfJoining = rememberDatePickerState()
 
 
 
@@ -168,14 +187,14 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 )
                 ExposedDropdownMenu(
                     expanded = salutationState.expandedState,
-                    onDismissRequest = {viewModel.onSalutationDropDownPressed(!salutationState.expandedState)},
+                    onDismissRequest = { viewModel.onSalutationDropDownPressed(!salutationState.expandedState) },
                     containerColor = Color(0xffebedfc),
                     matchTextFieldWidth = true,
                     shape = RoundedCornerShape(30.dp)
                 ) {
-                    salutationState.optionList.forEach { it->
+                    salutationState.optionList.forEach { it ->
                         DropdownMenuItem(
-                            text = {Text(it, color = Color.Black)},
+                            text = { Text(it, color = Color.Black) },
                             onClick = {
                                 viewModel.onSalutationItemClicked(it)
                             }
@@ -239,7 +258,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = "",
+                value = personalInformationState.dateOfBirth,
                 onValueChange = {},
                 placeholder = { Text("date of birth ... dd-mm-yyyy", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -253,7 +272,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 ),
                 readOnly = true,
                 trailingIcon = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = { openDatePickerState_DateOfBirth.value = true }) {
                         Icon(
                             Icons.Default.DateRange,
                             contentDescription = null,
@@ -267,10 +286,54 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
 
+            if (openDatePickerState_DateOfBirth.value) {
+                DatePickerDialog(
+                    shape = RoundedCornerShape(30.dp),
+                    colors = DatePickerDefaults.colors(
+                        // add color to date picker dialog
+                        containerColor = Color(0xffebedfc)
+                    ),
+                    onDismissRequest = { openDatePickerState_DateOfBirth.value = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            openDatePickerState_DateOfBirth.value = false
+                            datePickerState_DateOfBirth.selectedDateMillis?.let { millis ->
+                                val formatted = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+                                    .format(Date(millis))
+                                viewModel.onDateOfBirthChange(formatted)
+                            }
+                        }) { Text("OK", color = Color.Black) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { openDatePickerState_DateOfBirth.value = false }) {
+                            Text("Cancel", color = Color.Black)
+                        }
+                    }
+                ) {
+                    DatePicker(
+                        state = datePickerState_DateOfBirth,
+                        colors = DatePickerDefaults.colors(
+                            containerColor = Color(0xffebedfc),
+                            dayContentColor = Color.Black,
+                            titleContentColor = Color.Black,
+                            weekdayContentColor = Color.Black,
+                            headlineContentColor = Color.Black,
+                            navigationContentColor = Color.Black,
+                            subheadContentColor = Color.Black,
+                            dateTextFieldColors = TextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                unfocusedContainerColor = Color.White,
+                                focusedContainerColor = Color.White
+                            )
+                        )
+                    )
+                }
+            }
 
             ExposedDropdownMenuBox(
                 expanded = genderState.expandedState,
-                onExpandedChange = {viewModel.onGenderDropDownPressed(!genderState.expandedState)}
+                onExpandedChange = { viewModel.onGenderDropDownPressed(!genderState.expandedState) }
             ) {
                 OutlinedTextField(
                     value = genderState.selectedOptions,
@@ -332,10 +395,10 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
 
             ExposedDropdownMenuBox(
                 expanded = departmentState.expandedState,
-                onExpandedChange = {viewModel.onDepartmentDropDownPressed(!departmentState.expandedState)}
+                onExpandedChange = { viewModel.onDepartmentDropDownPressed(!departmentState.expandedState) }
             ) {
                 OutlinedTextField(
-                    value =departmentState.selectedOptions,
+                    value = departmentState.selectedOptions,
                     onValueChange = {},
                     readOnly = true,
                     placeholder = { Text("Department", color = Color.Black) },
@@ -367,7 +430,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                         DropdownMenuItem(
                             text = { Text(it, color = Color.Black) },
                             onClick = {
-                              viewModel.onDepartmentItemClicked(it)
+                                viewModel.onDepartmentItemClicked(it)
                             }
                         )
                     }
@@ -411,8 +474,10 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
 
+
+
             OutlinedTextField(
-                value = "",
+                value = professionalDetailState.dateOfJoining,
                 onValueChange = {},
                 placeholder = { Text("date of joining .. dd-mm-yyyy", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -426,7 +491,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 ),
                 readOnly = true,
                 trailingIcon = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = {openDatePicker_DateOfJoining.value =true}) {
                         Icon(
                             Icons.Default.DateRange,
                             contentDescription = null,
@@ -440,9 +505,55 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
 
+            if (openDatePicker_DateOfJoining.value) {
+                DatePickerDialog(
+                    shape = RoundedCornerShape(30.dp),
+                    colors = DatePickerDefaults.colors(
+                        // add color to date picker dialog
+                        containerColor = Color(0xffebedfc)
+                    ),
+                    onDismissRequest = { openDatePicker_DateOfJoining.value = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            openDatePicker_DateOfJoining.value = false
+                            datePickerState_DateOfJoining.selectedDateMillis?.let { millis ->
+                                val formatted = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+                                    .format(Date(millis))
+                                viewModel.onDateOfJoiningChange(formatted)
+                            }
+                        }) { Text("OK", color = Color.Black) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { openDatePicker_DateOfJoining.value = false }) {
+                            Text("Cancel", color = Color.Black)
+                        }
+                    }
+                ) {
+                    DatePicker(
+                        state = datePickerState_DateOfJoining,
+                        colors = DatePickerDefaults.colors(
+                            containerColor = Color(0xffebedfc),
+                            dayContentColor = Color.Black,
+                            titleContentColor = Color.Black,
+                            weekdayContentColor = Color.Black,
+                            headlineContentColor = Color.Black,
+                            navigationContentColor = Color.Black,
+                            subheadContentColor = Color.Black,
+                            dateTextFieldColors = TextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                unfocusedContainerColor = Color.White,
+                                focusedContainerColor = Color.White
+                            )
+                        )
+                    )
+                }
+            }
+
+
             ExposedDropdownMenuBox(
                 expanded = bloodGroupState.expandedState,
-                onExpandedChange = {viewModel.onBloodGroupDropDownPressed(!bloodGroupState.expandedState)}
+                onExpandedChange = { viewModel.onBloodGroupDropDownPressed(!bloodGroupState.expandedState) }
             ) {
                 OutlinedTextField(
                     value = bloodGroupState.selectedOptions,
@@ -474,16 +585,16 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                     shape = RoundedCornerShape(20.dp)
                 )
                 ExposedDropdownMenu(
-                    expanded =bloodGroupState.expandedState,
-                    onDismissRequest = {viewModel.onBloodGroupDropDownPressed(!bloodGroupState.expandedState)},
+                    expanded = bloodGroupState.expandedState,
+                    onDismissRequest = { viewModel.onBloodGroupDropDownPressed(!bloodGroupState.expandedState) },
                     containerColor = Color(0xffebedfc),
                     shape = RoundedCornerShape(30.dp)
                 ) {
-                    bloodGroupState.optionList.forEach { it->
+                    bloodGroupState.optionList.forEach { it ->
                         DropdownMenuItem(
-                            text = {Text(it, color = Color.Black)},
+                            text = { Text(it, color = Color.Black) },
                             onClick = {
-                             viewModel.onBloodGroupItemClicked(it)
+                                viewModel.onBloodGroupItemClicked(it)
                             }
                         )
                     }
@@ -510,7 +621,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
 
             ExposedDropdownMenuBox(
                 expanded = addressState.expandedState,
-                onExpandedChange = {viewModel.onAddressDropDownPressed(!addressState.expandedState)}
+                onExpandedChange = { viewModel.onAddressDropDownPressed(!addressState.expandedState) }
             ) {
                 OutlinedTextField(
                     value = addressState.selectedOptions,
@@ -543,15 +654,15 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 )
                 ExposedDropdownMenu(
                     expanded = addressState.expandedState,
-                    onDismissRequest = {viewModel.onAddressDropDownPressed(!addressState.expandedState)},
+                    onDismissRequest = { viewModel.onAddressDropDownPressed(!addressState.expandedState) },
                     containerColor = Color(0xffebedfc),
                     shape = RoundedCornerShape(30.dp)
                 ) {
-                    addressState.optionList.forEach { it->
+                    addressState.optionList.forEach { it ->
                         DropdownMenuItem(
-                            text = {Text(it, color = Color.Black)},
+                            text = { Text(it, color = Color.Black) },
                             onClick = {
-                               viewModel.onAddressItemClicked(it)
+                                viewModel.onAddressItemClicked(it)
                             }
                         )
                     }
