@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.ui.Screens.HomeScreen
 import com.example.happydocx.ui.Screens.LoginPage
 import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
+import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.SignUpPage
 import com.example.happydocx.ui.Screens.SignUpResponse
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
@@ -20,7 +21,7 @@ fun NavigationGraph(){
     val userViewModel : ParticularUserSignInViewModel  = viewModel()
     val particularUserSignUpViewModel: ParticularUserSignUpViewModel = viewModel()
     NavHost(
-        startDestination = "first_form",
+        startDestination = "second_form",
         navController = navController
     ){
 
@@ -38,6 +39,9 @@ fun NavigationGraph(){
         }
         composable("first_form"){
             Form_One_Screen()
+        }
+        composable("second_form") {
+            Form_Two_Screen()
         }
     }
 }
