@@ -303,8 +303,9 @@ fun MyDashedBox(
             }else{
                 Text(
                     text = "${selectedImageUri.value?.lastPathSegment}",
-                    fontSize = 12.sp,
-                    color = Color.Black
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
                 )
             }
         }else{
