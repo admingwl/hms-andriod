@@ -306,13 +306,6 @@ fun MyDashedBox(
                 val filename = selectedFileUri.value?.lastPathSegment ?: "Selected File"
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
-                    // Optional: Add a PDF icon here for better UX
-                    Text(
-                        text = "📄 PDF File Selected",
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
                     Text(
                         text = filename,
                         fontSize = 16.sp,
