@@ -244,24 +244,25 @@ fun Form_Two_Screen() {
 
 @Composable
 fun MyDashedBox(
-    fileType:String
+    fileType: String // "image" or "pdf" (implicitly)
 ) {
     val stroke =
         Stroke(width = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f))
-    //   Each instance will remember its own selected image
-    val selectedImageUri = remember { mutableStateOf<Uri?>(null) }
-    // picker launcher for this instance
-    val imagePicker = rememberLauncherForActivityResult(
+
+    val selectedFileUri = remember { mutableStateOf<Uri?>(null) }
+
+    // Picker launcher for visual media (Images)
+    val mediaPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
-    ) {uri->
-        selectedImageUri.value = uri
+    ) { uri ->
+        selectedFileUri.value = uri
     }
 
-    // document picker
+    // Document picker for PDFs
     val documentPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri->
-        selectedImageUri.value = uri
+    ) { uri ->
+        selectedFileUri.value = uri
     }
 
     Box(
@@ -271,23 +272,22 @@ fun MyDashedBox(
             .drawBehind {
                 drawRoundRect(color = Color.Black, style = stroke)
             }
-            .clickable{
-                if(fileType=="image"){
-                    imagePicker.launch(
+            .clickable {
+                if (fileType == "image") {
+                    mediaPicker.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
-                }else{
+                } else {
                     documentPicker.launch("application/pdf")
                 }
             },
         contentAlignment = Alignment.Center
     ) {
-        // if image exists
-        if(selectedImageUri.value!=null){
-            if(fileType=="image") {
+        if (selectedFileUri.value != null) {
+            if (fileType == "image") {
                 val painter = rememberAsyncImagePainter(
                     ImageRequest.Builder(LocalContext.current)
-                        .data(selectedImageUri.value)
+                        .data(selectedFileUri.value)
                         .build()
                 )
 
@@ -300,29 +300,43 @@ fun MyDashedBox(
                         .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
-            }else{
-                Text(
-                    text = "${selectedImageUri.value?.lastPathSegment}",
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
-                )
-            }
-        }else{
-            Column (horizontalAlignment = Alignment.CenterHorizontally){
+            } else {
+                // This block displays the filename (e.g., "document_name.pdf")
+                // The '.lastPathSegment' usually returns the filename directly.
+                val filename = selectedFileUri.value?.lastPathSegment ?: "Selected File"
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
+                    // Optional: Add a PDF icon here for better UX
                     Text(
-                        text = "Upload file here",
-                        fontSize = 14.sp,
-                        color = Color.Black,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "PNG, JPG up to 2MB",
+                        text = "📄 PDF File Selected",
                         fontSize = 12.sp,
                         color = Color.Gray,
-                        textAlign = TextAlign.Center
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        text = filename,
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1 // Prevent long names from stretching the box too much
                     )
                 }
             }
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Upload file here",
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = "PNG, JPG up to 2MB",
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
+    }
 }
