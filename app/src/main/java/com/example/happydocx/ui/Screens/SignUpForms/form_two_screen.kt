@@ -1,6 +1,7 @@
 package com.example.happydocx.ui.Screens.SignUpForms
 
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContract
@@ -15,18 +16,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,13 +48,17 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.example.happydocx.R
 
 @Preview
 @OptIn(ExperimentalMaterial3Api::class)
@@ -244,33 +254,84 @@ fun Form_Two_Screen() {
 
 @Composable
 fun MyDashedBox(
-    fileType: String // "image" or "pdf" (implicitly)
+    fileType: String, // "image" or "pdf"
+    onFileSelected: (Uri?) -> Unit = {},
+    maxSizeBytes: Long = 2 * 1024 * 1024 // 2MB
 ) {
-    val stroke =
-        Stroke(width = 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f))
-
+    val context = LocalContext.current
     val selectedFileUri = remember { mutableStateOf<Uri?>(null) }
+    val fileName = remember { mutableStateOf<String?>(null) }
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+    val isLoading = remember { mutableStateOf(false) }
 
-    // Picker launcher for visual media (Images)
+    // Helper to get actual filename
+    fun getFileName(uri: Uri): String {
+        var result = "Unknown File"
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (cursor.moveToFirst() && nameIndex != -1) {
+                result = cursor.getString(nameIndex)
+            }
+        }
+        return result
+    }
+
+    // Helper to check file size
+    fun checkFileSize(uri: Uri): Boolean {
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (cursor.moveToFirst() && sizeIndex != -1) {
+                val size = cursor.getLong(sizeIndex)
+                return size <= maxSizeBytes
+            }
+        }
+        return false
+    }
+
     val mediaPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        selectedFileUri.value = uri
+        uri?.let {
+            if (checkFileSize(it)) {
+                selectedFileUri.value = it
+                fileName.value = getFileName(it)
+                errorMessage.value = null
+                onFileSelected(it)
+            } else {
+                errorMessage.value = "File size exceeds 2MB"
+            }
+        }
     }
 
-    // Document picker for PDFs
     val documentPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        selectedFileUri.value = uri
+        uri?.let {
+            if (checkFileSize(it)) {
+                selectedFileUri.value = it
+                fileName.value = getFileName(it)
+                errorMessage.value = null
+                onFileSelected(it)
+            } else {
+                errorMessage.value = "File size exceeds 2MB"
+            }
+        }
     }
+
+    val stroke = Stroke(
+        width = 2f,
+        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+    )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
             .drawBehind {
-                drawRoundRect(color = Color.Black, style = stroke)
+                drawRoundRect(
+                    color = if (errorMessage.value != null) Color.Red else Color.Black,
+                    style = stroke
+                )
             }
             .clickable {
                 if (fileType == "image") {
@@ -283,52 +344,86 @@ fun MyDashedBox(
             },
         contentAlignment = Alignment.Center
     ) {
-        if (selectedFileUri.value != null) {
-            if (fileType == "image") {
-                val painter = rememberAsyncImagePainter(
-                    ImageRequest.Builder(LocalContext.current)
-                        .data(selectedFileUri.value)
-                        .build()
-                )
-
-                Image(
-                    painter = painter,
-                    contentDescription = "Selected Image",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .padding(8.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                // This block displays the filename (e.g., "document_name.pdf")
-                // The '.lastPathSegment' usually returns the filename directly.
-                val filename = selectedFileUri.value?.lastPathSegment ?: "Selected File"
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            when {
+                errorMessage.value != null -> {
                     Text(
-                        text = filename,
-                        fontSize = 16.sp,
-                        color = Color.Black,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1 // Prevent long names from stretching the box too much
+                        text = errorMessage.value!!,
+                        color = Color.Red,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(onClick = { errorMessage.value = null }) {
+                        Text("Try Again")
+                    }
+                }
+                selectedFileUri.value != null -> {
+                    if (fileType == "image") {
+                        val painter = rememberAsyncImagePainter(
+                            model = ImageRequest.Builder(context)
+                                .data(selectedFileUri.value)
+                                .crossfade(true)
+                                .build()
+                        )
+
+                        Image(
+                            painter = painter,
+                            contentDescription = "Selected image: ${fileName.value}",
+                            modifier = Modifier
+                                .size(150.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = fileName.value ?: "PDF Document",
+                            fontSize = 14.sp,
+                            color = Color.Black,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(
+                        onClick = {
+                            selectedFileUri.value = null
+                            fileName.value = null
+                            onFileSelected(null)
+                        }
+                    ) {
+                        Text("Remove", color = Color.Red)
+                    }
+                }
+                else -> {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_cloud_24),
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (fileType == "image") "Upload Image" else "Upload PDF",
+                        fontSize = 14.sp,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = if (fileType == "image") "PNG, JPG up to 2MB" else "PDF up to 2MB",
+                        fontSize = 12.sp,
+                        color = Color.Gray
                     )
                 }
-            }
-        } else {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Upload file here",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "PNG, JPG up to 2MB",
-                    fontSize = 12.sp,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center
-                )
             }
         }
     }
