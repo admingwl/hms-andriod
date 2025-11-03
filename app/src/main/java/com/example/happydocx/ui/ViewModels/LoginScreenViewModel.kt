@@ -3,6 +3,7 @@ package com.example.happydocx.ui.ViewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Repository.AuthRepository.LoginRepository.loginRepository
+import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.ui.uiStates.EmailState
 import com.example.happydocx.ui.uiStates.EyeToggleState
 import com.example.happydocx.ui.uiStates.LoginUiState
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LoginScreenViewModel(
-
+ private val tokenManager: TokenManager
 ) : ViewModel() {
 
 
@@ -35,6 +36,11 @@ class LoginScreenViewModel(
     // Login Ui state
     private var loginUiState = MutableStateFlow(LoginUiState())
     val _loginUiState = loginUiState.asStateFlow()
+
+    // check if user is already logged in or not
+    fun isUserLoggedIn(): Boolean{
+        return tokenManager.isLoggedIn()
+    }
 
     // on Email state change
     fun onEmailChanged(newEmail: String) {
@@ -85,6 +91,10 @@ class LoginScreenViewModel(
 
             result.onSuccess { response->
 
+              // fetch token from response and save in sharePref
+                response.token?.let {token->
+                    tokenManager.saveToken(token = token)
+                }
                 //save response here
                 // userViewModel.saveLoginData(response) saves the data
                 //Now HomeScreen can access this data!
@@ -103,5 +113,9 @@ class LoginScreenViewModel(
                 )
             }
         }
+    }
+
+    fun logOut(){
+        tokenManager.clearToken()
     }
 }
