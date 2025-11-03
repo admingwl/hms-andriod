@@ -276,7 +276,7 @@ fun MyDashedBox(
         return result
     }
 
-    // Helper to check file size
+    //This helper function i create as Helper to check file size
     fun checkFileSize(uri: Uri): Boolean {
         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)

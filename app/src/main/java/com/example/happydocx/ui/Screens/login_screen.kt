@@ -45,6 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.happydocx.R
 import com.example.happydocx.ui.ViewModels.LoginScreenViewModel
+import com.example.happydocx.ui.ViewModels.LoginViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 
 
@@ -60,7 +61,9 @@ import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 
 @Composable
 fun LoginPage(
-    viewModel: LoginScreenViewModel = viewModel(),
+    viewModel: LoginScreenViewModel = viewModel(
+        factory = LoginViewModelFactory(LocalContext.current)
+    ),
     userViewModel: ParticularUserSignInViewModel,
     navController: NavController
 ) {
@@ -72,6 +75,16 @@ fun LoginPage(
     val eyeToggleState = viewModel._eyeToggleState.collectAsStateWithLifecycle().value
     val loginUiState = viewModel._loginUiState.collectAsStateWithLifecycle().value
 
+
+    // Check if user is already logged in on first launch
+    LaunchedEffect(Unit) {
+        if (viewModel.isUserLoggedIn()) {
+            navController.navigate("Home") {
+                popUpTo("Login") { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
     // handle the login success
     LaunchedEffect(loginUiState.isSuccess) {
         if(loginUiState.isSuccess){

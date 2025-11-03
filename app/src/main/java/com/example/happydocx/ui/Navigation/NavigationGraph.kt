@@ -21,12 +21,12 @@ fun NavigationGraph(){
     val userViewModel : ParticularUserSignInViewModel  = viewModel()
     val particularUserSignUpViewModel: ParticularUserSignUpViewModel = viewModel()
     NavHost(
-        startDestination = "second_form",
+        startDestination = "Login",
         navController = navController
     ){
 
         composable("Home") {
-            HomeScreen(userViewModel = userViewModel)
+            HomeScreen(userViewModel = userViewModel, navController = navController)
         }
         composable(route = "Login"){
             LoginPage(navController = navController, userViewModel = userViewModel)
