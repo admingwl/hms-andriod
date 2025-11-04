@@ -1,5 +1,7 @@
 package com.example.happydocx.ui.uiStates
 
+import android.net.Uri
+
 data class FormInformation(
     val firstName: String = "",
     val middleName: String = "",
@@ -30,7 +32,20 @@ data class FormInformation(
     val bloodGroupselectedOptions:String="",
     val addressexpandedState:Boolean = false,
     val addressoptionList:List<String> = emptyList(),
-    val addressselectedOptions:String=""
-)
+    val addressselectedOptions:String="",
+    val profilePhotoUri: Uri? = null,
+    val profilePhotoName: String? = null,
+    val signatureUri: Uri? = null,
+    val signatureName: String? = null,
+    val doctorIdProofUri: Uri? = null,
+    val doctorIdProofName: String? = null,
+    val doctorLicenseUri: Uri? = null,
+    val doctorLicenseName: String? = null,
+    val mbbsCertificateUri: Uri? = null,
+    val mbbsCertificateName: String? = null,
+    val experienceCertificateUri: Uri? = null,
+    val experienceCertificateName: String? = null
+
+    )
 
 

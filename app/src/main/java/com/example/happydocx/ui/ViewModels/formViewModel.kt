@@ -1,12 +1,15 @@
 package com.example.happydocx.ui.ViewModels
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.happydocx.ui.uiStates.FormInformation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class SingUp_From1_ViewModel : ViewModel() {
+class formViewModel : ViewModel() {
 
     val salutationItemList = listOf("Dr.","Prof.","Mr.","Mrs","Ms.")
     val genderList = listOf("Male","Female","Other")
@@ -217,6 +220,43 @@ class SingUp_From1_ViewModel : ViewModel() {
             it.copy(
                 dateOfJoining = newDateOfJoining
             )
+        }
+    }
+
+
+
+
+
+
+    // update document fields
+    fun updateProfilePhoto(uri: Uri?, name: String?) {
+        formState.value = formState.value.copy(profilePhotoUri = uri, profilePhotoName = name)
+    }
+
+    fun updateSignature(uri: Uri?, name: String?) {
+        formState.value = formState.value.copy(signatureUri = uri, signatureName = name)
+    }
+
+    fun updateDoctorIdProof(uri: Uri?, name: String?) {
+        formState.value = formState.value.copy(doctorIdProofUri = uri, doctorIdProofName = name)
+    }
+
+    fun updateDoctorLicense(uri: Uri?, name: String?) {
+        formState.value = formState.value.copy(doctorLicenseUri = uri, doctorLicenseName = name)
+    }
+
+    fun updateMbbsCertificate(uri: Uri?,name:String?) {
+        formState.value = formState.value.copy(mbbsCertificateUri = uri, mbbsCertificateName = name)
+    }
+
+    fun updateExperienceCertificate(uri: Uri?,name:String?) {
+        formState.value = formState.value.copy(experienceCertificateUri = uri, experienceCertificateName = name)
+    }
+
+    // create completeRegistration process function
+    fun CompleteRegistration(){
+        viewModelScope.launch {
+            // call actual api here to send all data to the server
         }
     }
 }
