@@ -2,6 +2,7 @@ package com.example.happydocx.ui.Screens.SignUpForms
 
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContract
@@ -55,15 +56,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.example.happydocx.R
+import com.example.happydocx.ui.ViewModels.formViewModel
+import okhttp3.internal.format
 
 @Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Form_Two_Screen() {
+fun Form_Two_Screen(
+    viewModel: formViewModel = viewModel()
+) {
 
 
     val gradient_colors = Brush.linearGradient(
@@ -73,6 +80,9 @@ fun Form_Two_Screen() {
         )
     )
     val scrollBehaviour = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val context = LocalContext.current
+    // getting form state
+    val formState = viewModel._formState.collectAsStateWithLifecycle().value
     Scaffold(
         topBar = {
             TopAppBar(
@@ -140,7 +150,13 @@ fun Form_Two_Screen() {
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox(fileType = "image")
+            MyDashedBox(
+                fileType = "image",
+                selectedUri = formState.profilePhotoUri,
+                selectedName = formState.profilePhotoName,
+                onFileSelected = {uri,name->
+                    viewModel.updateProfilePhoto(uri,name)
+                })
 
 
             // adding Signature
@@ -158,7 +174,13 @@ fun Form_Two_Screen() {
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox("image")
+            MyDashedBox(
+                "image",
+                selectedUri = formState.signatureUri,
+                selectedName = formState.signatureName,
+                onFileSelected = {uri,name->
+                    viewModel.updateSignature(uri,name)
+                })
 
             // adding the Doctor ID Proof
             Row(
@@ -175,7 +197,12 @@ fun Form_Two_Screen() {
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox(fileType = "document")
+            MyDashedBox(fileType = "document",
+                selectedUri = formState.doctorIdProofUri,
+                selectedName = formState.doctorIdProofName,
+                onFileSelected = { uri, name ->
+                    viewModel.updateDoctorIdProof(uri, name)
+                })
 
             // adding the Doctor License
             Row(
@@ -192,7 +219,12 @@ fun Form_Two_Screen() {
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox("document")
+            MyDashedBox("document",
+                selectedUri = formState.doctorLicenseUri,
+                selectedName = formState.doctorLicenseName,
+                onFileSelected = { uri, name ->
+                    viewModel.updateDoctorLicense(uri, name)
+                })
 
             // adding the MBBS Certificate
             Row(
@@ -209,7 +241,12 @@ fun Form_Two_Screen() {
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox("document")
+            MyDashedBox("document",
+                selectedUri = formState.mbbsCertificateUri,
+                selectedName = formState.mbbsCertificateName,
+                onFileSelected = { uri, name ->
+                    viewModel.updateMbbsCertificate(uri, name)
+                })
 
             // adding the Experience Certificate
             Row(
@@ -226,13 +263,18 @@ fun Form_Two_Screen() {
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox("document")
+            MyDashedBox("document",
+                selectedUri = formState.experienceCertificateUri,
+                selectedName = formState.experienceCertificateName,
+                onFileSelected = { uri, name ->
+                    viewModel.updateExperienceCertificate(uri, name)
+                })
 
 
-            // Adding Button
+            // Final Registration  Button
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 FilledTonalButton(
-                    onClick = {},
+                    onClick = { Toast.makeText(context,"Doctor Register Successfuly",Toast.LENGTH_LONG).show()},
                     modifier = Modifier.padding(horizontal = 15.dp, vertical = 30.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff16a34a),
@@ -255,14 +297,14 @@ fun Form_Two_Screen() {
 @Composable
 fun MyDashedBox(
     fileType: String, // "image" or "pdf"
-    onFileSelected: (Uri?) -> Unit = {},
+    selectedUri:Uri?,
+    selectedName:String?,
+    onFileSelected: (Uri?,String?) -> Unit,
     maxSizeBytes: Long = 2 * 1024 * 1024 // 2MB
 ) {
     val context = LocalContext.current
-    val selectedFileUri = remember { mutableStateOf<Uri?>(null) }
-    val fileName = remember { mutableStateOf<String?>(null) }
-    val errorMessage = remember { mutableStateOf<String?>(null) }
-    val isLoading = remember { mutableStateOf(false) }
+    var errorMessage = remember { mutableStateOf<String?>(null) }
+    var isLoading = remember { mutableStateOf(false) }
 
     // Helper to get actual filename
     fun getFileName(uri: Uri): String {
@@ -293,10 +335,9 @@ fun MyDashedBox(
     ) { uri ->
         uri?.let {
             if (checkFileSize(it)) {
-                selectedFileUri.value = it
-                fileName.value = getFileName(it)
+                val name = getFileName(it)
+                onFileSelected(it, name)
                 errorMessage.value = null
-                onFileSelected(it)
             } else {
                 errorMessage.value = "File size exceeds 2MB"
             }
@@ -308,10 +349,9 @@ fun MyDashedBox(
     ) { uri ->
         uri?.let {
             if (checkFileSize(it)) {
-                selectedFileUri.value = it
-                fileName.value = getFileName(it)
+                val name = getFileName(it)
+                onFileSelected(it, name)
                 errorMessage.value = null
-                onFileSelected(it)
             } else {
                 errorMessage.value = "File size exceeds 2MB"
             }
@@ -360,18 +400,18 @@ fun MyDashedBox(
                         Text("Try Again")
                     }
                 }
-                selectedFileUri.value != null -> {
+                selectedUri != null -> {
                     if (fileType == "image") {
                         val painter = rememberAsyncImagePainter(
                             model = ImageRequest.Builder(context)
-                                .data(selectedFileUri.value)
+                                .data(selectedUri)
                                 .crossfade(true)
                                 .build()
                         )
 
                         Image(
                             painter = painter,
-                            contentDescription = "Selected image: ${fileName.value}",
+                            contentDescription =null,
                             modifier = Modifier
                                 .size(150.dp)
                                 .clip(RoundedCornerShape(8.dp)),
@@ -386,7 +426,7 @@ fun MyDashedBox(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = fileName.value ?: "PDF Document",
+                            text = selectedName ?: "PDF Document",
                             fontSize = 14.sp,
                             color = Color.Black,
                             textAlign = TextAlign.Center,
@@ -397,9 +437,7 @@ fun MyDashedBox(
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(
                         onClick = {
-                            selectedFileUri.value = null
-                            fileName.value = null
-                            onFileSelected(null)
+                            onFileSelected(null,null)
                         }
                     ) {
                         Text("Remove", color = Color.Red)

@@ -28,7 +28,7 @@ fun NavigationGraph(){
     val userViewModel : ParticularUserSignInViewModel  = viewModel()
     val particularUserSignUpViewModel: ParticularUserSignUpViewModel = viewModel()
     NavHost(
-        startDestination = "first_form",
+        startDestination = "second_form",
         navController = navController
     ){
 
