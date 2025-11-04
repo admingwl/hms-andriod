@@ -1,5 +1,7 @@
 package com.example.happydocx.ui.Screens.SignUpForms
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerColors
 import androidx.compose.material3.DatePickerDefaults
@@ -40,55 +43,51 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.happydocx.Data.Model.FormModel.Address
+import com.example.happydocx.Data.Model.FormModel.PersonalDetails
+import com.example.happydocx.Data.Model.FormModel.ProfessionalDetail
+import com.example.happydocx.ui.ViewModels.DoctorRegistrationViewModel
+import com.example.happydocx.ui.ViewModels.SaveDraftState
 import com.example.happydocx.ui.ViewModels.SingUp_From1_ViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
+fun Form_One_Screen(
+    viewModel: SingUp_From1_ViewModel = viewModel()){
 
     val scrollBehaviour = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val scope = rememberCoroutineScope()
     val gradient_colors = Brush.linearGradient(
         listOf(
             Color(0xff586AE5), Color(0xff717FE8),
             Color(0xff7785E9)
         )
     )
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    // states
-    val personalInformationState =
-        viewModel._personalInformationState.collectAsStateWithLifecycle().value
-    val professionalDetailState =
-        viewModel._professionalDetailState.collectAsStateWithLifecycle().value
-    val contactInformationState =
-        viewModel._contactInformationState.collectAsStateWithLifecycle().value
-    val salutationState =
-        viewModel._salutationState.collectAsStateWithLifecycle().value
-    val genderState =
-        viewModel._genderState.collectAsStateWithLifecycle().value
-    val departmentState =
-        viewModel._departmentState.collectAsStateWithLifecycle().value
-    val bloodGroupState =
-        viewModel._bloodGroupState.collectAsStateWithLifecycle().value
-    val addressState =
-        viewModel._addressState.collectAsStateWithLifecycle().value
+    // form states
+   val formInformationState = viewModel._formState.collectAsStateWithLifecycle().value
 
     // date picker state
     val openDatePickerState_DateOfBirth = remember { mutableStateOf(false) }
@@ -98,8 +97,6 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
     // date picker for date of joining
     val openDatePicker_DateOfJoining = remember{mutableStateOf(false)}
     val datePickerState_DateOfJoining = rememberDatePickerState()
-
-
 
     Scaffold(
         /*In Compose, when you use a collapsing or moving TopAppBar (like enterAlwaysScrollBehavior()),
@@ -159,11 +156,11 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
             }
 
             ExposedDropdownMenuBox(
-                expanded = salutationState.expandedState,
-                onExpandedChange = { viewModel.onSalutationDropDownPressed(!salutationState.expandedState) },
+                expanded = formInformationState.salutationDropDownexpandedState,
+                onExpandedChange = { viewModel.onSalutationDropDownPressed(!formInformationState.salutationDropDownexpandedState) },
             ) {
                 OutlinedTextField(
-                    value = salutationState.selectedOptions,
+                    value = formInformationState.salutationselectedOptions,
                     onValueChange = {},
                     readOnly = true,
                     placeholder = { Text("Salutation", color = Color.Black) },
@@ -186,13 +183,13 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                     shape = RoundedCornerShape(20.dp)
                 )
                 ExposedDropdownMenu(
-                    expanded = salutationState.expandedState,
-                    onDismissRequest = { viewModel.onSalutationDropDownPressed(!salutationState.expandedState) },
+                    expanded = formInformationState.salutationDropDownexpandedState,
+                    onDismissRequest = { viewModel.onSalutationDropDownPressed(!formInformationState.salutationDropDownexpandedState) },
                     containerColor = Color(0xffebedfc),
                     matchTextFieldWidth = true,
                     shape = RoundedCornerShape(30.dp)
                 ) {
-                    salutationState.optionList.forEach { it ->
+                    formInformationState.salutationoptionList.forEach { it ->
                         DropdownMenuItem(
                             text = { Text(it, color = Color.Black) },
                             onClick = {
@@ -204,7 +201,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
 
             }
             OutlinedTextField(
-                value = personalInformationState.firstName,
+                value = formInformationState.firstName,
                 onValueChange = { viewModel.onFirstNameChanged(it) },
                 placeholder = { Text("First Name", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -222,7 +219,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = personalInformationState.middleName,
+                value = formInformationState.middleName,
                 onValueChange = { it -> viewModel.onMiddleNameChanged(it) },
                 placeholder = { Text("Middle Name", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -240,7 +237,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = personalInformationState.lastName,
+                value = formInformationState.lastName,
                 onValueChange = { viewModel.onLastNameChanged(it) },
                 placeholder = { Text("Last Name", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -258,7 +255,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = personalInformationState.dateOfBirth,
+                value = formInformationState.dateOfBirth,
                 onValueChange = {},
                 placeholder = { Text("date of birth ... dd-mm-yyyy", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -332,11 +329,11 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
             }
 
             ExposedDropdownMenuBox(
-                expanded = genderState.expandedState,
-                onExpandedChange = { viewModel.onGenderDropDownPressed(!genderState.expandedState) }
+                expanded = formInformationState.genderexpandedState,
+                onExpandedChange = { viewModel.onGenderDropDownPressed(!formInformationState.genderexpandedState) }
             ) {
                 OutlinedTextField(
-                    value = genderState.selectedOptions,
+                    value = formInformationState.genderselectedOptions,
                     onValueChange = {},
                     readOnly = true,
                     placeholder = { Text("Gender", color = Color.Black) },
@@ -359,12 +356,12 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                     shape = RoundedCornerShape(20.dp)
                 )
                 ExposedDropdownMenu(
-                    expanded = genderState.expandedState,
-                    onDismissRequest = { viewModel.onGenderDropDownPressed(!genderState.expandedState) },
+                    expanded = formInformationState.genderexpandedState,
+                    onDismissRequest = { viewModel.onGenderDropDownPressed(!formInformationState.genderexpandedState) },
                     containerColor = Color(0xffebedfc),
                     shape = RoundedCornerShape(30.dp)
                 ) {
-                    genderState.optionList.forEach { it ->
+                    formInformationState.genderoptionList.forEach { it ->
                         DropdownMenuItem(
                             text = { Text(it, color = Color.Black) },
                             onClick = {
@@ -394,11 +391,11 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
             }
 
             ExposedDropdownMenuBox(
-                expanded = departmentState.expandedState,
-                onExpandedChange = { viewModel.onDepartmentDropDownPressed(!departmentState.expandedState) }
+                expanded = formInformationState.departmentexpandedState,
+                onExpandedChange = { viewModel.onDepartmentDropDownPressed(!formInformationState.departmentexpandedState) }
             ) {
                 OutlinedTextField(
-                    value = departmentState.selectedOptions,
+                    value = formInformationState.departmentselectedOptions,
                     onValueChange = {},
                     readOnly = true,
                     placeholder = { Text("Department", color = Color.Black) },
@@ -421,12 +418,12 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                     shape = RoundedCornerShape(20.dp)
                 )
                 ExposedDropdownMenu(
-                    expanded = departmentState.expandedState,
-                    onDismissRequest = { viewModel.onDepartmentDropDownPressed(!departmentState.expandedState) },
+                    expanded = formInformationState.departmentexpandedState,
+                    onDismissRequest = { viewModel.onDepartmentDropDownPressed(!formInformationState.departmentexpandedState) },
                     containerColor = Color(0xffebedfc),
                     shape = RoundedCornerShape(30.dp)
                 ) {
-                    departmentState.optionList.forEach { it ->
+                    formInformationState.departmentoptionList.forEach { it ->
                         DropdownMenuItem(
                             text = { Text(it, color = Color.Black) },
                             onClick = {
@@ -438,7 +435,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
             }
 
             OutlinedTextField(
-                value = professionalDetailState.contactNumber,
+                value = formInformationState.contactNumber,
                 onValueChange = { viewModel.onContactNumberChanged(it) },
                 placeholder = { Text("Contact Number", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -456,7 +453,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = professionalDetailState.email,
+                value = formInformationState.email,
                 onValueChange = { it -> viewModel.onEmailChanged(it) },
                 placeholder = { Text("Email", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -477,7 +474,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
 
 
             OutlinedTextField(
-                value = professionalDetailState.dateOfJoining,
+                value = formInformationState.dateOfJoining,
                 onValueChange = {},
                 placeholder = { Text("date of joining .. dd-mm-yyyy", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -552,11 +549,11 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
 
 
             ExposedDropdownMenuBox(
-                expanded = bloodGroupState.expandedState,
-                onExpandedChange = { viewModel.onBloodGroupDropDownPressed(!bloodGroupState.expandedState) }
+                expanded = formInformationState.bloodGroupexpandedState,
+                onExpandedChange = { viewModel.onBloodGroupDropDownPressed(!formInformationState.bloodGroupexpandedState) }
             ) {
                 OutlinedTextField(
-                    value = bloodGroupState.selectedOptions,
+                    value = formInformationState.bloodGroupselectedOptions,
                     onValueChange = {},
                     readOnly = true,
                     placeholder = { Text("Blood Group", color = Color.Black) },
@@ -585,12 +582,12 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                     shape = RoundedCornerShape(20.dp)
                 )
                 ExposedDropdownMenu(
-                    expanded = bloodGroupState.expandedState,
-                    onDismissRequest = { viewModel.onBloodGroupDropDownPressed(!bloodGroupState.expandedState) },
+                    expanded =formInformationState.bloodGroupexpandedState,
+                    onDismissRequest = { viewModel.onBloodGroupDropDownPressed(!formInformationState.bloodGroupexpandedState) },
                     containerColor = Color(0xffebedfc),
                     shape = RoundedCornerShape(30.dp)
                 ) {
-                    bloodGroupState.optionList.forEach { it ->
+                    formInformationState.bloodGroupoptionList.forEach { it ->
                         DropdownMenuItem(
                             text = { Text(it, color = Color.Black) },
                             onClick = {
@@ -620,11 +617,11 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
 
 
             ExposedDropdownMenuBox(
-                expanded = addressState.expandedState,
-                onExpandedChange = { viewModel.onAddressDropDownPressed(!addressState.expandedState) }
+                expanded = formInformationState.addressexpandedState,
+                onExpandedChange = { viewModel.onAddressDropDownPressed(!formInformationState.addressexpandedState) }
             ) {
                 OutlinedTextField(
-                    value = addressState.selectedOptions,
+                    value = formInformationState.addressselectedOptions,
                     onValueChange = {},
                     readOnly = true,
                     placeholder = { Text("Address Type", color = Color.Black) },
@@ -653,12 +650,12 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                     shape = RoundedCornerShape(20.dp)
                 )
                 ExposedDropdownMenu(
-                    expanded = addressState.expandedState,
-                    onDismissRequest = { viewModel.onAddressDropDownPressed(!addressState.expandedState) },
+                    expanded = formInformationState.addressexpandedState,
+                    onDismissRequest = { viewModel.onAddressDropDownPressed(!formInformationState.addressexpandedState) },
                     containerColor = Color(0xffebedfc),
                     shape = RoundedCornerShape(30.dp)
                 ) {
-                    addressState.optionList.forEach { it ->
+                    formInformationState.addressoptionList.forEach { it ->
                         DropdownMenuItem(
                             text = { Text(it, color = Color.Black) },
                             onClick = {
@@ -670,7 +667,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
             }
 
             OutlinedTextField(
-                value = contactInformationState.addressLineOne,
+                value = formInformationState.addressLineOne,
                 onValueChange = { viewModel.onAddressLineOneChanged(it) },
                 placeholder = { Text("Address Line 1", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -688,7 +685,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = contactInformationState.addressLineTwo,
+                value = formInformationState.addressLineTwo,
                 onValueChange = { viewModel.onAddressLineTwoChanged(it) },
                 placeholder = { Text("Address Line 2", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -707,7 +704,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
             )
 
             OutlinedTextField(
-                value = contactInformationState.city,
+                value = formInformationState.city,
                 onValueChange = { viewModel.city(it) },
                 placeholder = { Text("City", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -726,7 +723,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
             )
 
             OutlinedTextField(
-                value = contactInformationState.state,
+                value = formInformationState.state,
                 onValueChange = { viewModel.state(it) },
                 placeholder = { Text("State", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -745,7 +742,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
             )
 
             OutlinedTextField(
-                value = contactInformationState.district,
+                value = formInformationState.district,
                 onValueChange = { viewModel.district(it) },
                 placeholder = { Text("District", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -763,7 +760,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = contactInformationState.zipCode,
+                value = formInformationState.zipCode,
                 onValueChange = { viewModel.zipCode(it) },
                 placeholder = { Text("Zip Code", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -781,7 +778,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = contactInformationState.country,
+                value = formInformationState.country,
                 onValueChange = { viewModel.country(it) },
                 placeholder = { Text("Country", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -799,7 +796,7 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
                 shape = RoundedCornerShape(20.dp)
             )
             OutlinedTextField(
-                value = contactInformationState.clinicLocationUrl,
+                value = formInformationState.clinicLocationUrl,
                 onValueChange = { viewModel.clinicLocationUrl(it) },
                 placeholder = { Text("Clinic Location URL..", color = Color.Black) },
                 colors = TextFieldDefaults.colors(
@@ -819,23 +816,26 @@ fun Form_One_Screen(viewModel: SingUp_From1_ViewModel = viewModel()) {
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 FilledTonalButton(
-                    onClick = {},
+                    onClick = {
+
+                    },
                     modifier = Modifier.padding(horizontal = 15.dp, vertical = 15.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff4f61e3),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
                 ) {
-                    Text(
-                        "Next Step",
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(8.dp),
-                        fontSize = 13.sp
-                    )
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null
-                    )
+                        Text(
+                            "Next Step",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(8.dp),
+                            fontSize = 13.sp
+                        )
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null
+                        )
                 }
             }
         }
@@ -853,5 +853,19 @@ fun CustomNumberDisplay(number: Int) {
         contentAlignment = Alignment.Center
     ) {
         Text("$number", fontWeight = FontWeight.ExtraBold, color = Color(0xff3c50e2))
+    }
+}
+
+// logic to calculate the year of experience the doctor has by his year of joining
+fun calculateYearsOfExperience(dateOfJoining: String): Int {
+    return try {
+        val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+        val joiningDate = formatter.parse(dateOfJoining)
+        val currentDate = Date()
+        val diff = currentDate.time - (joiningDate?.time ?: 0)
+        val years = diff / (1000L * 60 * 60 * 24 * 365)
+        years.toInt()
+    } catch (e: Exception) {
+        0
     }
 }

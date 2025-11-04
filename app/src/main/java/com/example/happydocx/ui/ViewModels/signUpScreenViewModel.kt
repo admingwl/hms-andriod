@@ -123,7 +123,8 @@ class signUpScreenViewModel : ViewModel() {
              signUpUiState.update { signUpUiState ->
                  signUpUiState.copy(
                      isLoading = false,
-                     isSuccess = true
+                     isSuccess = true,
+                     doctorId = signUpResponse.user.doctorId
                  )
              }
          }
