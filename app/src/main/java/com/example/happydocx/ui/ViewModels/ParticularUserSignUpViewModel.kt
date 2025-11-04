@@ -16,5 +16,4 @@ class ParticularUserSignUpViewModel : ViewModel(){
     fun SaveSignUpResponse(signUpResponse: SignUpResponse){
         SignUpDataResponse.value = signUpResponse
     }
-
 }

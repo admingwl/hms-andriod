@@ -55,12 +55,12 @@ fun SignUpPage(viewModel: signUpScreenViewModel = viewModel(),navController: Nav
     val confirmPasswordEyeToggleState = viewModel._confirmPasswordEyeToggle.collectAsStateWithLifecycle().value
     val signUpUiState = viewModel._signUpUiState.collectAsStateWithLifecycle().value
 
-
+    val doctorId = signUpUiState.doctorId  // NEW: Collect doctorId from UiState (add this field to your UiState data class if missing)
     // handle the signUp success
     // handle the login success
     LaunchedEffect(signUpUiState.isSuccess) {
-        if(signUpUiState.isSuccess){
-            navController.navigate("SignUpResponse") {
+        if(signUpUiState.isSuccess && doctorId!=null){
+            navController.navigate("first_form/${doctorId}") {
                 // Clear the back stack up to and including the login screen
                 popUpTo("SignUp") { inclusive = true }
                 // Ensure only one instance of Home exists

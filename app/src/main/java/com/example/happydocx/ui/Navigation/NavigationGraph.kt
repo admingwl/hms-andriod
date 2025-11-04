@@ -1,10 +1,17 @@
 package com.example.happydocx.ui.Navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.happydocx.ui.Screens.HomeScreen
 import com.example.happydocx.ui.Screens.LoginPage
 import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
@@ -21,12 +28,12 @@ fun NavigationGraph(){
     val userViewModel : ParticularUserSignInViewModel  = viewModel()
     val particularUserSignUpViewModel: ParticularUserSignUpViewModel = viewModel()
     NavHost(
-        startDestination = "Login",
+        startDestination = "first_form",
         navController = navController
     ){
 
         composable("Home") {
-            HomeScreen(userViewModel = userViewModel, navController = navController)
+            HomeScreen(navController = navController)
         }
         composable(route = "Login"){
             LoginPage(navController = navController, userViewModel = userViewModel)
