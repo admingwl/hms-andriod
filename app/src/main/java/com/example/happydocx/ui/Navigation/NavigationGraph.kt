@@ -1,11 +1,8 @@
 package com.example.happydocx.ui.Navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -18,37 +15,53 @@ import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.SignUpPage
 import com.example.happydocx.ui.Screens.SignUpResponse
+import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.ParticularUserSignUpViewModel
+import com.example.happydocx.ui.ViewModels.formViewModel
 
 @Composable
-fun NavigationGraph(){
+fun NavigationGraph() {
 
+    val context = LocalContext.current
     val navController = rememberNavController()
-    val userViewModel : ParticularUserSignInViewModel  = viewModel()
+    val userViewModel: ParticularUserSignInViewModel = viewModel()
     val particularUserSignUpViewModel: ParticularUserSignUpViewModel = viewModel()
+
+    // Create viewModel at navigation graph level so it survives between screens
+    val sharedViewModel: formViewModel = viewModel(
+        factory = FormViewModelFactory(context)
+    )
     NavHost(
-        startDestination = "second_form",
+        startDestination = "Login",
         navController = navController
-    ){
+    ) {
 
         composable("Home") {
             HomeScreen(navController = navController)
         }
-        composable(route = "Login"){
+        composable(route = "Login") {
             LoginPage(navController = navController, userViewModel = userViewModel)
         }
-        composable(route = "SignUp"){
+        composable(route = "SignUp") {
             SignUpPage(navController = navController)
         }
         composable("SignUpResponse") {
             SignUpResponse(particularUserSignUpViewModel = particularUserSignUpViewModel)
         }
-        composable("first_form"){
-            Form_One_Screen()
+        composable(
+            route = "first_form/{doctorId}",
+            arguments = listOf(navArgument("doctorId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
+            Form_One_Screen(doctorId = doctorId, navController = navController, viewModel = sharedViewModel)
         }
-        composable("second_form") {
-            Form_Two_Screen()
+        composable(
+            route = "second_form/{doctorId}",
+            arguments = listOf(navArgument("doctorId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
+            Form_Two_Screen(doctorId = doctorId, navController = navController, viewModel = sharedViewModel)
         }
     }
 }
