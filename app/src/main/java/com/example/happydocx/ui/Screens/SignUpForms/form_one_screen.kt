@@ -37,6 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,7 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.happydocx.ui.ViewModels.formViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -59,8 +60,11 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Form_One_Screen(
-    viewModel: formViewModel = viewModel()){
+    navController: NavController,
+    doctorId:String,
+    viewModel: formViewModel)
 
+{
     val scrollBehaviour = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scope = rememberCoroutineScope()
     val gradient_colors = Brush.linearGradient(
@@ -73,7 +77,7 @@ fun Form_One_Screen(
     val scrollState = rememberScrollState()
 
     // form states
-   val formInformationState = viewModel._formState.collectAsStateWithLifecycle().value
+   val formInformationState by viewModel._formState.collectAsStateWithLifecycle()
 
     // date picker state
     val openDatePickerState_DateOfBirth = remember { mutableStateOf(false) }
@@ -803,7 +807,7 @@ fun Form_One_Screen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 FilledTonalButton(
                     onClick = {
-
+                        navController.navigate("second_form/${doctorId}")
                     },
                     modifier = Modifier.padding(horizontal = 15.dp, vertical = 15.dp),
                     colors = ButtonDefaults.buttonColors(

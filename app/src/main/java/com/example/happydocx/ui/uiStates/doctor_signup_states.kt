@@ -45,7 +45,6 @@ data class FormInformation(
     val mbbsCertificateName: String? = null,
     val experienceCertificateUri: Uri? = null,
     val experienceCertificateName: String? = null
-
     )
 
 

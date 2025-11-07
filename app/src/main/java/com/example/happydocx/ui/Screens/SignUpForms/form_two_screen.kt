@@ -5,7 +5,6 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,8 +25,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -37,6 +36,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -53,26 +54,28 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.example.happydocx.R
+import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.formViewModel
-import okhttp3.internal.format
 
-@Preview
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Form_Two_Screen(
-    viewModel: formViewModel = viewModel()
+    doctorId: String,
+    navController: NavController,
+    viewModel: formViewModel
 ) {
 
 
+    val doctorProfileState by viewModel._doctorProfileState.collectAsStateWithLifecycle()
     val gradient_colors = Brush.linearGradient(
         listOf(
             Color(0xff586AE5), Color(0xff717FE8),
@@ -82,7 +85,7 @@ fun Form_Two_Screen(
     val scrollBehaviour = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val context = LocalContext.current
     // getting form state
-    val formState = viewModel._formState.collectAsStateWithLifecycle().value
+    val formState by viewModel._formState.collectAsStateWithLifecycle()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -154,8 +157,8 @@ fun Form_Two_Screen(
                 fileType = "image",
                 selectedUri = formState.profilePhotoUri,
                 selectedName = formState.profilePhotoName,
-                onFileSelected = {uri,name->
-                    viewModel.updateProfilePhoto(uri,name)
+                onFileSelected = { uri, name ->
+                    viewModel.updateProfilePhoto(uri, name)
                 })
 
 
@@ -178,8 +181,8 @@ fun Form_Two_Screen(
                 "image",
                 selectedUri = formState.signatureUri,
                 selectedName = formState.signatureName,
-                onFileSelected = {uri,name->
-                    viewModel.updateSignature(uri,name)
+                onFileSelected = { uri, name ->
+                    viewModel.updateSignature(uri, name)
                 })
 
             // adding the Doctor ID Proof
@@ -197,7 +200,8 @@ fun Form_Two_Screen(
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox(fileType = "document",
+            MyDashedBox(
+                fileType = "document",
                 selectedUri = formState.doctorIdProofUri,
                 selectedName = formState.doctorIdProofName,
                 onFileSelected = { uri, name ->
@@ -219,7 +223,8 @@ fun Form_Two_Screen(
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox("document",
+            MyDashedBox(
+                "document",
                 selectedUri = formState.doctorLicenseUri,
                 selectedName = formState.doctorLicenseName,
                 onFileSelected = { uri, name ->
@@ -241,7 +246,8 @@ fun Form_Two_Screen(
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox("document",
+            MyDashedBox(
+                "document",
                 selectedUri = formState.mbbsCertificateUri,
                 selectedName = formState.mbbsCertificateName,
                 onFileSelected = { uri, name ->
@@ -263,7 +269,8 @@ fun Form_Two_Screen(
                 Text("*", color = Color.Red)
             }
             // know i add the add box section
-            MyDashedBox("document",
+            MyDashedBox(
+                "document",
                 selectedUri = formState.experienceCertificateUri,
                 selectedName = formState.experienceCertificateName,
                 onFileSelected = { uri, name ->
@@ -274,20 +281,76 @@ fun Form_Two_Screen(
             // Final Registration  Button
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 FilledTonalButton(
-                    onClick = { Toast.makeText(context,"Doctor Register Successfuly",Toast.LENGTH_LONG).show()},
+                    onClick = {
+                        // Validate required fields first
+                        if (formState.profilePhotoUri == null ||
+                            formState.signatureUri == null ||
+                            formState.doctorIdProofUri == null ||
+                            formState.doctorLicenseUri == null ||
+                            formState.mbbsCertificateUri == null ||
+                            formState.experienceCertificateUri == null
+                        ) {
+                            Toast.makeText(
+                                context,
+                                "Please upload all required documents",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            // Call the API with actual doctorId
+                            viewModel.CompleteRegistration(doctorId = doctorId)
+                        }
+                    },
                     modifier = Modifier.padding(horizontal = 15.dp, vertical = 30.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff16a34a),
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    enabled = doctorProfileState !is formViewModel.DoctorProfileUiState.Loading
                 ) {
+                    if (doctorProfileState is formViewModel.DoctorProfileUiState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                     Text(
-                        "Complete Registration",
+                        if (doctorProfileState is formViewModel.DoctorProfileUiState.Loading) "Uploading..." else "Complete Registration",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(8.dp),
                         fontSize = 13.sp
                     )
+                }
+            }
+            when (val state = doctorProfileState) {
+                is formViewModel.DoctorProfileUiState.Success -> {
+                    LaunchedEffect(Unit) {
+                        Toast.makeText(
+                            context,
+                            "Registration Completed Successfully!",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        // Navigate to Home screen and clear back stack
+                        navController.navigate("Home") {
+                            popUpTo(0) { inclusive = true } // Clear entire back stack
+                            launchSingleTop = true
+                        }
+                    }
+                }
+
+                is formViewModel.DoctorProfileUiState.Error -> {
+                    LaunchedEffect(Unit) {
+                        Toast.makeText(
+                            context,
+                            "Error: ${state.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+
+                else -> { /* Idle or Loading - no action needed */
                 }
             }
         }
@@ -297,14 +360,13 @@ fun Form_Two_Screen(
 @Composable
 fun MyDashedBox(
     fileType: String, // "image" or "pdf"
-    selectedUri:Uri?,
-    selectedName:String?,
-    onFileSelected: (Uri?,String?) -> Unit,
+    selectedUri: Uri?,
+    selectedName: String?,
+    onFileSelected: (Uri?, String?) -> Unit,
     maxSizeBytes: Long = 2 * 1024 * 1024 // 2MB
 ) {
     val context = LocalContext.current
     var errorMessage = remember { mutableStateOf<String?>(null) }
-    var isLoading = remember { mutableStateOf(false) }
 
     // Helper to get actual filename
     fun getFileName(uri: Uri): String {
@@ -400,6 +462,7 @@ fun MyDashedBox(
                         Text("Try Again")
                     }
                 }
+
                 selectedUri != null -> {
                     if (fileType == "image") {
                         val painter = rememberAsyncImagePainter(
@@ -411,7 +474,7 @@ fun MyDashedBox(
 
                         Image(
                             painter = painter,
-                            contentDescription =null,
+                            contentDescription = null,
                             modifier = Modifier
                                 .size(150.dp)
                                 .clip(RoundedCornerShape(8.dp)),
@@ -437,12 +500,13 @@ fun MyDashedBox(
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(
                         onClick = {
-                            onFileSelected(null,null)
+                            onFileSelected(null, null)
                         }
                     ) {
                         Text("Remove", color = Color.Red)
                     }
                 }
+
                 else -> {
                     Icon(
                         painter = painterResource(R.drawable.baseline_cloud_24),
