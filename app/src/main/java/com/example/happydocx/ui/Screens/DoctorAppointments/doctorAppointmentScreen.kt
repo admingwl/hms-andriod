@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,12 +25,14 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -58,6 +61,7 @@ import com.example.happydocx.R
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,16 +87,12 @@ fun DoctorAppointmentScreen(
     val tokenManger = TokenManager(context = context)
 
 
-    // Log state changes for debug (optional, remove later)
-    LaunchedEffect(uiState.value) {
-        Log.d("DEBUG_COMPOSE", "UI State changed to: ${uiState.value}")
-    }
 
     // Fetch on compose (same as before)
     LaunchedEffect(Unit) {
         Log.d("DEBUG_SCREEN", "Token received in screen: $token")
         if (token.isNotBlank()) {
-            viewModel.getDoctorAppointments(token, showCompleted = false)
+            viewModel.getDoctorAppointments(token,page =1, showCompleted = false)
         } else {
             Log.e("DEBUG_SCREEN", "Invalid token—setting error")
         }
@@ -184,52 +184,72 @@ fun DoctorAppointmentScreen(
                 is AppointmentUiState.Success -> {
                     val successState =
                         uiState.value as AppointmentUiState.Success  //  Safe: .value is Success
-                    Log.d(
-                        "DEBUG_STATE",
-                        "Success! Total: ${successState.total}, Appointments: ${successState.appointments.size}"
-                    )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-//                        Text(
-//                            text = "Total Appointments: ${successState.total}",
-//                            color = Color.White
-//                        )
-//                        Text(
-//                            text = "Loaded ${successState.appointments.size} items",
-//                            style = MaterialTheme.typography.bodyMedium,
-//                            color = Color.White
-//                        )
-//                        Text(
-//                            "appointment page limit: ${successState.limit}",
-//                            color = Color.White
-//                        )
-//                        Text(
-//                            "appointment page: ${successState.page}",
-//                            color = Color.White
-//                        )
-                        // Quick list preview (expand later)
+                    val totalPages = ceil(
+                        successState.total.toDouble() / (successState.limit ?: 10)
+                    ).toInt()
+                    val currentPage = successState.page ?: 1
+
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Header showing count
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFF5F5F5))
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = "Showing ${successState.appointments.size} of ${successState.total} appointments (Page $currentPage of $totalPages)",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xff4f61e3),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        // Appointments List
                         LazyColumn(
-                            modifier = Modifier.padding(top = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(top = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             items(successState.appointments) { appointment ->
                                 Card(
-                                    modifier = Modifier.fillMaxWidth(0.8f)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
-                                        Text("Status: ${appointment.status}")
-                                        Text("patient ID: ${appointment.patient._id}")
-                                        Text("Date: ${appointment.date}")
-                                        Text("patient name: ${appointment.patient.name}")
-                                        Text("Company Id: ${appointment.companyId}")
-                                        Text("appointment ID: ${appointment.id}")
-
+                                        Text(
+                                            text = appointment.patient.name ?: "Unknown Patient",
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("Status: ${appointment.status ?: "N/A"}")
+                                        Text("Date: ${appointment.date ?: "No date"}")
+                                        Text("Patient ID: ${appointment.patient._id ?: "N/A"}")
                                     }
                                 }
                             }
                         }
+
+                        // Pagination Controls (only show if more than 1 page)
+                        if (totalPages > 1) {
+                            PaginationControls(
+                                currentPage = currentPage,
+                                totalPages = totalPages,
+                                onPreviousClick = {
+                                    viewModel.loadPreviousPage(token)
+                                },
+                                onNextClick = {
+                                    viewModel.loadNextPage(token)
+                                },
+                                onPageClick = { page ->
+                                    viewModel.loadSpecificPage(token, page)
+                                }
+                            )
+                        }
                     }
                 }
-
                 is AppointmentUiState.Error -> {
                     val errorState = uiState.value as AppointmentUiState.Error  //  Safe unwrap
                     Log.e("DEBUG_STATE", "Error: ${errorState.message}")
@@ -265,6 +285,68 @@ fun DoctorAppointmentScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun PaginationControls(
+    currentPage: Int,
+    totalPages: Int,
+    onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onPageClick: (Int) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFFF5F5F5),
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Previous Button
+            Button(
+                onClick = onPreviousClick,
+                enabled = currentPage > 1,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff4f61e3),
+                    disabledContainerColor = Color.LightGray
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
+            ) {
+                Text("← Previous", color = Color.White)
+            }
+
+            // Page Info
+            Text(
+                text = "$currentPage / $totalPages",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xff4f61e3),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            // Next Button
+            Button(
+                onClick = onNextClick,
+                enabled = currentPage < totalPages,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff4f61e3),
+                    disabledContainerColor = Color.LightGray
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp)
+            ) {
+                Text("Next →", color = Color.White)
             }
         }
     }

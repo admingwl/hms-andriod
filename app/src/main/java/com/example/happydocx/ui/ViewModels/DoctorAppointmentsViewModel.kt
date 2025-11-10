@@ -1,6 +1,7 @@
 package com.example.happydocx.ui.ViewModels
 
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.DoctorAppointment.Appointment
@@ -9,6 +10,7 @@ import com.example.happydocx.Data.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 
 class DoctorAppointmentsViewModel() : ViewModel() {
 
@@ -18,6 +20,10 @@ class DoctorAppointmentsViewModel() : ViewModel() {
     private val uiState: MutableStateFlow<AppointmentUiState> = MutableStateFlow(AppointmentUiState.Loading)
     val _uiState = uiState.asStateFlow()
 
+
+    // add current page state
+    private val _currentPage = MutableStateFlow(1)
+    val currentPage = _currentPage.asStateFlow()
     fun getDoctorAppointments(
         token:String?,
         page:Int=1,
@@ -49,6 +55,34 @@ class DoctorAppointmentsViewModel() : ViewModel() {
             }
 
         }
+    }
+
+    // create helper function for pagination
+    fun loadNextPage(token:String){
+     val currentState = uiState.value
+        if(currentState is AppointmentUiState.Success){
+            val totalpage = ceil(currentState.total.toDouble() / (currentState.limit ?: 10)).toInt()
+            val nextPage = (currentState.page ?: 1)+1
+            if(nextPage<=totalpage){
+                getDoctorAppointments(token,page = nextPage)
+            }
+        }
+    }
+
+    // create helper function for load previous page
+    fun loadPreviousPage(token:String){
+        val currentState = uiState.value
+        if(currentState is AppointmentUiState.Success){
+            val prevPage = (currentState.page ?: 1) - 1
+            if(prevPage>=1) {
+                getDoctorAppointments(token, page = prevPage)
+            }
+        }
+    }
+
+    // fun to load the specific page
+    fun loadSpecificPage(token:String,page:Int){
+        getDoctorAppointments(token,page=page)
     }
 }
 
