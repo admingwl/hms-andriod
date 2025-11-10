@@ -1,5 +1,6 @@
 package com.example.happydocx.ui.Screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.ui.ViewModels.LoginScreenViewModel
 import com.example.happydocx.ui.ViewModels.LoginViewModelFactory
@@ -74,12 +76,13 @@ fun LoginPage(
     val passwordState = viewModel._passwordState.collectAsStateWithLifecycle().value
     val eyeToggleState = viewModel._eyeToggleState.collectAsStateWithLifecycle().value
     val loginUiState = viewModel._loginUiState.collectAsStateWithLifecycle().value
+    val savedToken = TokenManager(context).getToken()
 
 
     // Check if user is already logged in on first launch
     LaunchedEffect(Unit) {
         if (viewModel.isUserLoggedIn()) {
-            navController.navigate("Home") {
+            navController.navigate("AppointmentsScreen/${savedToken}") {
                 popUpTo("Login") { inclusive = true }
                 launchSingleTop = true
             }
@@ -88,21 +91,21 @@ fun LoginPage(
     // handle the login success
     LaunchedEffect(loginUiState.isSuccess) {
         if(loginUiState.isSuccess){
-            navController.navigate("Home") {
-                // Clear the back stack up to and including the login screen
-                popUpTo("Login") { inclusive = true }
-                // Ensure only one instance of Home exists
-                launchSingleTop = true
+            Log.d("LOGIN_DEBUG", "Login successful, token: $savedToken")
+            if (savedToken != null) {
+                // Navigate with token as argument
+                navController.navigate("AppointmentsScreen/${savedToken}") {
+                    // Clear the back stack up to and including the login screen
+                    popUpTo("Login") { inclusive = true }
+                    // Ensure only one instance exists
+                    launchSingleTop = true
+                }
+            } else {
+                Log.e("LOGIN_DEBUG", "Login successful but token is null!")
             }
         }
     }
 
-    // Launched Effect for failiure
-//    LaunchedEffect(loginUiState.errorMessage) {
-//        loginUiState.errorMessage.let { message->
-//
-//        }
-//    }
     Column(
         modifier = Modifier
             .fillMaxSize()

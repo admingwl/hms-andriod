@@ -1,5 +1,6 @@
 package com.example.happydocx.ui.Navigation
 
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -9,7 +10,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.happydocx.ui.Screens.HomeScreen
+import com.example.happydocx.Data.TokenManager
+import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
 import com.example.happydocx.ui.Screens.LoginPage
 import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
@@ -37,9 +39,6 @@ fun NavigationGraph() {
         navController = navController
     ) {
 
-        composable("Home") {
-            HomeScreen(navController = navController)
-        }
         composable(route = "Login") {
             LoginPage(navController = navController, userViewModel = userViewModel)
         }
@@ -62,6 +61,17 @@ fun NavigationGraph() {
         ) { backStackEntry ->
             val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
             Form_Two_Screen(doctorId = doctorId, navController = navController, viewModel = sharedViewModel)
+        }
+        composable("AppointmentsScreen/{token}",
+            arguments = listOf(
+                navArgument("token"){
+                    type = NavType.StringType
+                    nullable = false
+                }
+            )) {backStackEntry->
+            val token_one = backStackEntry.arguments?.getString("token")?:""
+            Log.d("DEBUG_NAV", "Navigation: Token = $token_one")
+            DoctorAppointmentScreen(token = token_one, navController = navController)
         }
     }
 }
