@@ -1,5 +1,6 @@
 package com.example.happydocx.Data.Network
 
+import com.example.happydocx.Data.Model.DoctorAppointment.AppointmentResponse
 import com.example.happydocx.Data.Model.FormModel.DoctorProfileResponse
 import com.example.happydocx.Data.Model.LoginModel.LoginRequest
 import com.example.happydocx.Data.Model.LoginModel.LoginResponse
@@ -9,11 +10,14 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService{
     // here is the end point in post(parameter)
@@ -74,4 +78,15 @@ interface ApiService{
         @Part mbbsCertificate: MultipartBody.Part?,
         @Part experienceCertificate: MultipartBody.Part?
     ): Response<DoctorProfileResponse>
+
+
+
+    // Api integration for getting all the list of appointments of the doctor
+    @GET("api/v1/appointment/doctor")
+    suspend fun getDoctorAppointments(
+      @Header("Authorization") token:String?, // bearer token
+      @Query("page") page:Int = 1,
+      @Query("limit") limit:Int = 10,
+      @Query("showCompleted") showCompleted:Boolean = false
+    ): Response<AppointmentResponse>
 }
