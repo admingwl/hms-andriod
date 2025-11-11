@@ -332,8 +332,8 @@ fun Form_Two_Screen(
                             "Registration Completed Successfully!",
                             Toast.LENGTH_LONG
                         ).show()
-                        // Navigate to Home screen and clear back stack
-                        navController.navigate("Home") {
+                        // Navigate to Login screen and clear back stack
+                        navController.navigate("Login") {
                             popUpTo(0) { inclusive = true } // Clear entire back stack
                             launchSingleTop = true
                         }

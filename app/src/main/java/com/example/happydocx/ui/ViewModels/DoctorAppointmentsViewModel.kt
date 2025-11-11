@@ -1,12 +1,10 @@
 package com.example.happydocx.ui.ViewModels
 
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.DoctorAppointment.Appointment
 import com.example.happydocx.Data.Repository.DoctorAppointments.DoctorAppointmentRepository
-import com.example.happydocx.Data.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch

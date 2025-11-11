@@ -1,6 +1,5 @@
 package com.example.happydocx.ui.Screens.DoctorAppointments
 
-import android.R.attr.onClick
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,19 +16,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -52,6 +51,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -63,6 +63,13 @@ import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
+
+val gradient_colors = Brush.linearGradient(
+    listOf(
+        Color(0xff586AE5), Color(0xff717FE8),
+        Color(0xff7785E9)
+    )
+)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorAppointmentScreen(
@@ -70,15 +77,12 @@ fun DoctorAppointmentScreen(
     token: String,  // Non-nullable, as per your NavGraph
     navController: NavController
 ) {
-    val uiState = viewModel._uiState.collectAsStateWithLifecycle()  // State<AppointmentUiState> — keep this!
-    val scrollBehaviour = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-    val gradient_colors = Brush.linearGradient(
-        listOf(
-            Color(0xff586AE5), Color(0xff717FE8),
-            Color(0xff7785E9)
-        )
-    )
+    val uiState =
+        viewModel._uiState.collectAsStateWithLifecycle()  // State<AppointmentUiState> — keep this!
+    val scrollBehaviour =
+        TopAppBarDefaults.enterAlwaysScrollBehavior()
+
     // dialog state
     val showDialog = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -87,35 +91,34 @@ fun DoctorAppointmentScreen(
     val tokenManger = TokenManager(context = context)
 
 
-
     // Fetch on compose (same as before)
     LaunchedEffect(Unit) {
         Log.d("DEBUG_SCREEN", "Token received in screen: $token")
         if (token.isNotBlank()) {
-            viewModel.getDoctorAppointments(token,page =1, showCompleted = false)
+            viewModel.getDoctorAppointments(token, page = 1, showCompleted = false)
         } else {
             Log.e("DEBUG_SCREEN", "Invalid token—setting error")
         }
     }
 
     // adding dialog for the user to logout
-    if(showDialog.value){
+    if (showDialog.value) {
         AlertDialog(
             containerColor = Color.White,
             textContentColor = Color.Black,
             titleContentColor = Color.Black,
-            onDismissRequest = {showDialog.value = false},
-            title = {Text("Logout")},
-            text = {Text("Are you shure you want to logout?")},
+            onDismissRequest = { showDialog.value = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
             confirmButton = {
                 TextButton(onClick = {
                     coroutineScope.launch {
                         // clear token and user data
                         tokenManger.clearToken()
                         // navigate back to login screen
-                        navController.navigate("Login"){
+                        navController.navigate("Login") {
                             // clear entire backStack
-                            popUpTo(0){inclusive = true  }
+                            popUpTo(0) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
@@ -124,21 +127,24 @@ fun DoctorAppointmentScreen(
                     Text("Yes", color = Color(0xff4f61e3))
                 }
             },
-            dismissButton = {TextButton(onClick = { showDialog.value = false }) {
-                Text("No", color = Color(0xff4f61e3))
-            }}
+            dismissButton = {
+                TextButton(onClick = { showDialog.value = false }) {
+                    Text("No", color = Color(0xff4f61e3))
+                }
+            }
         )
     }
 
     Scaffold(
 
-        modifier = Modifier.fillMaxSize()
-        /*In Compose, when you use a collapsing or moving TopAppBar (like enterAlwaysScrollBehavior()),
-          you must attach the scroll behavior to the scrollable content using this modifier:*/
-        .nestedScroll(scrollBehaviour.nestedScrollConnection),
+        modifier = Modifier
+            .fillMaxSize()
+            /*In Compose, when you use a collapsing or moving TopAppBar (like enterAlwaysScrollBehavior()),
+              you must attach the scroll behavior to the scrollable content using this modifier:*/
+            .nestedScroll(scrollBehaviour.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = {Text("Appointments")},
+                title = { Text("Appointments", color = Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
                     scrolledContainerColor = Color.Transparent // keep the same gradient
@@ -148,7 +154,7 @@ fun DoctorAppointmentScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                              showDialog.value = true
+                            showDialog.value = true
                         }
                     ) {
                         Icon(
@@ -160,7 +166,7 @@ fun DoctorAppointmentScreen(
                 }
             )
         }
-    ) {paddingValues ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues = paddingValues)
@@ -171,7 +177,11 @@ fun DoctorAppointmentScreen(
             when (uiState.value) {  // .value gives the actual AppointmentUiState
                 is AppointmentUiState.Loading -> {
                     Log.d("DEBUG_STATE", "Showing Loading state")
-                    Column(modifier = Modifier.fillMaxSize(),horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
                         CircularProgressIndicator(
                             color = Color(0xff4f61e3),
                             modifier = Modifier.size(48.dp)
@@ -189,46 +199,43 @@ fun DoctorAppointmentScreen(
                     ).toInt()
                     val currentPage = successState.page ?: 1
 
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        // Header showing count
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFF5F5F5))
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = "Showing ${successState.appointments.size} of ${successState.total} appointments (Page $currentPage of $totalPages)",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xff4f61e3),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+
+                    Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
                         // Appointments List
                         LazyColumn(
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(top = 16.dp),
+                                .padding(top = 12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                            contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
                         ) {
                             items(successState.appointments) { appointment ->
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                                ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Text(
-                                            text = appointment.patient.name ?: "Unknown Patient",
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("Status: ${appointment.status ?: "N/A"}")
-                                        Text("Date: ${appointment.date ?: "No date"}")
-                                        Text("Patient ID: ${appointment.patient._id ?: "N/A"}")
-                                    }
-                                }
+//                                Card(
+//                                    modifier = Modifier.fillMaxWidth().background(brush = gradient_colors),
+//                                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+//                                    colors = CardDefaults.cardColors(
+//                                        containerColor = Color.Transparent
+//                                    )
+//                                ) {
+//                                    Column(modifier = Modifier) {
+//                                        Text(
+//                                            text = appointment.patient.name ?: "Unknown Patient",
+//                                            fontWeight = FontWeight.Bold,
+//                                            style = MaterialTheme.typography.titleMedium
+//                                        )
+//                                        Spacer(modifier = Modifier.height(8.dp))
+//                                        Text("Status: ${appointment.status ?: "N/A"}")
+//                                        Text("Date: ${appointment.date ?: "No date"}")
+//                                        Text("Patient ID: ${appointment.patient._id ?: "N/A"}")
+//                                    }
+//                                }
+                                CardComponent(
+                                    name = (appointment.patient.first_name + appointment.patient.last_name)
+                                        ?: "No Name",
+                                    status = appointment.status?:"N/A",
+                                    date = appointment.date ?: "No Date",
+                                    patient_Id = appointment.patient._id ?: "N/A"
+                                )
                             }
                         }
 
@@ -250,14 +257,17 @@ fun DoctorAppointmentScreen(
                         }
                     }
                 }
+
                 is AppointmentUiState.Error -> {
                     val errorState = uiState.value as AppointmentUiState.Error  //  Safe unwrap
                     Log.e("DEBUG_STATE", "Error: ${errorState.message}")
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxSize()
-                            .background(Color.White)) {
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
+                    ) {
 
                         Image(
                             painter = painterResource(R.drawable.wifi),
@@ -270,8 +280,8 @@ fun DoctorAppointmentScreen(
                         Button(
                             contentPadding = PaddingValues(0.dp),
                             onClick = {
-                            viewModel.getDoctorAppointments(token)  // Retry
-                        },
+                                viewModel.getDoctorAppointments(token)  // Retry
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 30.dp),
@@ -280,7 +290,7 @@ fun DoctorAppointmentScreen(
                                 contentColor = Color.Black
                             ),
                             shape = RoundedCornerShape(8.dp),
-                            ) {
+                        ) {
                             Text("Retry", fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
@@ -348,6 +358,33 @@ fun PaginationControls(
             ) {
                 Text("Next →", color = Color.White)
             }
+        }
+    }
+}
+
+
+@Composable
+fun CardComponent(
+    name:String,
+    status:String,
+    date:String,
+    patient_Id:String
+){
+    Card (
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+        elevation = CardDefaults.cardElevation(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xff4f61e3),
+            contentColor = Color.White
+        ),
+        shape = RoundedCornerShape(30.dp)
+    ){
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 8.dp)) { 
+            Text(name, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Text(status)
+            Text(date)
+            Text(patient_Id)
         }
     }
 }
