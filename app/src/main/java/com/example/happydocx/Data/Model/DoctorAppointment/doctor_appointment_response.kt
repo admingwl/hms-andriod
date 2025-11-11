@@ -16,7 +16,7 @@ data class Appointment(
     val id: String,
     val status:String,
     val patient:Patient,
-    @SerializedName("date")
+    @SerializedName("appointmentDate")
     val date:String,
     val companyId: String
 )
@@ -24,6 +24,8 @@ data class Appointment(
 data class Patient(
     @SerializedName("_id")
     val _id: String,
-    @SerializedName("name")
-    val name : String
+    @SerializedName("first_name")
+    val first_name : String,
+    @SerializedName("last_name")
+    val last_name : String,
 )
