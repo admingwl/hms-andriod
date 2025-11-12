@@ -13,6 +13,7 @@ import androidx.navigation.navArgument
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
 import com.example.happydocx.ui.Screens.LoginPage
+import com.example.happydocx.ui.Screens.Patient.ParticularPatientScreen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.SignUpPage
@@ -72,6 +73,9 @@ fun NavigationGraph() {
             val token_one = backStackEntry.arguments?.getString("token")?:""
             Log.d("DEBUG_NAV", "Navigation: Token = $token_one")
             DoctorAppointmentScreen(token = token_one, navController = navController)
+        }
+        composable("ParticularPatientScreen") {
+            ParticularPatientScreen()
         }
     }
 }

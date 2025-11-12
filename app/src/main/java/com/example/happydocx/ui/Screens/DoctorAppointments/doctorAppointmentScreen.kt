@@ -3,8 +3,8 @@ package com.example.happydocx.ui.Screens.DoctorAppointments
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,18 +17,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -51,8 +50,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -70,6 +69,7 @@ val gradient_colors = Brush.linearGradient(
         Color(0xff7785E9)
     )
 )
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorAppointmentScreen(
@@ -80,6 +80,8 @@ fun DoctorAppointmentScreen(
 
     val uiState =
         viewModel._uiState.collectAsStateWithLifecycle()  // State<AppointmentUiState> — keep this!
+
+
     val scrollBehaviour =
         TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -152,6 +154,16 @@ fun DoctorAppointmentScreen(
                 modifier = Modifier.background(brush = gradient_colors),
                 scrollBehavior = scrollBehaviour,
                 actions = {
+                    // icon button for Creating appointments
+                    IconButton(onClick = {}){
+                        Icon(
+                            painter = painterResource(R.drawable.addappointments),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(25.dp)
+                        )
+                    }
+                    // adding button for logout doctor
                     IconButton(
                         onClick = {
                             showDialog.value = true
@@ -200,42 +212,27 @@ fun DoctorAppointmentScreen(
                     val currentPage = successState.page ?: 1
 
 
-                    Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
+                    ) {
                         // Appointments List
                         LazyColumn(
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(top = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                                .background(color = Color(0xffebebeb)),
                             contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
                         ) {
                             items(successState.appointments) { appointment ->
-//                                Card(
-//                                    modifier = Modifier.fillMaxWidth().background(brush = gradient_colors),
-//                                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-//                                    colors = CardDefaults.cardColors(
-//                                        containerColor = Color.Transparent
-//                                    )
-//                                ) {
-//                                    Column(modifier = Modifier) {
-//                                        Text(
-//                                            text = appointment.patient.name ?: "Unknown Patient",
-//                                            fontWeight = FontWeight.Bold,
-//                                            style = MaterialTheme.typography.titleMedium
-//                                        )
-//                                        Spacer(modifier = Modifier.height(8.dp))
-//                                        Text("Status: ${appointment.status ?: "N/A"}")
-//                                        Text("Date: ${appointment.date ?: "No date"}")
-//                                        Text("Patient ID: ${appointment.patient._id ?: "N/A"}")
-//                                    }
-//                                }
                                 CardComponent(
-                                    name = (appointment.patient.first_name + appointment.patient.last_name)
+                                    name = "${appointment.patient.first_name} ${appointment.patient.last_name}"
                                         ?: "No Name",
-                                    status = appointment.status?:"N/A",
+                                    status = appointment.status ?: "N/A",
                                     date = appointment.date ?: "No Date",
-                                    patient_Id = appointment.patient._id ?: "N/A"
+                                    navController = navController
                                 )
+                                HorizontalDivider(color=Color(0xffdbdbd9))
                             }
                         }
 
@@ -329,10 +326,18 @@ fun PaginationControls(
                     disabledContainerColor = Color.LightGray
                 ),
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.5f)
                     .padding(end = 8.dp)
+                    .padding(paddingValues = PaddingValues(0.dp)),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Text("← Previous", color = Color.White)
+                Icon(
+                    painter = painterResource(R.drawable.arrow_left_long_line),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(" Previous", color = Color.White)
             }
 
             // Page Info
@@ -353,10 +358,18 @@ fun PaginationControls(
                     disabledContainerColor = Color.LightGray
                 ),
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.5f)
                     .padding(start = 8.dp)
+                    .padding(paddingValues = PaddingValues(0.dp)),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Next →", color = Color.White)
+                Text(" Next", color = Color.White)
+                Icon(
+                    painter = painterResource(R.drawable.arrow_right_long_line),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }
@@ -365,26 +378,31 @@ fun PaginationControls(
 
 @Composable
 fun CardComponent(
-    name:String,
-    status:String,
-    date:String,
-    patient_Id:String
-){
-    Card (
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
-        elevation = CardDefaults.cardElevation(12.dp),
+    name: String,
+    status: String,
+    date: String,
+    navController: NavController
+) {
+    Card(
+        modifier = Modifier
+            .clickable{navController.navigate("ParticularPatientScreen")}
+            .fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xff4f61e3),
+            containerColor = Color(0xffebebeb),
             contentColor = Color.White
         ),
-        shape = RoundedCornerShape(30.dp)
-    ){
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 8.dp)) { 
-            Text(name, fontWeight = FontWeight.Bold)
+        shape = RoundedCornerShape(1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 15.dp, vertical = 15.dp)
+        ) {
+            Text(name, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Color.Black)
             Spacer(Modifier.height(8.dp))
-            Text(status)
-            Text(date)
-            Text(patient_Id)
+            Text(status, color = Color.Black)
+            Text(date, color = Color.Black)
         }
     }
 }
