@@ -7,6 +7,7 @@ import com.example.happydocx.Data.Model.DoctorAppointment.Appointment
 import com.example.happydocx.Data.Repository.DoctorAppointments.DoctorAppointmentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
