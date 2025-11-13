@@ -1,7 +1,9 @@
 package com.example.happydocx.ui.Navigation
 
+import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -18,11 +20,13 @@ import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.SignUpPage
 import com.example.happydocx.ui.Screens.SignUpResponse
+import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.ParticularUserSignUpViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationGraph() {
 
@@ -35,6 +39,7 @@ fun NavigationGraph() {
     val sharedViewModel: formViewModel = viewModel(
         factory = FormViewModelFactory(context)
     )
+    val doctorAppointmentViewModel : DoctorAppointmentsViewModel = viewModel()
     NavHost(
         startDestination = "Login",
         navController = navController
@@ -72,10 +77,18 @@ fun NavigationGraph() {
             )) {backStackEntry->
             val token_one = backStackEntry.arguments?.getString("token")?:""
             Log.d("DEBUG_NAV", "Navigation: Token = $token_one")
-            DoctorAppointmentScreen(token = token_one, navController = navController)
+            DoctorAppointmentScreen(token = token_one, navController = navController, viewModel = doctorAppointmentViewModel)
         }
-        composable("ParticularPatientScreen") {
-            ParticularPatientScreen()
+        composable("ParticularPatientScreen/{patientId}",
+            arguments = listOf(
+                navArgument("patientId"){type = NavType.StringType})
+        ) {backStack->
+            val patientId = backStack.arguments?.getString("patientId")?:""
+            ParticularPatientScreen(
+                patientId = patientId,
+                viewModel = doctorAppointmentViewModel,
+                navController = navController
+            )
         }
     }
 }
