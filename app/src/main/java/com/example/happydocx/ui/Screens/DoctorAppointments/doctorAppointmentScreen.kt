@@ -1,6 +1,8 @@
 package com.example.happydocx.ui.Screens.DoctorAppointments
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,6 +39,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
+import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import kotlinx.coroutines.launch
@@ -70,10 +74,11 @@ val gradient_colors = Brush.linearGradient(
     )
 )
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorAppointmentScreen(
-    viewModel: DoctorAppointmentsViewModel = viewModel(),
+    viewModel: DoctorAppointmentsViewModel,
     token: String,  // Non-nullable, as per your NavGraph
     navController: NavController
 ) {
@@ -183,7 +188,7 @@ fun DoctorAppointmentScreen(
             modifier = Modifier
                 .padding(paddingValues = paddingValues)
                 .fillMaxSize()
-                .background(Color.White),  // Ensures visibility
+                .background(Color(0xffebebeb)),  // Ensures visibility
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when (uiState.value) {  // .value gives the actual AppointmentUiState
@@ -220,16 +225,20 @@ fun DoctorAppointmentScreen(
                         // Appointments List
                         LazyColumn(
                             modifier = Modifier
-                                .weight(1f)
-                                .background(color = Color(0xffebebeb)),
+                                .weight(0.5f)
+                                .background(color = Color(0xfff8fafc)),
                             contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
                         ) {
                             items(successState.appointments) { appointment ->
                                 CardComponent(
                                     name = "${appointment.patient.first_name} ${appointment.patient.last_name}"
                                         ?: "No Name",
-                                    status = appointment.status ?: "N/A",
-                                    date = appointment.date ?: "No Date",
+//                                    status = appointment.status ?: "N/A",
+                                      lastVisit = "last visit: ${DateUtils.formatAppointmentDate(appointment.patient.createdAt)}", // i have to make space between date and time
+//                                    gender = appointment.patient.gender ?:"no gender",
+//                                    contactNumber = appointment.patient.contactNumber?:"no contactNumber",
+//                                    visitType = appointment.visitType?:"",
+                                    patientId = appointment.patient._id,
                                     navController = navController
                                 )
                                 HorizontalDivider(color=Color(0xffdbdbd9))
@@ -379,13 +388,13 @@ fun PaginationControls(
 @Composable
 fun CardComponent(
     name: String,
-    status: String,
-    date: String,
+    patientId:String,
+    lastVisit:String,
     navController: NavController
 ) {
     Card(
         modifier = Modifier
-            .clickable{navController.navigate("ParticularPatientScreen")}
+            .clickable{navController.navigate("ParticularPatientScreen/$patientId")}
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
@@ -401,8 +410,7 @@ fun CardComponent(
         ) {
             Text(name, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Color.Black)
             Spacer(Modifier.height(8.dp))
-            Text(status, color = Color.Black)
-            Text(date, color = Color.Black)
+            Text(lastVisit, color = Color.Black)
         }
     }
 }

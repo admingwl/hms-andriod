@@ -1,6 +1,7 @@
 package com.example.happydocx.Data.Model.DoctorAppointment
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serial
 
 data class AppointmentResponse(
     @SerializedName("success")
@@ -16,9 +17,11 @@ data class Appointment(
     val id: String,
     val status:String,
     val patient:Patient,
-    @SerializedName("appointmentDate")
+    @SerializedName("appointmentDate") // slot
     val date:String,
-    val companyId: String
+    val companyId: String,
+    @SerializedName("visitType")
+    val visitType:String = "",
 )
 
 data class Patient(
@@ -28,4 +31,11 @@ data class Patient(
     val first_name : String,
     @SerializedName("last_name")
     val last_name : String,
+    @SerializedName("gender")
+    val gender:String="",
+    @SerializedName("contactNumber")
+    val contactNumber:String = "",
+    @SerializedName("createdAt")
+    val createdAt :String=""
 )
+// patient created at -> is last visit
