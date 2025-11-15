@@ -126,12 +126,11 @@ fun ParticularPatientScreen(
                                 )
                             }
                             Spacer(Modifier.width(14.dp))
-                            Column {
+                            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.Center) {
                                 Text(
                                     "Contact Number",
                                     color = Color(0xff707f94)
                                 )
-                                Spacer(Modifier.height(1.dp))
                                 Text(patient.contactNumber, fontWeight = FontWeight.Bold)
                             }
                         }
@@ -163,7 +162,6 @@ fun ParticularPatientScreen(
                                     "Visit Type",
                                     color = Color(0xff707f94)
                                 )
-                                Spacer(Modifier.height(1.dp))
                                 Text(appointment?.visitType ?: "null", fontWeight = FontWeight.Bold)
                             }
                         }
@@ -195,11 +193,11 @@ fun ParticularPatientScreen(
                                     "Appointment Slot",
                                     color = Color(0xff707f94)
                                 )
-                                Spacer(Modifier.height(1.dp))
                                 Text(DateUtils.formatAppointmentDate(appointment?.date ?: ""), fontWeight = FontWeight.Bold)
                             }
                         }
                         Spacer(Modifier.height(8.dp))
+
                         // Current Status
                         Row(
                             modifier = Modifier
@@ -227,7 +225,6 @@ fun ParticularPatientScreen(
                                     "Current Status",
                                     color = Color(0xff707f94)
                                 )
-                                Spacer(Modifier.height(1.dp))
                                 // here i add the color according to the status
                                 val statusColor = when(appointment?.status){
                                     "Confirmed" -> Color(0xff10b981)
