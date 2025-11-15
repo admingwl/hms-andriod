@@ -153,7 +153,7 @@ fun Form_One_Screen(
                     value = formInformationState.salutationselectedOptions,
                     onValueChange = {},
                     readOnly = true,
-                    placeholder = { Text("Salutation", color = Color.Black) },
+                    placeholder = { Text("Salutation", color = Color(0xffdae0e7)) },
                     trailingIcon = {
 
                     },
@@ -193,7 +193,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.firstName,
                 onValueChange = { viewModel.onFirstNameChanged(it) },
-                placeholder = { Text("First Name", color = Color.Black) },
+                placeholder = { Text("First Name", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -211,7 +211,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.middleName,
                 onValueChange = { it -> viewModel.onMiddleNameChanged(it) },
-                placeholder = { Text("Middle Name", color = Color.Black) },
+                placeholder = { Text("Middle Name", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -229,7 +229,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.lastName,
                 onValueChange = { viewModel.onLastNameChanged(it) },
-                placeholder = { Text("Last Name", color = Color.Black) },
+                placeholder = { Text("Last Name", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -247,7 +247,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.dateOfBirth,
                 onValueChange = {},
-                placeholder = { Text("date of birth ... dd-mm-yyyy", color = Color.Black) },
+                placeholder = { Text("date of birth ... dd-mm-yyyy", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -326,7 +326,7 @@ fun Form_One_Screen(
                     value = formInformationState.genderselectedOptions,
                     onValueChange = {},
                     readOnly = true,
-                    placeholder = { Text("Gender", color = Color.Black) },
+                    placeholder = { Text("Gender", color = Color(0xffdae0e7)) },
                     trailingIcon = {
 
                     },
@@ -388,7 +388,7 @@ fun Form_One_Screen(
                     value = formInformationState.departmentselectedOptions,
                     onValueChange = {},
                     readOnly = true,
-                    placeholder = { Text("Department", color = Color.Black) },
+                    placeholder = { Text("Department", color = Color(0xffdae0e7)) },
                     trailingIcon = {
 
                     },
@@ -427,7 +427,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.contactNumber,
                 onValueChange = { viewModel.onContactNumberChanged(it) },
-                placeholder = { Text("Contact Number", color = Color.Black) },
+                placeholder = { Text("Contact Number", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -445,7 +445,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.email,
                 onValueChange = { it -> viewModel.onEmailChanged(it) },
-                placeholder = { Text("Email", color = Color.Black) },
+                placeholder = { Text("Email", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -466,7 +466,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.dateOfJoining,
                 onValueChange = {},
-                placeholder = { Text("date of joining .. dd-mm-yyyy", color = Color.Black) },
+                placeholder = { Text("date of joining .. dd-mm-yyyy", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -546,7 +546,7 @@ fun Form_One_Screen(
                     value = formInformationState.bloodGroupselectedOptions,
                     onValueChange = {},
                     readOnly = true,
-                    placeholder = { Text("Blood Group", color = Color.Black) },
+                    placeholder = { Text("Blood Group", color =Color(0xffdae0e7)) },
                     trailingIcon = {
                         IconButton(onClick = {}) {
                             Icon(
@@ -614,7 +614,7 @@ fun Form_One_Screen(
                     value = formInformationState.addressselectedOptions,
                     onValueChange = {},
                     readOnly = true,
-                    placeholder = { Text("Address Type", color = Color.Black) },
+                    placeholder = { Text("Address Type", color = Color(0xffdae0e7)) },
                     trailingIcon = {
                         IconButton(onClick = {}) {
                             Icon(
@@ -659,7 +659,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.addressLineOne,
                 onValueChange = { viewModel.onAddressLineOneChanged(it) },
-                placeholder = { Text("Address Line 1", color = Color.Black) },
+                placeholder = { Text("Address Line 1", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -677,7 +677,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.addressLineTwo,
                 onValueChange = { viewModel.onAddressLineTwoChanged(it) },
-                placeholder = { Text("Address Line 2", color = Color.Black) },
+                placeholder = { Text("Address Line 2", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -696,7 +696,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.city,
                 onValueChange = { viewModel.city(it) },
-                placeholder = { Text("City", color = Color.Black) },
+                placeholder = { Text("City", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -715,7 +715,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.state,
                 onValueChange = { viewModel.state(it) },
-                placeholder = { Text("State", color = Color.Black) },
+                placeholder = { Text("State", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -734,7 +734,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.district,
                 onValueChange = { viewModel.district(it) },
-                placeholder = { Text("District", color = Color.Black) },
+                placeholder = { Text("District", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -752,7 +752,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.zipCode,
                 onValueChange = { viewModel.zipCode(it) },
-                placeholder = { Text("Zip Code", color = Color.Black) },
+                placeholder = { Text("Zip Code", color =Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -770,7 +770,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.country,
                 onValueChange = { viewModel.country(it) },
-                placeholder = { Text("Country", color = Color.Black) },
+                placeholder = { Text("Country", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),
@@ -788,7 +788,7 @@ fun Form_One_Screen(
             OutlinedTextField(
                 value = formInformationState.clinicLocationUrl,
                 onValueChange = { viewModel.clinicLocationUrl(it) },
-                placeholder = { Text("Clinic Location URL..", color = Color.Black) },
+                placeholder = { Text("Clinic Location URL..", color = Color(0xffdae0e7)) },
                 colors = TextFieldDefaults.colors(
                     cursorColor = Color.Black,
                     focusedContainerColor = Color(0xfff6f6f6),

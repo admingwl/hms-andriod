@@ -18,25 +18,37 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemColors
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -90,12 +102,17 @@ fun DoctorAppointmentScreen(
     val scrollBehaviour =
         TopAppBarDefaults.enterAlwaysScrollBehavior()
 
+    // get drawer state
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+
     // dialog state
     val showDialog = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val context = LocalContext.current
     val tokenManger = TokenManager(context = context)
+
+    val scope = rememberCoroutineScope()
 
 
     // Fetch on compose (same as before)
@@ -142,162 +159,274 @@ fun DoctorAppointmentScreen(
         )
     }
 
-    Scaffold(
+    // add navigation drawer
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerContainerColor = Color.Transparent,
+                drawerContentColor = Color.Transparent,
+                modifier = Modifier.background(color = Color(0xfff8fafc), shape = RoundedCornerShape(30.dp))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Spacer(Modifier.height(12.dp))
 
-        modifier = Modifier
-            .fillMaxSize()
-            /*In Compose, when you use a collapsing or moving TopAppBar (like enterAlwaysScrollBehavior()),
-              you must attach the scroll behavior to the scrollable content using this modifier:*/
-            .nestedScroll(scrollBehaviour.nestedScrollConnection),
-        topBar = {
-            TopAppBar(
-                title = { Text("Appointments", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent // keep the same gradient
-                ),
-                modifier = Modifier.background(brush = gradient_colors),
-                scrollBehavior = scrollBehaviour,
-                actions = {
-                    // icon button for Creating appointments
-                    IconButton(onClick = {}){
-                        Icon(
-                            painter = painterResource(R.drawable.addappointments),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(25.dp)
-                        )
-                    }
-                    // adding button for logout doctor
-                    IconButton(
-                        onClick = {
-                            showDialog.value = true
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.outline_logout_24),
-                            contentDescription = null,
-                            tint = Color.White
-                        )
-                    }
+                    Text(
+                        "HappyDocx",
+                        modifier = Modifier.padding(16.dp),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        fontSize = 40.sp
+                    )
+
+                    HorizontalDivider()
+
+                    Text(
+                        "Section 1",
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Black
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Item 1") },
+                        selected = false,
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedTextColor = Color.Black,
+                            unselectedTextColor = Color.Black
+                        ),
+                        onClick = { /* Handle click */ }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Item 2") },
+                        selected = false,
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedTextColor = Color.Black,
+                            unselectedTextColor = Color.Black
+                        ),
+                        onClick = { /* Handle click */ }
+                    )
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    Text(
+                        "Section 2",
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Black
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Settings") },
+                        selected = false,
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedTextColor = Color.Black,
+                            unselectedTextColor = Color.Black
+                        ),
+                        icon = { Icon(Icons.Outlined.Settings, contentDescription = null, tint = Color.Black) },
+                        badge = { Text("20") }, // Placeholder
+                        onClick = { /* Handle click */ }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("List") },
+                        selected = false,
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedTextColor = Color.Black,
+                            unselectedTextColor = Color.Black
+                        ),
+                        icon = {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.List,
+                                tint = Color.Black,
+                                contentDescription = null
+                            )
+                        },
+                        onClick = { /* Handle click */ },
+                    )
+                    Spacer(Modifier.height(12.dp))
                 }
-            )
-        }
-    ) { paddingValues ->
-        Column(
+            }
+        },
+        gesturesEnabled = true // enable gesture to enable drawer
+    ) {
+        Scaffold(
+
             modifier = Modifier
-                .padding(paddingValues = paddingValues)
                 .fillMaxSize()
-                .background(Color(0xffebebeb)),  // Ensures visibility
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            when (uiState.value) {  // .value gives the actual AppointmentUiState
-                is AppointmentUiState.Loading -> {
-                    Log.d("DEBUG_STATE", "Showing Loading state")
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = Color(0xff4f61e3),
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Loading appointments...", color = Color(0xff4f61e3))
-                    }
-                }
-
-                is AppointmentUiState.Success -> {
-                    val successState =
-                        uiState.value as AppointmentUiState.Success  //  Safe: .value is Success
-                    val totalPages = ceil(
-                        successState.total.toDouble() / (successState.limit ?: 10)
-                    ).toInt()
-                    val currentPage = successState.page ?: 1
-
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White)
-                    ) {
-                        // Appointments List
-                        LazyColumn(
-                            modifier = Modifier
-                                .weight(0.5f)
-                                .background(color = Color(0xfff8fafc)),
-                            contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
-                        ) {
-                            items(successState.appointments) { appointment ->
-                                CardComponent(
-                                    name = "${appointment.patient.first_name} ${appointment.patient.last_name}"
-                                        ?: "No Name",
-//                                    status = appointment.status ?: "N/A",
-                                      lastVisit = "last visit: ${DateUtils.formatAppointmentDate(appointment.patient.createdAt)}", // i have to make space between date and time
-//                                    gender = appointment.patient.gender ?:"no gender",
-//                                    contactNumber = appointment.patient.contactNumber?:"no contactNumber",
-//                                    visitType = appointment.visitType?:"",
-                                    patientId = appointment.patient._id,
-                                    navController = navController
-                                )
-                                HorizontalDivider(color=Color(0xffdbdbd9))
-                            }
+                /*In Compose, when you use a collapsing or moving TopAppBar (like enterAlwaysScrollBehavior()),
+              you must attach the scroll behavior to the scrollable content using this modifier:*/
+                .nestedScroll(scrollBehaviour.nestedScrollConnection),
+            topBar = {
+                TopAppBar(
+                    title = { Text("Appointments", color = Color.White) },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent // keep the same gradient
+                    ),
+                    modifier = Modifier.background(brush = gradient_colors),
+                    scrollBehavior = scrollBehaviour,
+                    actions = {
+                        // icon button for Creating appointments
+                        IconButton(onClick = {}) {
+                            Icon(
+                                painter = painterResource(R.drawable.addappointments),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
-
-                        // Pagination Controls (only show if more than 1 page)
-                        if (totalPages > 1) {
-                            PaginationControls(
-                                currentPage = currentPage,
-                                totalPages = totalPages,
-                                onPreviousClick = {
-                                    viewModel.loadPreviousPage(token)
-                                },
-                                onNextClick = {
-                                    viewModel.loadNextPage(token)
-                                },
-                                onPageClick = { page ->
-                                    viewModel.loadSpecificPage(token, page)
+                        // adding button for logout doctor
+                        IconButton(
+                            onClick = {
+                                showDialog.value = true
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.outline_logout_24),
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    drawerState.open()
                                 }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Menu,
+                                contentDescription = "Menu",
+                                tint = Color.White
                             )
                         }
                     }
-                }
-
-                is AppointmentUiState.Error -> {
-                    val errorState = uiState.value as AppointmentUiState.Error  //  Safe unwrap
-                    Log.e("DEBUG_STATE", "Error: ${errorState.message}")
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White)
-                    ) {
-
-                        Image(
-                            painter = painterResource(R.drawable.wifi),
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp),
-                            colorFilter = ColorFilter.tint(Color.Black)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            contentPadding = PaddingValues(0.dp),
-                            onClick = {
-                                viewModel.getDoctorAppointments(token)  // Retry
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 30.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xff4f61e3),
-                                contentColor = Color.Black
-                            ),
-                            shape = RoundedCornerShape(8.dp),
+                )
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .padding(paddingValues = paddingValues)
+                    .fillMaxSize()
+                    .background(Color(0xffebebeb)),  // Ensures visibility
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                when (uiState.value) {  // .value gives the actual AppointmentUiState
+                    is AppointmentUiState.Loading -> {
+                        Log.d("DEBUG_STATE", "Showing Loading state")
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Text("Retry", fontWeight = FontWeight.Bold, color = Color.White)
+                            CircularProgressIndicator(
+                                color = Color(0xff4f61e3),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Loading appointments...", color = Color(0xff4f61e3))
+                        }
+                    }
+
+                    is AppointmentUiState.Success -> {
+                        val successState =
+                            uiState.value as AppointmentUiState.Success  //  Safe: .value is Success
+                        val totalPages = ceil(
+                            successState.total.toDouble() / (successState.limit ?: 10)
+                        ).toInt()
+                        val currentPage = successState.page ?: 1
+
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White)
+                        ) {
+                            // Appointments List
+                            LazyColumn(
+                                modifier = Modifier
+                                    .weight(0.5f)
+                                    .background(color = Color(0xfff8fafc)),
+                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
+                            ) {
+                                items(successState.appointments) { appointment ->
+                                    CardComponent(
+                                        name = "${appointment.patient.first_name} ${appointment.patient.last_name}"
+                                            ?: "No Name",
+//                                    status = appointment.status ?: "N/A",
+                                        lastVisit = "last visit: ${
+                                            DateUtils.formatAppointmentDate(
+                                                appointment.patient.createdAt
+                                            )
+                                        }", // i have to make space between date and time
+//                                    gender = appointment.patient.gender ?:"no gender",
+//                                    contactNumber = appointment.patient.contactNumber?:"no contactNumber",
+//                                    visitType = appointment.visitType?:"",
+                                        patientId = appointment.patient._id,
+                                        navController = navController
+                                    )
+                                    HorizontalDivider(color = Color(0xffdbdbd9))
+                                }
+                            }
+
+                            // Pagination Controls (only show if more than 1 page)
+                            if (totalPages > 1) {
+                                PaginationControls(
+                                    currentPage = currentPage,
+                                    totalPages = totalPages,
+                                    onPreviousClick = {
+                                        viewModel.loadPreviousPage(token)
+                                    },
+                                    onNextClick = {
+                                        viewModel.loadNextPage(token)
+                                    },
+                                    onPageClick = { page ->
+                                        viewModel.loadSpecificPage(token, page)
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    is AppointmentUiState.Error -> {
+                        val errorState = uiState.value as AppointmentUiState.Error  //  Safe unwrap
+                        Log.e("DEBUG_STATE", "Error: ${errorState.message}")
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.White)
+                        ) {
+
+                            Image(
+                                painter = painterResource(R.drawable.wifi),
+                                contentScale = ContentScale.Crop,
+                                contentDescription = null,
+                                modifier = Modifier.size(100.dp),
+                                colorFilter = ColorFilter.tint(Color.Black)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                contentPadding = PaddingValues(0.dp),
+                                onClick = {
+                                    viewModel.getDoctorAppointments(token)  // Retry
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 30.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xff4f61e3),
+                                    contentColor = Color.Black
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text("Retry", fontWeight = FontWeight.Bold, color = Color.White)
+                            }
                         }
                     }
                 }
@@ -388,13 +517,13 @@ fun PaginationControls(
 @Composable
 fun CardComponent(
     name: String,
-    patientId:String,
-    lastVisit:String,
+    patientId: String,
+    lastVisit: String,
     navController: NavController
 ) {
     Card(
         modifier = Modifier
-            .clickable{navController.navigate("ParticularPatientScreen/$patientId")}
+            .clickable { navController.navigate("ParticularPatientScreen/$patientId") }
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
