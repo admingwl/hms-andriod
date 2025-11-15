@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -33,6 +32,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,21 +41,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemColors
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -68,11 +68,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
+import com.example.happydocx.ui.Navigation.AppointmentTopBar
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import kotlinx.coroutines.launch
@@ -92,7 +92,7 @@ val gradient_colors = Brush.linearGradient(
 fun DoctorAppointmentScreen(
     viewModel: DoctorAppointmentsViewModel,
     token: String,  // Non-nullable, as per your NavGraph
-    navController: NavController
+    navController: NavController,
 ) {
 
     val uiState =
@@ -100,7 +100,7 @@ fun DoctorAppointmentScreen(
 
 
     val scrollBehaviour =
-        TopAppBarDefaults.enterAlwaysScrollBehavior()
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior() // for large top app bar use exitUntilCollapsedScrollBehaviour()
 
     // get drawer state
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -113,6 +113,10 @@ fun DoctorAppointmentScreen(
     val tokenManger = TokenManager(context = context)
 
     val scope = rememberCoroutineScope()
+
+
+    var searchQuery by remember { mutableStateOf("") }
+    var searchActive by remember { mutableStateOf(false) }
 
 
     // Fetch on compose (same as before)
@@ -166,7 +170,10 @@ fun DoctorAppointmentScreen(
             ModalDrawerSheet(
                 drawerContainerColor = Color.Transparent,
                 drawerContentColor = Color.Transparent,
-                modifier = Modifier.background(color = Color(0xfff8fafc), shape = RoundedCornerShape(30.dp))
+                modifier = Modifier.background(
+                    color = Color(0xfff8fafc),
+                    shape = RoundedCornerShape(30.dp)
+                )
             ) {
                 Column(
                     modifier = Modifier
@@ -225,7 +232,13 @@ fun DoctorAppointmentScreen(
                             selectedTextColor = Color.Black,
                             unselectedTextColor = Color.Black
                         ),
-                        icon = { Icon(Icons.Outlined.Settings, contentDescription = null, tint = Color.Black) },
+                        icon = {
+                            Icon(
+                                Icons.Outlined.Settings,
+                                contentDescription = null,
+                                tint = Color.Black
+                            )
+                        },
                         badge = { Text("20") }, // Placeholder
                         onClick = { /* Handle click */ }
                     )
@@ -252,60 +265,45 @@ fun DoctorAppointmentScreen(
         gesturesEnabled = true // enable gesture to enable drawer
     ) {
         Scaffold(
-
             modifier = Modifier
                 .fillMaxSize()
                 /*In Compose, when you use a collapsing or moving TopAppBar (like enterAlwaysScrollBehavior()),
               you must attach the scroll behavior to the scrollable content using this modifier:*/
                 .nestedScroll(scrollBehaviour.nestedScrollConnection),
             topBar = {
-                TopAppBar(
-                    title = { Text("Appointments", color = Color.White) },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Transparent // keep the same gradient
-                    ),
-                    modifier = Modifier.background(brush = gradient_colors),
-                    scrollBehavior = scrollBehaviour,
-                    actions = {
-                        // icon button for Creating appointments
-                        IconButton(onClick = {}) {
-                            Icon(
-                                painter = painterResource(R.drawable.addappointments),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(25.dp)
-                            )
-                        }
-                        // adding button for logout doctor
-                        IconButton(
-                            onClick = {
-                                showDialog.value = true
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.outline_logout_24),
-                                contentDescription = null,
-                                tint = Color.White
-                            )
+                AppointmentTopBar(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { searchQuery = it },
+                    onMenuClick = {
+                        coroutineScope.launch {
+                            drawerState.open()
                         }
                     },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    drawerState.open()
-                                }
-                            }
+
+                    onLogoutClick = { showDialog.value = true },
+                    scrollBehavior = scrollBehaviour
+                )
+            },
+            floatingActionButton = {
+                if(uiState.value is AppointmentUiState.Success){
+                    val SuccessState = uiState.value as AppointmentUiState.Success
+                    if(SuccessState.appointments.isNotEmpty()){
+                        // Only show FAB when there are appointments (not empty state)
+                        FloatingActionButton(
+                            onClick = {},
+                            modifier = Modifier.padding(bottom = 80.dp, end = 10.dp),
+                            containerColor = Color(0xff5a6de6)
                         ) {
-                            Icon(
-                                Icons.Default.Menu,
-                                contentDescription = "Menu",
-                                tint = Color.White
-                            )
+                            IconButton(onClick = {}) {
+                                Icon(
+                                    painter = painterResource(R.drawable.addappointments),
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
                         }
                     }
-                )
+                }
             }
         ) { paddingValues ->
             Column(
@@ -315,6 +313,8 @@ fun DoctorAppointmentScreen(
                     .background(Color(0xffebebeb)),  // Ensures visibility
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // add search bar
+
                 when (uiState.value) {  // .value gives the actual AppointmentUiState
                     is AppointmentUiState.Loading -> {
                         Log.d("DEBUG_STATE", "Showing Loading state")
@@ -334,60 +334,146 @@ fun DoctorAppointmentScreen(
 
                     is AppointmentUiState.Success -> {
                         val successState =
-                            uiState.value as AppointmentUiState.Success  //  Safe: .value is Success
+                            uiState.value as AppointmentUiState.Success
+
+                        // Filter the list according to the search
+                        val filteredAppointments = if (searchQuery.isBlank()) {
+                            successState.appointments
+                        } else {
+                            successState.appointments.filter { appointment ->
+                                val fullName = "${appointment.patient.first_name} ${appointment.patient.last_name}"
+                                fullName.contains(searchQuery, ignoreCase = true)
+                            }
+                        }
+
                         val totalPages = ceil(
                             successState.total.toDouble() / (successState.limit ?: 10)
                         ).toInt()
                         val currentPage = successState.page ?: 1
 
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White)
-                        ) {
-                            // Appointments List
-                            LazyColumn(
+                        // Case 1: No patients at all (new doctor)
+                        if (successState.appointments.isEmpty()) {
+                            Column(
                                 modifier = Modifier
-                                    .weight(0.5f)
+                                    .fillMaxSize()
                                     .background(color = Color(0xfff8fafc)),
-                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
                             ) {
-                                items(successState.appointments) { appointment ->
-                                    CardComponent(
-                                        name = "${appointment.patient.first_name} ${appointment.patient.last_name}"
-                                            ?: "No Name",
-//                                    status = appointment.status ?: "N/A",
-                                        lastVisit = "last visit: ${
-                                            DateUtils.formatAppointmentDate(
-                                                appointment.patient.createdAt
-                                            )
-                                        }", // i have to make space between date and time
-//                                    gender = appointment.patient.gender ?:"no gender",
-//                                    contactNumber = appointment.patient.contactNumber?:"no contactNumber",
-//                                    visitType = appointment.visitType?:"",
-                                        patientId = appointment.patient._id,
-                                        navController = navController
+                                Image(
+                                    painter = painterResource(R.drawable.to_do_list),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(120.dp),
+                                    colorFilter = ColorFilter.tint(Color(0xff4f61e3))
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text(
+                                    "No Appointments",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 24.sp,
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "adding your appointments first",
+                                    fontSize = 16.sp,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Button(
+                                    onClick = { /* Navigate to add patient screen */ },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xff4f61e3)
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.padding(horizontal = 32.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.addappointments),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
                                     )
-                                    HorizontalDivider(color = Color(0xffdbdbd9))
+                                    Spacer(modifier = Modifier.size(8.dp))
+                                    Text(
+                                        "Create Appointments",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
                                 }
                             }
-
-                            // Pagination Controls (only show if more than 1 page)
-                            if (totalPages > 1) {
-                                PaginationControls(
-                                    currentPage = currentPage,
-                                    totalPages = totalPages,
-                                    onPreviousClick = {
-                                        viewModel.loadPreviousPage(token)
-                                    },
-                                    onNextClick = {
-                                        viewModel.loadNextPage(token)
-                                    },
-                                    onPageClick = { page ->
-                                        viewModel.loadSpecificPage(token, page)
+                        } else {
+                            // Case 2 & 3: Has patients - show list or search results
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.White)
+                            ) {
+                                // Show message if no search results found
+                                if (filteredAppointments.isEmpty() && searchQuery.isNotEmpty()) {
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(0.5f)
+                                            .fillMaxWidth()
+                                            .background(color = Color(0xfff8fafc)),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Image(
+                                            painter = painterResource(R.drawable.usernotfound),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(80.dp),
+                                            colorFilter = ColorFilter.tint(Color.Gray)
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            "No patients found matching \"$searchQuery\"",
+                                            color = Color.Gray,
+                                            fontSize = 16.sp
+                                        )
                                     }
-                                )
+                                } else {
+                                    // Appointments List
+                                    LazyColumn(
+                                        modifier = Modifier
+                                            .weight(0.5f)
+                                            .background(color = Color(0xFFFFFFFF)),
+                                        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
+                                    ) {
+                                        items(filteredAppointments) { appointment ->
+                                            CardComponent(
+                                                name = "${appointment.patient.first_name} ${appointment.patient.last_name}"
+                                                    ?: "No Name",
+                                                lastVisit = "last visit: ${
+                                                    DateUtils.formatAppointmentDate(
+                                                        appointment.patient.createdAt
+                                                    )
+                                                }",
+                                                patientId = appointment.patient._id,
+                                                navController = navController
+                                            )
+                                            HorizontalDivider(color = Color(0xffdbdbd9))
+                                        }
+                                    }
+                                }
+
+                                // Pagination Controls (hide during search, show only for full list)
+                                if (totalPages > 1 && searchQuery.isBlank()) {
+                                    PaginationControls(
+                                        currentPage = currentPage,
+                                        totalPages = totalPages,
+                                        onPreviousClick = {
+                                            viewModel.loadPreviousPage(token)
+                                        },
+                                        onNextClick = {
+                                            viewModel.loadNextPage(token)
+                                        },
+                                        onPageClick = { page ->
+                                            viewModel.loadSpecificPage(token, page)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -408,7 +494,7 @@ fun DoctorAppointmentScreen(
                                 contentScale = ContentScale.Crop,
                                 contentDescription = null,
                                 modifier = Modifier.size(100.dp),
-                                colorFilter = ColorFilter.tint(Color.Black)
+                                colorFilter = ColorFilter.tint(Color.Gray)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Button(
@@ -445,23 +531,23 @@ fun PaginationControls(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFFF5F5F5),
-        shadowElevation = 8.dp
+        color = Color.Transparent,
+        shadowElevation = 8.dp,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(gradient_colors)
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Previous Button
-            Button(
+            TextButton(
                 onClick = onPreviousClick,
-                enabled = currentPage > 1,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xff4f61e3),
-                    disabledContainerColor = Color.LightGray
+                    containerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent
                 ),
                 modifier = Modifier
                     .weight(0.5f)
@@ -483,17 +569,16 @@ fun PaginationControls(
                 text = "$currentPage / $totalPages",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xff4f61e3),
+                color = Color.White,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             // Next Button
-            Button(
+            TextButton(
                 onClick = onNextClick,
-                enabled = currentPage < totalPages,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xff4f61e3),
-                    disabledContainerColor = Color.LightGray
+                    containerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent
                 ),
                 modifier = Modifier
                     .weight(0.5f)
@@ -525,9 +610,8 @@ fun CardComponent(
         modifier = Modifier
             .clickable { navController.navigate("ParticularPatientScreen/$patientId") }
             .fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xffebebeb),
+            containerColor = Color(0xFFFFFFFF),
             contentColor = Color.White
         ),
         shape = RoundedCornerShape(1.dp)
@@ -543,3 +627,5 @@ fun CardComponent(
         }
     }
 }
+
+
