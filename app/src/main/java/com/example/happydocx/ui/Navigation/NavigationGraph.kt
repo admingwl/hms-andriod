@@ -4,8 +4,36 @@ import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.DockedSearchBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SegmentedButtonDefaults.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -13,7 +41,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.happydocx.Data.TokenManager
+import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
+import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.Screens.LoginPage
 import com.example.happydocx.ui.Screens.Patient.ParticularPatientScreen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
@@ -40,6 +70,7 @@ fun NavigationGraph() {
         factory = FormViewModelFactory(context)
     )
     val doctorAppointmentViewModel : DoctorAppointmentsViewModel = viewModel()
+
     NavHost(
         startDestination = "Login",
         navController = navController
@@ -91,4 +122,89 @@ fun NavigationGraph() {
             )
         }
     }
+}
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppointmentTopBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onMenuClick: () -> Unit,
+    onLogoutClick: () -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior
+) {
+    TopAppBar(
+
+        title = {
+            // Integrated Search Bar in Title
+
+            SearchBar(
+                tonalElevation = 9.dp,
+                query = searchQuery,
+                onQueryChange = onSearchQueryChange,
+                onSearch = { /* Handle search */ },
+                active = false, // Always collapsed in topbar
+                onActiveChange = { },
+                placeholder = {
+                    Text(
+                        "Search appointments...",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 18.sp
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = Color.White
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Clear",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp),
+                colors = SearchBarDefaults.colors(
+                    containerColor = Color.White.copy(alpha = 0.15f),
+                    dividerColor = Color.Transparent
+                ),
+                shape = RoundedCornerShape(10.dp),
+            ) { }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = Color.Transparent
+        ),
+        modifier = Modifier.background(brush = gradient_colors).padding(vertical = 10.dp),
+        scrollBehavior = scrollBehavior,
+        navigationIcon = {
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = Color.White
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = onLogoutClick) {
+                Icon(
+                    painter = painterResource(R.drawable.outline_logout_24),
+                    contentDescription = "Logout",
+                    tint = Color.White
+                )
+            }
+        }
+    )
 }

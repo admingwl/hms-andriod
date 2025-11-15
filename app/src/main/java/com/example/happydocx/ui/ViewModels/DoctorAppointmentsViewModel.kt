@@ -83,6 +83,8 @@ class DoctorAppointmentsViewModel() : ViewModel() {
     fun loadSpecificPage(token:String,page:Int){
         getDoctorAppointments(token,page=page)
     }
+
+
 }
 
 sealed class AppointmentUiState {
