@@ -50,6 +50,7 @@ import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.SignUpPage
 import com.example.happydocx.ui.Screens.SignUpResponse
+import com.example.happydocx.ui.Screens.StartConsulting.ConsultingMainScreen
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
@@ -120,6 +121,10 @@ fun NavigationGraph() {
                 viewModel = doctorAppointmentViewModel,
                 navController = navController
             )
+        }
+
+        composable("mainconsultingscreen") {
+            ConsultingMainScreen(navController = navController)
         }
     }
 }

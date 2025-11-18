@@ -63,7 +63,7 @@ fun ParticularPatientScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color(0xfff8fafc)),
+            .background(color = Color(0xfff0f5ff)),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -244,7 +244,7 @@ fun ParticularPatientScreen(
 
                         Spacer(Modifier.height(50.dp))
                         FilledTonalButton(
-                            onClick = {},
+                            onClick = {navController.navigate("mainconsultingscreen")},
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xff3b82f6)),
                             modifier = Modifier
                                 .padding(paddingValues = PaddingValues(0.dp))
