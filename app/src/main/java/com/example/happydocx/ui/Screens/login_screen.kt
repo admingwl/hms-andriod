@@ -39,11 +39,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.ui.ViewModels.LoginScreenViewModel
@@ -298,4 +301,21 @@ fun SocialMediaAccounts(socialMediaImage: Int) {
             }
         }
     }
+}
+
+
+@Preview
+@Composable
+fun MyPreview(){
+    val viewModel1 : LoginScreenViewModel = viewModel(
+        factory = LoginViewModelFactory(LocalContext.current)
+    )
+    val viewModel2 : ParticularUserSignInViewModel = viewModel()
+    val navController = rememberNavController()
+
+    LoginPage(
+        viewModel = viewModel1,
+        userViewModel = viewModel2,
+        navController = navController
+    )
 }
