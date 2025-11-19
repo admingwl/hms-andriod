@@ -33,7 +33,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,23 +64,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewFontScale
-import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Navigation.AppointmentTopBar
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
-import com.example.happydocx.ui.theme.HappyDocxTheme
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
@@ -448,7 +440,19 @@ fun DoctorAppointmentScreen(
                                             .background(color = Color(0xFFFFFFFF)),
                                         contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
                                     ) {
-                                        items(filteredAppointments) { appointment ->
+                                        items(
+                                            items = filteredAppointments,
+                                            // Providing a unique key for each item is a crucial performance optimization.
+                                            // It allows Compose to uniquely identify each item across recompositions.
+                                            // When the list changes (e.g., an item is added, removed, or moved),
+                                            // Compose uses these keys to understand which items are new and which have just moved,
+                                            // preventing it from recreating every item and preserving the state of existing ones.
+                                            // Here, `it.id` is a perfect candidate for a key as it's a unique identifier
+                                            // for each appointment.
+                                            key = {it->
+                                                it.id
+                                            }
+                                        ) { appointment ->
                                             CardComponent(
                                                 name = "${appointment.patient.first_name} ${appointment.patient.last_name}"
                                                     ?: "No Name",
@@ -634,7 +638,3 @@ fun CardComponent(
         }
     }
 }
-
-
-
-

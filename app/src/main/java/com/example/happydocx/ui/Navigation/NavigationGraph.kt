@@ -73,7 +73,7 @@ fun NavigationGraph() {
     val doctorAppointmentViewModel : DoctorAppointmentsViewModel = viewModel()
 
     NavHost(
-        startDestination = "Login",
+        startDestination = "mainconsultingscreen",
         navController = navController
     ) {
 
@@ -131,6 +131,8 @@ fun NavigationGraph() {
 
 
 
+
+// custom top bar in Appointment screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppointmentTopBar(
