@@ -9,6 +9,8 @@ import java.util.Locale
 import java.util.TimeZone
 
 object DateUtils {
+
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun formatAppointmentDate(isoDate: String): String {
         return try {
@@ -19,7 +21,7 @@ object DateUtils {
 
             // Output: "05 Nov 2025  05:56 AM"
         } catch (e: Exception) {
-            isoDate // Return original if parsing fails
+            isoDate  // Return original if parsing fails
         }
     }
 
