@@ -55,6 +55,7 @@ import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.ParticularUserSignUpViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -65,6 +66,7 @@ fun NavigationGraph() {
     val navController = rememberNavController()
     val userViewModel: ParticularUserSignInViewModel = viewModel()
     val particularUserSignUpViewModel: ParticularUserSignUpViewModel = viewModel()
+    val BasicPatientInformationViewModel: BasicInformationViewModel = viewModel()
 
     // Create viewModel at navigation graph level so it survives between screens
     val sharedViewModel: formViewModel = viewModel(
@@ -124,7 +126,7 @@ fun NavigationGraph() {
         }
 
         composable("mainconsultingscreen") {
-            ConsultingMainScreen(navController = navController)
+            ConsultingMainScreen(navController = navController, viewModel = BasicPatientInformationViewModel)
         }
     }
 }
