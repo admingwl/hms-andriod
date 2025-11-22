@@ -244,7 +244,7 @@ fun ParticularPatientScreen(
 
                         Spacer(Modifier.height(50.dp))
                         FilledTonalButton(
-                            onClick = {navController.navigate("mainconsultingscreen")},
+                            onClick = {navController.navigate("SartConsultationScreen")},
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xff3b82f6)),
                             modifier = Modifier
                                 .padding(paddingValues = PaddingValues(0.dp))
