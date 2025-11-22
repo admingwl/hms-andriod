@@ -117,12 +117,7 @@ fun StartConsultingScreenTabLayout(
                     InvoicesScreen()
                 }
                 2 -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Patient Document - Coming Soon", color = Color.Black)
-                    }
+                    PatientDocumentsUploading()
                 }
                 3 -> {
                     Box(
