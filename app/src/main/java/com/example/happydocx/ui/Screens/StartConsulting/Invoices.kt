@@ -73,7 +73,7 @@ fun InvoicesCard(
                 Column {
                     Text(
                         patientName,
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
@@ -83,7 +83,7 @@ fun InvoicesCard(
                 Column {
                     Text(
                         "₹${totalAmount}",
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xff3b82f6),
                         modifier = modifier.align(Alignment.End)
