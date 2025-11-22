@@ -245,4 +245,49 @@ class BasicInformationViewModel : ViewModel() {
             it.copy(selectedTest = updatedTest)
         }
     }
+
+    // adding state change for adding symptoms
+
+    fun onBloodPressureAdded(newBloodPressure:String){
+          state.update { it->
+              it.copy(
+                  bloodPressure = newBloodPressure
+              )
+          }
+    }
+    fun onHeartRateAdded(newHeartRate:String){
+        state.update { it->
+            it.copy(
+                heartRate = newHeartRate
+            )
+        }
+    }
+    fun onTempratureAdded(newTemprature:String){
+        state.update { it->
+            it.copy(
+                temperature = newTemprature
+            )
+        }
+    }
+    fun onOxygenSaturationAdded(newOxygen:String){
+        state.update { it->
+            it.copy(
+                oxygenSaturation = newOxygen
+            )
+        }
+    }
+    fun onHeightAdded(newHeight:String){
+        state.update { it->
+            it.copy(
+                height = newHeight
+            )
+        }
+    }
+    fun onWeightAdded(newWeight:String){
+        state.update { it->
+            it.copy(
+                weight = newWeight
+            )
+        }
+    }
 }

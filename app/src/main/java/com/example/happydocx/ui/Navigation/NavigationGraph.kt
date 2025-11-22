@@ -2,28 +2,22 @@ package com.example.happydocx.ui.Navigation
 
 import android.os.Build
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -40,7 +34,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
@@ -50,7 +43,10 @@ import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.SignUpPage
 import com.example.happydocx.ui.Screens.SignUpResponse
+import com.example.happydocx.ui.Screens.StartConsulting.AddSymptomScreen
 import com.example.happydocx.ui.Screens.StartConsulting.ConsultingMainScreen
+import com.example.happydocx.ui.Screens.StartConsulting.InvoicesScreen
+import com.example.happydocx.ui.Screens.StartConsulting.StartConsultingScreen
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
@@ -75,7 +71,7 @@ fun NavigationGraph() {
     val doctorAppointmentViewModel : DoctorAppointmentsViewModel = viewModel()
 
     NavHost(
-        startDestination = "mainconsultingscreen",
+        startDestination = "Login",
         navController = navController
     ) {
 
@@ -127,6 +123,17 @@ fun NavigationGraph() {
 
         composable("mainconsultingscreen") {
             ConsultingMainScreen(navController = navController, viewModel = BasicPatientInformationViewModel)
+        }
+
+        composable(route = "addSymptoms") {
+            AddSymptomScreen(viewModel = BasicPatientInformationViewModel, navController = navController)
+        }
+
+        composable(route = "invoiceScreen"){
+            InvoicesScreen()
+        }
+        composable(route = "SartConsultationScreen") {
+            StartConsultingScreen(viewModel = BasicPatientInformationViewModel, navController = navController)
         }
     }
 }

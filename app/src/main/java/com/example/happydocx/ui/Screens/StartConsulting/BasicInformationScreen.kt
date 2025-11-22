@@ -31,6 +31,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,8 +52,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -70,6 +73,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -91,33 +95,11 @@ fun ConsultingMainScreen(
 ) {
     val context = LocalContext.current
     val state = viewModel._state.collectAsStateWithLifecycle().value
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text("Patient Detail") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = Color.White
-                ),
-                modifier = Modifier.background(brush = gradient_colors),
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                            tint = Color.White
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .fillMaxSize()
-                .padding(paddingValues = paddingValues)
                 .background(color = Color(0xfff0f5ff)),
             content = {
                 ImageCard(
@@ -202,11 +184,11 @@ fun ConsultingMainScreen(
                         .padding(horizontal = 16.dp)
                 )
                 Spacer(Modifier.height(8.dp))
-                TabScreen(state = state, viewModel = viewModel)
+                TabScreen(state = state, viewModel = viewModel, navController = navController)
             }
         )
     }
-}
+
 
 
 // Image Card
@@ -489,7 +471,7 @@ fun ClinicalAssessmentScreen(
 }
 
 @Composable
-fun VitalSignAndSymtoms(modifier: Modifier = Modifier) {
+fun VitalSignAndSymtoms(modifier: Modifier = Modifier, navController: NavController) {
     Column(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
@@ -497,14 +479,14 @@ fun VitalSignAndSymtoms(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(8.dp))
         Column(modifier = Modifier.fillMaxWidth()) {
             FilledTonalButton(
-                onClick = {},
+                onClick = { navController.navigate("addSymptoms") },
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier
                     .padding(paddingValues = PaddingValues(0.dp))
                     .align(Alignment.End),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xff1d4ed8))
             ) {
-                Text("Submit", color = Color.White)
+                Text("Add Symptoms", color = Color.White)
             }
         }
     }
@@ -558,7 +540,7 @@ fun Medication(
                 modifier = Modifier
                     .menuAnchor()
                     .onFocusChanged { it ->
-                        viewModel.onMedicationDropdownToggle(false)
+                        viewModel.onMedicationDropdownToggle(isExpanded = false)
                     }
             )
             ExposedDropdownMenu(
@@ -685,7 +667,8 @@ fun TestInvestigation(
 fun TabScreen(
     modifier: Modifier = Modifier,
     state: StartConsultingUiState,
-    viewModel: BasicInformationViewModel
+    viewModel: BasicInformationViewModel,
+    navController: NavController
 ) {
     var tabIndex by remember { mutableIntStateOf(0) }
     var showFullScreen by remember { mutableStateOf(false) }
@@ -763,7 +746,7 @@ fun TabScreen(
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (tabIndex) {
                             0 -> ClinicalAssessmentScreen(state = state, viewModel = viewModel)
-                            1 -> VitalSignAndSymtoms()
+                            1 -> VitalSignAndSymtoms(navController = navController)
                             2 -> Medication(state = state, viewModel = viewModel)
                             3 -> TestInvestigation(state = state, viewModel = viewModel)
                         }
@@ -854,6 +837,187 @@ fun ChipInputTextField(
             }
         }
     }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddSymptomScreen(
+    modifier: Modifier = Modifier,
+    viewModel: BasicInformationViewModel,
+    navController: NavController
+) {
+
+
+    val state = viewModel._state.collectAsStateWithLifecycle().value
+
+    LaunchedEffect(Unit) {
+        if ((state.heartRate.isEmpty()) || (state.bloodPressure.isEmpty()) || (state.oxygenSaturation.isEmpty()) || (state.height.isEmpty()) || (state.weight.isEmpty()) || (state.heartRate.isEmpty())) {
+
+        }
+    }
+    Scaffold(
+        modifier = modifier
+            .fillMaxSize(),
+        containerColor = Color(0xfff0f5ff),
+        topBar = {
+            TopAppBar(
+                title = { Text("Add Vital Signs") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color.White
+                ),
+                modifier = modifier
+                    .background(brush = gradient_colors)
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .padding(paddingValues = paddingValues)
+                .padding(18.dp)
+                .background(color = Color(0xfff0f5ff))
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text("Blood Pressure")
+            SymptomsWritingTextField(
+                modifier = modifier,
+                placeHolder = "eg. 120/80",
+                state = state.bloodPressure,
+                onValueChange = {
+                    viewModel.onBloodPressureAdded(it)
+                }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text("Heart Rate")
+            SymptomsWritingTextField(
+                modifier = modifier,
+                placeHolder = "eg. 75",
+                state = state.heartRate,
+                onValueChange = {
+                    viewModel.onHeartRateAdded(it)
+                }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text("Temperature (°F)")
+            SymptomsWritingTextField(
+                modifier = modifier,
+                placeHolder = "eg. 98.6",
+                state = state.temperature,
+                onValueChange = {
+                    viewModel.onTempratureAdded(it)
+                }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text("Oxygen Saturation (%)")
+            SymptomsWritingTextField(
+                modifier = modifier,
+                placeHolder = "eg. 98%",
+                state = state.oxygenSaturation,
+                onValueChange = {
+                    viewModel.onOxygenSaturationAdded(it)
+                }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text("Height (cm)")
+            SymptomsWritingTextField(
+                modifier = modifier,
+                placeHolder = "eg. 170",
+                state = state.height,
+                onValueChange = {
+                    viewModel.onHeightAdded(it)
+                }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+
+            Text("Weight (kg)")
+            SymptomsWritingTextField(
+                modifier = modifier,
+                placeHolder = "eg. 70",
+                state = state.weight,
+                onValueChange = {
+                    viewModel.onWeightAdded(it)
+                }
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            Row(
+                modifier = modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                FilledTonalButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = modifier.padding(paddingValues = PaddingValues(0.dp)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xffcbd5e1)
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text("Cancel", fontWeight = FontWeight.Bold, color = Color.Black)
+                }
+                Spacer(Modifier.width(6.dp))
+                FilledTonalButton(
+                    onClick = {
+                       // send data to server through the api call
+                    },
+
+                    enabled = state.bloodPressure.isNotEmpty()
+                        && state.heartRate.isNotEmpty()
+                        && state.temperature.isNotEmpty()
+                        && state.oxygenSaturation.isNotEmpty()
+                        && state.height.isNotEmpty()
+                        && state.weight.isNotEmpty(),
+
+                    modifier = modifier.padding(paddingValues = PaddingValues(0.dp)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1d4ed8)
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text("Save", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+
+        }
+    }
+
+}
+
+@Composable
+fun SymptomsWritingTextField(
+    modifier: Modifier = Modifier,
+    placeHolder: String,
+    state: String,
+    // make onValueChange as event so that SymptomWritingTextFiled as reusable function
+    onValueChange: (String) -> Unit,
+) {
+
+    OutlinedTextField(
+        value = state,
+        onValueChange = onValueChange,
+        modifier = modifier
+            .fillMaxWidth(),
+        placeholder = { Text(placeHolder, color = Color.Gray) },
+        colors = TextFieldDefaults.colors(
+            cursorColor = Color.Black,
+            focusedContainerColor = Color(0xfff6f6f6),
+            unfocusedContainerColor = Color(0xfff6f6f6),
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+            errorIndicatorColor = Color.Red
+        )
+    )
 }
 
 

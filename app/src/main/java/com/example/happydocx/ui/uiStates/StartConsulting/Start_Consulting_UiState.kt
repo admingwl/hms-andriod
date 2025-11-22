@@ -27,4 +27,12 @@ data class StartConsultingUiState(
     // allow user to select more than one Test
     val selectedTest: List<String> = emptyList(),
     val testInvestigationExpandingState:Boolean=false,
+    // symptoms adding state
+    val bloodPressure:String="",
+    val heartRate:String="",
+    val temperature:String="",
+    val oxygenSaturation:String="",
+    val height:String="",
+    val weight:String=""
+
 )
