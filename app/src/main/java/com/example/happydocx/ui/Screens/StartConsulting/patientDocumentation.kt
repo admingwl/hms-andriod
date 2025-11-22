@@ -113,9 +113,8 @@ fun PatientDocumentsUploading(
 
                 },
                 colors = TextFieldDefaults.colors(
-                    cursorColor = Color.Black,
-                    focusedContainerColor = Color(0xfff6f6f6),
-                    unfocusedContainerColor = Color(0xfff6f6f6),
+                    focusedContainerColor = Color(0xfff9fafb),
+                    unfocusedContainerColor = Color(0xfff9fafb),
                     focusedTextColor = Color.Black,
                     unfocusedTextColor = Color.Black,
                     focusedIndicatorColor = Color.Transparent,
@@ -350,7 +349,7 @@ fun ShowUploadedDocuments(
     modifier: Modifier = Modifier,
     date: String = "12-03-2023",
     doctor: String = "Deepak Guleria",
-    result: String = "Negative",
+    result: String = "Negative Result",
 
     ) {
     Card(modifier = modifier.fillMaxWidth().padding(16.dp)) {
@@ -358,7 +357,7 @@ fun ShowUploadedDocuments(
             modifier = modifier
                 .fillMaxWidth()
                 .background(color = Color(0xfff0f5ff))
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             // row one
             Row(
@@ -436,11 +435,11 @@ fun ShowUploadedDocuments(
                     Surface(
                         shape = RoundedCornerShape(24.dp),
                         color = when (result) {
-                            "Positive" -> {
+                            "Positive Result" -> {
                                 Color(0xffdcfce7)
                             }
 
-                            "Negative" -> {
+                            "Negative Result" -> {
                                 Color(0xfffee2e2)
                             }
 
@@ -452,14 +451,14 @@ fun ShowUploadedDocuments(
                         Text(
                             result,
                             modifier = modifier.padding(6.dp),
-                            fontSize = 10.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = when (result) {
-                                "Positive" -> {
+                                "Positive Result" -> {
                                     Color(0xff59aa77)
                                 }
 
-                                "Negative" -> {
+                                "Negative Result" -> {
                                     Color(0xffe65c5c)
                                 }
 
