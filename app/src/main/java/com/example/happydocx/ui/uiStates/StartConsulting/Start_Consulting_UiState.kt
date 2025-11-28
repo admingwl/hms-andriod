@@ -14,6 +14,11 @@ data class MedicationEntry(
     val duration:String="",
     val quantity:String=""
 )
+
+data class InvestigationEntry(
+    val testInvestigationName: String = "",
+    val testInvestigationReason:String = "",
+)
 @Immutable
 data class StartConsultingUiState(
     val scheduleState:String= "",
@@ -37,7 +42,7 @@ data class StartConsultingUiState(
     val medicationExpandingState:Boolean=false,
     val testInvestigation:String="",
     // allow user to select more than one Test
-    val selectedTest: List<String> = emptyList(),
+    val selectedTest: List<InvestigationEntry> = emptyList(),
     val testInvestigationExpandingState:Boolean=false,
     // symptoms adding state
     val bloodPressure:String="",

@@ -86,6 +86,7 @@ import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
+import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
@@ -354,7 +355,9 @@ fun ClinicalAssessmentScreen(
     val diagnosisFilteredList = viewModel.diagnosis.filter { it ->
         it.contains(state.diagnosisSearchQuery, ignoreCase = true)
     }
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp).verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier
+        .padding(horizontal = 16.dp, vertical = 16.dp)
+        .verticalScroll(rememberScrollState())) {
 
         // section 1
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -676,10 +679,8 @@ fun TestInvestigation(
                     viewModel.onTestDropdownToggle(it.isNotEmpty())
                 },
                 placeHolder = "Search for Medication...",
-                selectedItem = state.selectedTest,
-                onRemoveItem = { test ->
-                    viewModel.onTestInvestigationRemoved(test = test)
-                },
+                selectedItem = emptyList(),
+                onRemoveItem = {},
                 modifier = Modifier
                     .menuAnchor()
                     .onFocusChanged { it ->
@@ -703,6 +704,15 @@ fun TestInvestigation(
                     )
                 }
             }
+        }
+        Spacer(Modifier.height(8.dp))
+        // render the tests
+        state.selectedTest.forEachIndexed {index, entry ->
+            TestInputRow(
+                entry = entry,
+                onNotesChange = {viewModel.onTestInvestigationUpdated(index, reason = it)},
+                onRemove = {viewModel.onTestInvestigationRemoved(entry)}
+            )
         }
         Spacer(Modifier.height(8.dp))
         FilledTonalButton(
@@ -1201,7 +1211,9 @@ fun MedicationInputRow(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             // Name and Remove
@@ -1215,7 +1227,9 @@ fun MedicationInputRow(
                     imageVector = Icons.Default.Clear,
                     contentDescription = "Remove",
                     tint = Color.Gray,
-                    modifier = Modifier.size(20.dp).clickable { onRemove() }
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable { onRemove() }
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -1279,6 +1293,87 @@ fun MedicationInputRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TestInputRow(
+    entry: InvestigationEntry,
+    onNotesChange: (String) -> Unit,
+    onRemove: () -> Unit
+) {
+    ElevatedCard(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.Center) {
+            // Header: Name and Remove
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = entry.testInvestigationName,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = "Remove",
+                    tint = Color.Gray,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable { onRemove() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            )
+            {  // Note Input Field
+                OutlinedTextField(
+                    value = entry.testInvestigationReason,
+                    onValueChange = onNotesChange,
+                    placeholder = { Text("Reason", fontSize = 12.sp) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color(0xff1d4ed8),
+                        unfocusedTextColor = Color.Black,
+                        focusedTextColor = Color.Black
+                    )
+                )
+                OutlinedTextField(
+                    value = "mg/dL",
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color(0xff1d4ed8),
+                        unfocusedTextColor = Color.Black,
+                        focusedTextColor = Color.Black
+                    )
+                )
+            }
+        }
+    }
+}
 
 
 

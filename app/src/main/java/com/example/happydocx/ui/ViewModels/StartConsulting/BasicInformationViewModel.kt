@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Repository.StartConsulting.BasicInformationRepository
+import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
@@ -231,12 +232,28 @@ class BasicInformationViewModel : ViewModel() {
     }
 
     fun ontestInvestigationSelected(newTest: String) {
-        state.update { it ->
-            val updatedTest = (it.selectedTest + newTest).distinct()
-            it.copy(
-                selectedTest = updatedTest,
-                testInvestigationExpandingState = false,
-                testSearchQuery = ""
+        state.update { it->
+            if(it.selectedTest.any{it.testInvestigationName == newTest}){
+                it.copy(testInvestigationExpandingState = false, testSearchQuery = "")
+            }else{
+                val newItem = InvestigationEntry(testInvestigationName = newTest)
+                it.copy(
+                    selectedTest = it.selectedTest + newItem,
+                    testInvestigationExpandingState = false,
+                    testSearchQuery = ""
+                )
+            }
+        }
+    }
+
+    fun onTestInvestigationUpdated(index:Int,reason:String?=null){
+        state.update { it->
+            val mutableList = it.selectedTest.toMutableList()
+            val currentItem = mutableList[index]
+            mutableList[index] = currentItem.copy(
+                testInvestigationReason = reason ?: currentItem.testInvestigationReason
+            )
+            it.copy(selectedTest = mutableList
             )
         }
     }
@@ -333,9 +350,10 @@ class BasicInformationViewModel : ViewModel() {
         }
     }
 
-    fun onTestInvestigationRemoved(test: String) {
+    fun onTestInvestigationRemoved(test: InvestigationEntry) {
         state.update {
-            val updatedTest = it.selectedTest.toMutableList().apply { remove(test) }
+            val updatedTest = it.selectedTest.toMutableList()
+            updatedTest.remove(test)
             it.copy(selectedTest = updatedTest)
         }
     }
