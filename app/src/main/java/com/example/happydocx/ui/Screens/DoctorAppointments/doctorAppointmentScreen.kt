@@ -462,7 +462,9 @@ fun DoctorAppointmentScreen(
                                                     )
                                                 }",
                                                 patientId = appointment.patient._id,
-                                                navController = navController
+                                                navController = navController,
+                                                token = token,
+                                                appointmentId = appointment.id
                                             )
                                             HorizontalDivider(color = Color(0xffdbdbd9))
                                         }
@@ -614,12 +616,14 @@ fun PaginationControls(
 fun CardComponent(
     name: String,
     patientId: String,
+    appointmentId:String,
     lastVisit: String,
+    token:String,
     navController: NavController
 ) {
     Card(
         modifier = Modifier
-            .clickable { navController.navigate("ParticularPatientScreen/$patientId") }
+            .clickable { navController.navigate("ParticularPatientScreen/$patientId/$token/$appointmentId") }
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFFFFFFF),

@@ -1,17 +1,59 @@
 package com.example.happydocx.ui.ViewModels.StartConsulting
 
-import androidx.compose.animation.core.copy
+import androidx.compose.animation.core.updateTransition
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
+import com.example.happydocx.Data.Repository.StartConsulting.BasicInformationRepository
+import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
+import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class BasicInformationViewModel : ViewModel() {
 
+
+    // get repo object
+    val repo = BasicInformationRepository()
     private val state = MutableStateFlow(StartConsultingUiState())
     val _state = state.asStateFlow()
 
+    // state for handling the api response (appointments{id})
+    private val apiState =
+        MutableStateFlow<BasicInformationUiState>(BasicInformationUiState.Loading)
+    val _apiState = apiState.asStateFlow()
+
+    // function for the api response
+     fun onStartConsultingClicked(
+        appointmentId: String,
+        token:String,
+    ) {
+        viewModelScope.launch {
+            // set loading state
+            apiState.value = BasicInformationUiState.Loading
+            try {
+                val result = repo.getBasicInformation(appointmentId = appointmentId,token=token)
+                result.fold(
+                    onSuccess = { appointmentData ->
+                        apiState.value = BasicInformationUiState.Success(data = appointmentData)
+                    },
+                    onFailure = { exception ->
+                        apiState.value = BasicInformationUiState.Error(
+                            message = exception.message ?: "Failed to load appointment details...."
+                        )
+                    }
+                )
+
+            } catch (e: Exception) {
+                apiState.value = BasicInformationUiState.Error(
+                    message = e.message ?: "An Unexpected error occurred"
+                )
+            }
+        }
+    }
 
     // symptoms
     val Symtoms = listOf(
@@ -103,35 +145,88 @@ class BasicInformationViewModel : ViewModel() {
 
     // Event handlers functions
     fun onSymptomSelected(newSymptom: String) {
-        state.update { it ->
-            val updatedSymptoms = (it.selectedSymptoms + newSymptom).distinct()
-            it.copy(
-                selectedSymptoms = updatedSymptoms,
-                symptomsExpandingState = false,
-                symptomsSearchQuery = ""
+       state.update { it->
+           // check if the symptom already exists
+           if(it.selectedSymptoms.any{it.name == newSymptom}){
+               it.copy(symptomsExpandingState = false, symptomsSearchQuery =  "")
+           }else{
+               val newItem = MedicalEntry(name = newSymptom)
+               it.copy(
+                   selectedSymptoms = it.selectedSymptoms + newItem,
+                   symptomsExpandingState =  false,
+                   symptomsSearchQuery = ""
+               )
+           }
+       }
+    }
+
+    // 2. NEW: Update Symptom Details (Duration/Severity)
+    fun onSymptomDetailUpdate(index:Int,duration:String?=null,severity:String?=null){
+        state.update { currentState ->
+            val mutableList = currentState.selectedSymptoms.toMutableList()
+            val currentItem = mutableList[index]
+
+            mutableList[index] = currentItem.copy(
+                duration = duration ?: currentItem.duration,
+                severity = severity ?: currentItem.severity
             )
+            currentState.copy(selectedSymptoms = mutableList)
         }
     }
 
+
     fun onDiagnosisSelected(newDiagnosis: String) {
-        state.update { it ->
-            val updatedDiagnosis = (it.selectedDiagnosis + newDiagnosis).distinct()
-            it.copy(
-                selectedDiagnosis = updatedDiagnosis,
-                diagnosisExpandingState = false,
-                diagnosisSearchQuery = ""
+        state.update { currentState ->
+            if (currentState.selectedDiagnosis.any { it.name == newDiagnosis }) {
+                currentState.copy(diagnosisExpandingState = false, diagnosisSearchQuery = "")
+            } else {
+                val newItem = MedicalEntry(name = newDiagnosis)
+                currentState.copy(
+                    selectedDiagnosis = currentState.selectedDiagnosis + newItem,
+                    diagnosisExpandingState = false,
+                    diagnosisSearchQuery = ""
+                )
+            }
+        }
+    }
+
+    // NEW: Update Diagnosis Details
+    fun onDiagnosisDetailsUpdated(index: Int, duration: String? = null, severity: String? = null) {
+        state.update { currentState ->
+            val mutableList = currentState.selectedDiagnosis.toMutableList()
+            val currentItem = mutableList[index]
+
+            mutableList[index] = currentItem.copy(
+                duration = duration ?: currentItem.duration,
+                severity = severity ?: currentItem.severity
             )
+            currentState.copy(selectedDiagnosis = mutableList)
         }
     }
 
     fun onMedicationSelected(newMedication: String) {
-        state.update { it ->
-            val updatedMedication = (it.selectedMedication + newMedication).distinct()
-            it.copy(
-                selectedMedication = updatedMedication,
-                medicationExpandingState = false,
-                medicationSearchQuery = ""
-            )
+       state.update { it->
+           if(it.selectedMedication.any{it.medicationName == newMedication}){
+               it.copy(medicationExpandingState = false, medicationSearchQuery = "")
+           }else{
+               val newItem = MedicationEntry(medicationName = newMedication)
+               it.copy(
+                   selectedMedication = it.selectedMedication + newItem,
+                   medicationExpandingState = false,
+                   medicationSearchQuery = ""
+               )
+           }
+       }
+    }
+
+    fun onMedicationUpdated(index:Int,duration:String?=null,frequency:String?=null){
+        state.update { it->
+            val mutableList = it.selectedMedication.toMutableList()
+            val currentItem = mutableList[index]
+            mutableList[index] = currentItem.copy(
+                duration = duration ?: currentItem.duration,
+                quantity = frequency ?: currentItem.quantity)
+            it.copy(selectedMedication = mutableList)
         }
     }
 
@@ -156,13 +251,13 @@ class BasicInformationViewModel : ViewModel() {
 
     fun onSymptomDropdownToggle(isExpanded: Boolean? = null) {
         state.update {
-            it.copy(symptomsExpandingState = isExpanded?:!it.symptomsExpandingState)
+            it.copy(symptomsExpandingState = isExpanded ?: !it.symptomsExpandingState)
         }
     }
 
     fun onDiagnosisDropdownToggle(isExpanded: Boolean? = null) {
         state.update {
-            it.copy(diagnosisExpandingState = isExpanded?:!it.diagnosisExpandingState)
+            it.copy(diagnosisExpandingState = isExpanded ?: !it.diagnosisExpandingState)
         }
     }
 
@@ -188,6 +283,7 @@ class BasicInformationViewModel : ViewModel() {
             )
         }
     }
+
     fun onDiagnosisSearchQueryChanged(newQuery: String) {
         state.update { it ->
             it.copy(
@@ -195,6 +291,7 @@ class BasicInformationViewModel : ViewModel() {
             )
         }
     }
+
     fun onMedicationSearchQueryChanged(newQuery: String) {
         state.update { it ->
             it.copy(
@@ -202,6 +299,7 @@ class BasicInformationViewModel : ViewModel() {
             )
         }
     }
+
     fun onTestSearchQueryChanged(newQuery: String) {
         state.update { it ->
             it.copy(
@@ -211,31 +309,27 @@ class BasicInformationViewModel : ViewModel() {
     }
 
     // remove item functions
-    fun onSymptomRemove(symptom: String) {
-        state.update {
-            val updatedState = it.selectedSymptoms.toMutableList()
-            updatedState.remove(symptom)
-            it.copy(selectedSymptoms = updatedState)
-        }
+    fun onSymptomRemove(entry: MedicalEntry) {
+      state.update { it->
+          val updatedState  = it.selectedSymptoms.toMutableList()
+          updatedState.remove(entry)
+          it.copy(selectedSymptoms = updatedState)
+      }
     }
 
-    fun onDiagnosisRemove(diagnosis: String) {
+    fun onDiagnosisRemove(entry: MedicalEntry) {
         state.update { currentState ->
-            // first convert to mutable list
             val updatedDiagnosis = currentState.selectedDiagnosis.toMutableList()
-            // them remove
-            updatedDiagnosis.remove(diagnosis)
-            currentState.copy(
-                selectedDiagnosis = updatedDiagnosis
-            )
+            updatedDiagnosis.remove(entry)
+            currentState.copy(selectedDiagnosis = updatedDiagnosis)
         }
     }
 
-    fun onMedicationRemoved(medication: String) {
+    fun onMedicationRemoved(medication: MedicationEntry) {
         state.update {
-            val updatedMedication =
-                it.selectedMedication.toMutableList().apply { remove(medication) }
-            it.copy(selectedMedication = updatedMedication)
+           val updateMedication = it.selectedMedication.toMutableList()
+            updateMedication.remove(medication)
+            it.copy(selectedMedication = updateMedication)
         }
     }
 
@@ -248,46 +342,65 @@ class BasicInformationViewModel : ViewModel() {
 
     // adding state change for adding symptoms
 
-    fun onBloodPressureAdded(newBloodPressure:String){
-          state.update { it->
-              it.copy(
-                  bloodPressure = newBloodPressure
-              )
-          }
+    fun onBloodPressureAdded(newBloodPressure: String) {
+        state.update { it ->
+            it.copy(
+                bloodPressure = newBloodPressure
+            )
+        }
     }
-    fun onHeartRateAdded(newHeartRate:String){
-        state.update { it->
+
+    fun onHeartRateAdded(newHeartRate: String) {
+        state.update { it ->
             it.copy(
                 heartRate = newHeartRate
             )
         }
     }
-    fun onTempratureAdded(newTemprature:String){
-        state.update { it->
+
+    fun onTempratureAdded(newTemprature: String) {
+        state.update { it ->
             it.copy(
                 temperature = newTemprature
             )
         }
     }
-    fun onOxygenSaturationAdded(newOxygen:String){
-        state.update { it->
+
+    fun onOxygenSaturationAdded(newOxygen: String) {
+        state.update { it ->
             it.copy(
                 oxygenSaturation = newOxygen
             )
         }
     }
-    fun onHeightAdded(newHeight:String){
-        state.update { it->
+
+    fun onHeightAdded(newHeight: String) {
+        state.update { it ->
             it.copy(
                 height = newHeight
             )
         }
     }
-    fun onWeightAdded(newWeight:String){
-        state.update { it->
+
+    fun onWeightAdded(newWeight: String) {
+        state.update { it ->
             it.copy(
                 weight = newWeight
             )
         }
     }
+
+}
+
+sealed class BasicInformationUiState {
+
+    object Loading : BasicInformationUiState()
+
+    data class Success(
+        val data: AppointmentApiResponse
+    ) : BasicInformationUiState()
+
+    data class Error(
+        val message: String
+    ) : BasicInformationUiState()
 }

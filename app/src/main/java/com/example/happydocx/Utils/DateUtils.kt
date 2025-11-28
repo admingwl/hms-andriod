@@ -3,14 +3,13 @@ package com.example.happydocx.Utils
 import android.os.Build
 import androidx.annotation.RequiresApi
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.TimeZone
 
 object DateUtils {
-
-
     @RequiresApi(Build.VERSION_CODES.O)
     fun formatAppointmentDate(isoDate: String): String {
         return try {
@@ -38,4 +37,16 @@ object DateUtils {
             isoDate
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun gettingOnlyDate(isoDate: String): String {
+        return try {
+            val localDate = LocalDate.parse(isoDate.substringBefore('T'))  // Extracts "2025-11-05"
+            val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
+            localDate.format(formatter)
+        } catch (e: Exception) {
+            isoDate
+        }
+    }
 }
+

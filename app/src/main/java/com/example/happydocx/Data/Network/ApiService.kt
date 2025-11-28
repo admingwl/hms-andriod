@@ -1,11 +1,13 @@
 package com.example.happydocx.Data.Network
 
+import com.example.happydocx.Data.Model.AllDepartments
 import com.example.happydocx.Data.Model.DoctorAppointment.AppointmentResponse
 import com.example.happydocx.Data.Model.FormModel.DoctorProfileResponse
 import com.example.happydocx.Data.Model.LoginModel.LoginRequest
 import com.example.happydocx.Data.Model.LoginModel.LoginResponse
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
+import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -89,4 +91,20 @@ interface ApiService{
       @Query("limit") limit:Int = 10,
       @Query("showCompleted") showCompleted:Boolean = false
     ): Response<AppointmentResponse>
+
+
+    // api for getting the all departments
+    @GET("api/v1/department/all-departments")
+    suspend fun getAllDepartments(
+        @Header ("Authorization") token:String
+    ): Response<AllDepartments>
+
+
+    // api for getting the particular patient's appointment data
+    // we use path here because the appointmentId is the part of the url .
+    @GET("api/v1/appointment/{appointmentId}")
+    suspend fun getParticularPatientAppointment(
+          @Header("Authorization") token:String,
+          @Path("appointmentId") appointmentId:String
+    ): Response<AppointmentApiResponse>
 }
