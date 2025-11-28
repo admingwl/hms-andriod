@@ -1,5 +1,7 @@
 package com.example.happydocx.ui.Screens.StartConsulting
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +26,7 @@ import androidx.navigation.NavController
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun StartConsultingScreen(
     modifier: Modifier = Modifier,
@@ -32,6 +35,7 @@ fun StartConsultingScreen(
     patientId:String,
     token:String,
     appointmentID:String,
+
 ) {
     StartConsultingScreenTabLayout(
         modifier = modifier,
@@ -39,11 +43,13 @@ fun StartConsultingScreen(
         navController = navController,
         patientId = patientId,
         token=token,
-        appointmentId = appointmentID
+        appointmentId = appointmentID,
+
     )
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StartConsultingScreenTabLayout(
@@ -120,7 +126,7 @@ fun StartConsultingScreenTabLayout(
                         navController = navController,
                         patientId = patientId,
                         token = token,
-                        appointmentId = appointmentId
+                        appointmentId = appointmentId,
                     )
                 }
                 1 -> {

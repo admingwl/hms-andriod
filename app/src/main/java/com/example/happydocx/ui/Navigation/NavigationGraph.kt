@@ -102,8 +102,7 @@ fun NavigationGraph() {
         }
         composable("AppointmentsScreen/{token}",
             arguments = listOf(
-                navArgument("token"){
-                    type = NavType.StringType
+                navArgument("token"){ type = NavType.StringType
                     nullable = false
                 }
             )) {backStackEntry->
@@ -113,7 +112,10 @@ fun NavigationGraph() {
         }
         composable("ParticularPatientScreen/{patientId}/{token}/{appointmentId}",
             arguments = listOf(
-                navArgument("patientId"){type = NavType.StringType})
+                navArgument("patientId"){type = NavType.StringType},
+                navArgument("token") { type = NavType.StringType },
+                navArgument("appointmentId") { type = NavType.StringType },
+            )
         ) {backStack->
             val patientId = backStack.arguments?.getString("patientId")?:""
             val token = backStack.arguments?.getString("token") ?: ""
@@ -123,7 +125,7 @@ fun NavigationGraph() {
                 viewModel = doctorAppointmentViewModel,
                 navController = navController,
                 token = token,
-                appointmentId = appointmentId
+                appointmentId = appointmentId,
             )
         }
 
@@ -134,24 +136,27 @@ fun NavigationGraph() {
         composable(route = "invoiceScreen"){
             InvoicesScreen()
         }
-        composable(
-            route = "SartConsultationScreen/{patientId}/{token}/{appointmentId}",
-            arguments = listOf(
-                navArgument("patientId"){type = NavType.StringType}
-            )
-        ) {
-            backStack->
-            val patientId = backStack.arguments?.getString("patientId")?:""
-            val token = backStack.arguments?.getString("token")?:""
-            val appointmentId = backStack.arguments?.getString("appointmentId")?:""
-            StartConsultingScreen(
-                viewModel = BasicPatientInformationViewModel,
-                navController = navController
-                ,patientId = patientId,
-                token = token,
-                appointmentID = appointmentId
-            )
-        }
+            composable(
+                route = "SartConsultationScreen/{patientId}/{token}/{appointmentId}",
+                arguments = listOf(
+                    navArgument("patientId"){type = NavType.StringType},
+                    navArgument("token") { type = NavType.StringType },
+                    navArgument("appointmentId") { type = NavType.StringType }
+                )
+            ) {
+                backStack->
+                val patientId = backStack.arguments?.getString("patientId")?:""
+                val token = backStack.arguments?.getString("token")?:""
+                val appointmentId = backStack.arguments?.getString("appointmentId")?:""
+
+                StartConsultingScreen(
+                    viewModel = BasicPatientInformationViewModel,
+                    navController = navController
+                    ,patientId = patientId,
+                    token = token,
+                    appointmentID = appointmentId,
+                )
+            }
         composable(
             "NewPage/{patientId}/{token}",
             arguments = listOf(

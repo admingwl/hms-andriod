@@ -8,6 +8,8 @@ import com.example.happydocx.Data.Model.LoginModel.LoginResponse
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
+import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
+import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -43,7 +45,6 @@ interface ApiService{
     @PUT("api/v1/doctor/{doctorId}")
     suspend fun updateDoctorProfile(
         @Path("doctorId") doctorId: String,
-
         // Personal Information
         @Part("salutation") salutation: RequestBody,
         @Part("first_name") firstName: RequestBody,
@@ -107,4 +108,11 @@ interface ApiService{
           @Header("Authorization") token:String,
           @Path("appointmentId") appointmentId:String
     ): Response<AppointmentApiResponse>
+
+
+    // post request for the submit of the symptoms and diagnosis and notes
+    @POST("api/v1/investigation/add")
+    suspend fun SubmitSymptomsDiagnosisNotes(
+        @Body body: SaveSymptomDiagnosisRequest
+    ): Response<SaveSymptomDiagnosisResponse>
 }

@@ -1,13 +1,18 @@
 package com.example.happydocx.Data.Repository.StartConsulting
 
+import android.util.Log
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
+import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
+import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
 import com.example.happydocx.Data.Network.ApiService
 import com.example.happydocx.Utils.RetrofitInstance
+import okhttp3.Request
 
 class BasicInformationRepository {
 
     // first create the object of the api service
     val apiService = RetrofitInstance.retrofit.create(ApiService::class.java)
+
 
     // fun to get the data from the api
     suspend fun getBasicInformation(
@@ -30,4 +35,26 @@ class BasicInformationRepository {
         }
 
     }
+
+    //fun for uploading the symtoms and diagnosis to data base
+    suspend fun submitSymptomsDiagnosisNotes(
+      requestBody: SaveSymptomDiagnosisRequest
+    ): Result<SaveSymptomDiagnosisResponse> {
+        return try {
+          // api call
+            val result = apiService.SubmitSymptomsDiagnosisNotes(body = requestBody)
+            Log.d("Api Response method","Api call is successful")
+            // handle response
+            if(result.isSuccessful && result.body() != null){
+                Result.success(result.body()!!)
+            }else{
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e:Exception){
+            // Handle network or parsing errors
+            Result.failure(e)
+        }
+    }
+
 }
