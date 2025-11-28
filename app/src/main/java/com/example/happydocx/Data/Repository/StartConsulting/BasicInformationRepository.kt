@@ -38,14 +38,18 @@ class BasicInformationRepository {
 
     //fun for uploading the symtoms and diagnosis to data base
     suspend fun submitSymptomsDiagnosisNotes(
-      requestBody: SaveSymptomDiagnosisRequest
+      requestBody: SaveSymptomDiagnosisRequest,
+      token:String
     ): Result<SaveSymptomDiagnosisResponse> {
         return try {
           // api call
-            val result = apiService.SubmitSymptomsDiagnosisNotes(body = requestBody)
+            Log.d("Api Request", "Token: Bearer $token")
+            Log.d("Api Request", "Body: $requestBody")
+            val result = apiService.SubmitSymptomsDiagnosisNotes(body = requestBody,token = "Bearer $token")
             Log.d("Api Response method","Api call is successful")
             // handle response
             if(result.isSuccessful && result.body() != null){
+                Log.d("Api Response", "Success: ${result.body()}")
                 Result.success(result.body()!!)
             }else{
                 val errorMessage = result.errorBody()?.string() ?: "Unknown server error"

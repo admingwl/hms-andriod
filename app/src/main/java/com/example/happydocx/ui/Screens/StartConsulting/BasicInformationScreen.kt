@@ -222,7 +222,10 @@ fun ConsultingMainScreen(
                         navController = navController,
                         submitionState = submissionState ,
                         patientId = patientId,
-                        appointmentId = appointmentId)
+                        appointmentId = appointmentId,
+                        token = token
+                    )
+
                 }
             )
         }
@@ -362,6 +365,7 @@ fun ClinicalAssessmentScreen(
     submitionState: SubmitDiagnosisNotesSymptomsUiState,
     patientId:String,
     appointmentId:String,
+    token: String
 ) {
 
     val apiResponse = viewModel._apiState.collectAsStateWithLifecycle().value
@@ -554,7 +558,8 @@ fun ClinicalAssessmentScreen(
                     viewModel.onSubmitClicked(
                         patientId = patientId,
                         appointmentId = appointmentId,
-                        physicianId = physicianId // here i have to pass the physician id
+                        physicianId = physicianId, // here i have to pass the physician id
+                        token = token
                     )
                 }
             },
@@ -785,6 +790,7 @@ fun TabScreen(
     submitionState: SubmitDiagnosisNotesSymptomsUiState,
     patientId:String,
     appointmentId:String,
+    token:String,
 ) {
     var tabIndex by remember { mutableIntStateOf(0) }
     var showFullScreen by remember { mutableStateOf(false) }
@@ -867,6 +873,7 @@ fun TabScreen(
                                 submitionState = submitionState,
                                 patientId = patientId,
                                 appointmentId = appointmentId,
+                                token = token
                             )
                             1 -> VitalSignAndSymtoms(navController = navController)
                             2 -> Medication(state = state, viewModel = viewModel)
