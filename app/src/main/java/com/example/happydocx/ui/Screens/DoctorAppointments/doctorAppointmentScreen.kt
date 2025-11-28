@@ -464,7 +464,8 @@ fun DoctorAppointmentScreen(
                                                 patientId = appointment.patient._id,
                                                 navController = navController,
                                                 token = token,
-                                                appointmentId = appointment.id
+                                                appointmentId = appointment.id,
+
                                             )
                                             HorizontalDivider(color = Color(0xffdbdbd9))
                                         }
@@ -619,7 +620,8 @@ fun CardComponent(
     appointmentId:String,
     lastVisit: String,
     token:String,
-    navController: NavController
+    navController: NavController,
+
 ) {
     Card(
         modifier = Modifier

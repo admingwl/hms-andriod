@@ -62,6 +62,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,16 +81,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.SubmitDiagnosisNotesSymptomsUiState
 import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
+import kotlinx.coroutines.launch
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -98,19 +102,21 @@ import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
 fun ConsultingMainScreen(
     navController: NavController,
     viewModel: BasicInformationViewModel,
-    patientId : String,
     token:String,
+    patientId:String,
     appointmentId:String,
+
 ) {
     val context = LocalContext.current
     val state = viewModel._state.collectAsStateWithLifecycle().value
     // api state
     val apiState = viewModel._apiState.collectAsStateWithLifecycle().value
-
+    val submissionState = viewModel._submitState.collectAsStateWithLifecycle().value
      LaunchedEffect(patientId) {
     // pass patient id here through navigation
-    viewModel.onStartConsultingClicked(appointmentId = appointmentId,token = token)
+       viewModel.onStartConsultingClicked(appointmentId = appointmentId,token = token)
      }
+
 
     // when ever we use the sealed class no need to add the else branch in the when expression
     when(apiState){
@@ -210,7 +216,13 @@ fun ConsultingMainScreen(
                             .padding(horizontal = 16.dp)
                     )
                     Spacer(Modifier.height(8.dp))
-                    TabScreen(state = state, viewModel = viewModel, navController = navController)
+                    TabScreen(
+                        state = state,
+                        viewModel = viewModel,
+                        navController = navController,
+                        submitionState = submissionState ,
+                        patientId = patientId,
+                        appointmentId = appointmentId)
                 }
             )
         }
@@ -346,8 +358,35 @@ fun ScheduleDate(
 fun ClinicalAssessmentScreen(
     modifier: Modifier = Modifier,
     viewModel: BasicInformationViewModel,
-    state: StartConsultingUiState
+    state: StartConsultingUiState,
+    submitionState: SubmitDiagnosisNotesSymptomsUiState,
+    patientId:String,
+    appointmentId:String,
 ) {
+
+    val apiResponse = viewModel._apiState.collectAsStateWithLifecycle().value
+    val context = LocalContext.current
+    val physicianId = remember(apiResponse) {
+        (apiResponse as? BasicInformationUiState.Success)?.data?.message?.doctor?.id ?: ""
+    }
+
+    // launched effect for submittion state
+    LaunchedEffect(submitionState) {
+        when(submitionState){
+            is SubmitDiagnosisNotesSymptomsUiState.Success->{
+                Toast.makeText(context,"Successfully Submitted",Toast.LENGTH_LONG).show()
+            }
+            is SubmitDiagnosisNotesSymptomsUiState.Error->{
+                Toast.makeText(context, (submitionState as SubmitDiagnosisNotesSymptomsUiState.Error).message, Toast.LENGTH_SHORT).show()
+            }
+            SubmitDiagnosisNotesSymptomsUiState.Idle -> {}
+            SubmitDiagnosisNotesSymptomsUiState.Loading -> {
+                // show loading
+                Toast.makeText(context,"Loading",Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    val scope = rememberCoroutineScope()
     // filter list
     val filteredList = viewModel.Symtoms.filter { it ->
         it.contains(state.symptomsSearchQuery, ignoreCase = true)
@@ -511,6 +550,13 @@ fun ClinicalAssessmentScreen(
         FilledTonalButton(
             onClick = {
                 // here you need to call submit api.
+                scope.launch {
+                    viewModel.onSubmitClicked(
+                        patientId = patientId,
+                        appointmentId = appointmentId,
+                        physicianId = physicianId // here i have to pass the physician id
+                    )
+                }
             },
             shape = RoundedCornerShape(4.dp),
             modifier = Modifier
@@ -735,7 +781,10 @@ fun TabScreen(
     modifier: Modifier = Modifier,
     state: StartConsultingUiState,
     viewModel: BasicInformationViewModel,
-    navController: NavController
+    navController: NavController,
+    submitionState: SubmitDiagnosisNotesSymptomsUiState,
+    patientId:String,
+    appointmentId:String,
 ) {
     var tabIndex by remember { mutableIntStateOf(0) }
     var showFullScreen by remember { mutableStateOf(false) }
@@ -812,7 +861,13 @@ fun TabScreen(
                     // Content
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (tabIndex) {
-                            0 -> ClinicalAssessmentScreen(state = state, viewModel = viewModel)
+                            0 -> ClinicalAssessmentScreen(
+                                state = state,
+                                viewModel = viewModel,
+                                submitionState = submitionState,
+                                patientId = patientId,
+                                appointmentId = appointmentId,
+                            )
                             1 -> VitalSignAndSymtoms(navController = navController)
                             2 -> Medication(state = state, viewModel = viewModel)
                             3 -> TestInvestigation(state = state, viewModel = viewModel)

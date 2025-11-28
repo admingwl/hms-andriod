@@ -1,9 +1,11 @@
 package com.example.happydocx.ui.ViewModels.StartConsulting
 
-import androidx.compose.animation.core.updateTransition
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
+import com.example.happydocx.Data.Model.StartConsulting.AssessmentItem
+import com.example.happydocx.Data.Model.StartConsulting.InvestigationData
+import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Repository.StartConsulting.BasicInformationRepository
 import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
@@ -26,6 +28,10 @@ class BasicInformationViewModel : ViewModel() {
     private val apiState =
         MutableStateFlow<BasicInformationUiState>(BasicInformationUiState.Loading)
     val _apiState = apiState.asStateFlow()
+
+    // submissions state
+    private val submissionState = MutableStateFlow<SubmitDiagnosisNotesSymptomsUiState>(SubmitDiagnosisNotesSymptomsUiState.Idle)
+    val _submitState = submissionState.asStateFlow()
 
     // function for the api response
      fun onStartConsultingClicked(
@@ -53,6 +59,65 @@ class BasicInformationViewModel : ViewModel() {
                     message = e.message ?: "An Unexpected error occurred"
                 )
             }
+        }
+    }
+
+    // function when user click on send diagnosis and symptoms with notes
+   suspend fun onSubmitClicked(
+         patientId:String,
+         appointmentId:String,
+         physicianId:String,
+    ) {
+
+        viewModelScope.launch {
+            submissionState.value = SubmitDiagnosisNotesSymptomsUiState.Loading
+
+            // prepare the data (map the data)
+            val symptomList = state.value.selectedSymptoms.map { it ->
+                AssessmentItem(
+                    name = it.name,
+                    severity = it.severity,
+                    duration = it.duration
+                )
+            }
+
+            val diagnosis = state.value.selectedDiagnosis.map { it ->
+                AssessmentItem(
+                    name = it.name,
+                    severity = it.severity,
+                    duration = it.duration
+                )
+            }
+
+            val investigationData = InvestigationData(
+                notes = state.value.notes,
+                problemDiagnosis = diagnosis,
+                symptoms = symptomList
+            )
+
+            val requestBody = SaveSymptomDiagnosisRequest(
+                patientId = patientId,
+                appointmentId = appointmentId,
+                physicianId = physicianId,
+                investigation = investigationData
+            )
+
+            // call the repo function here
+            val result = repo.submitSymptomsDiagnosisNotes(requestBody = requestBody)
+
+            // handle the result
+            result.fold(
+                onSuccess = {
+                    submissionState.value = SubmitDiagnosisNotesSymptomsUiState.Success
+                },
+                onFailure = {
+                    // API failed: Update state to Error
+                    // The UI will observe this and show a Toast/Snackbar
+                    submissionState.value = SubmitDiagnosisNotesSymptomsUiState.Error(
+                        message = it.message ?: "Failed to submit data"
+                    )
+                }
+            )
         }
     }
 
@@ -421,4 +486,11 @@ sealed class BasicInformationUiState {
     data class Error(
         val message: String
     ) : BasicInformationUiState()
+}
+
+sealed class SubmitDiagnosisNotesSymptomsUiState{
+    object Idle : SubmitDiagnosisNotesSymptomsUiState()
+    object Loading : SubmitDiagnosisNotesSymptomsUiState()
+    object Success : SubmitDiagnosisNotesSymptomsUiState()
+    data class Error(val message: String) : SubmitDiagnosisNotesSymptomsUiState()
 }
