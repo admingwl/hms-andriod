@@ -1,7 +1,9 @@
 package com.example.happydocx.ui.Screens.StartConsulting
 
 import android.content.Context
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,7 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -36,6 +37,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,7 +54,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,121 +74,159 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.happydocx.R
+import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
+import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
+import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
+import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsultingMainScreen(
     navController: NavController,
-    viewModel: BasicInformationViewModel
+    viewModel: BasicInformationViewModel,
+    patientId : String,
+    token:String,
+    appointmentId:String,
 ) {
     val context = LocalContext.current
     val state = viewModel._state.collectAsStateWithLifecycle().value
+    // api state
+    val apiState = viewModel._apiState.collectAsStateWithLifecycle().value
 
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .fillMaxSize()
-                .background(color = Color(0xfff0f5ff)),
-            content = {
-                ImageCard(
-                    image = R.drawable.patientimage,
-                    patientName = "Deepak Guleria",
-                    patientId = "7985678430",
-                    context = context
-                )
-                // information cards
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    InformationCard(
-                        label = "Date of Birth",
-                        labelValue = "09-06-1992",
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(Modifier.weight(0.2f))
+     LaunchedEffect(patientId) {
+    // pass patient id here through navigation
+    viewModel.onStartConsultingClicked(appointmentId = appointmentId,token = token)
+     }
 
-                    InformationCard(
-                        label = "Age",
-                        labelValue = "33 years",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Spacer(Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    InformationCard(
-                        label = "Gender",
-                        labelValue = "Male",
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(Modifier.weight(0.2f))
-                    InformationCard(
-                        label = "Department",
-                        labelValue = "Psychiatry",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Spacer(Modifier.height(4.dp))
-                InformationCard(
-                    label = "Physician",
-                    labelValue = "Dr Brian L. Kamau",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                )
-                Spacer(Modifier.height(4.dp))
-                InformationCard(
-                    label = "Reason for visit",
-                    labelValue = "Cold",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "Schedule Appointment", color = Color.Black,
-                    fontWeight = FontWeight.Bold, fontSize = 20.sp,
-                    modifier = Modifier.padding(start = 18.dp)
-                )
-                Spacer(Modifier.height(4.dp))
-                ScheduleDate(
-                    label = "Date & Time",
-                    labelValue = "22-11-2025 08:22 AM",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                )
-                Spacer(Modifier.height(4.dp))
-                ScheduleDate(
-                    label = "Next Schedule Date",
-                    labelValue = "dd-MM-yyyy",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                )
-                Spacer(Modifier.height(8.dp))
-                TabScreen(state = state, viewModel = viewModel, navController = navController)
+    // when ever we use the sealed class no need to add the else branch in the when expression
+    when(apiState){
+        is BasicInformationUiState.Loading->{
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-        )
+        }
+        is BasicInformationUiState.Success->{
+            // first cast the data
+            val data = apiState.data
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .fillMaxSize()
+                    .background(color = Color(0xfff0f5ff)),
+                content = {
+                    ImageCard(
+                        image = R.drawable.patientimage,
+                        patientName = "${data.message.patient.firstName} ${data.message.patient.lastName}",
+                        context = context,
+                        patientId = data.message.id
+                    )
+                    // information cards
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        InformationCard(
+                            label = "Date of Birth",
+                            labelValue = DateUtils.gettingOnlyDate(data.message.patient.dateOfBirth),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(Modifier.weight(0.2f))
+
+                        InformationCard(
+                            label = "Age",
+                            labelValue = "${data.message.patient.age.value}",
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        InformationCard(
+                            label = "Gender",
+                            labelValue = data.message.patient.gender,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(Modifier.weight(0.2f))
+                        InformationCard(
+                            label = "Department",
+                            labelValue = data.message.department.departmentName,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    InformationCard(
+                        label = "Physician",
+                        labelValue = "${data.message.doctor.salutation} ${data.message.doctor.firstName} ${data.message.doctor.lastName}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    InformationCard(
+                        label = "Reason for visit",
+                        labelValue = data.message.reason,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Schedule Appointment", color = Color.Black,
+                        fontWeight = FontWeight.Bold, fontSize = 20.sp,
+                        modifier = Modifier.padding(start = 18.dp)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    ScheduleDate(
+                        label = "Date & Time",
+                        labelValue = DateUtils.formatAppointmentDate(data.message.appointmentDate),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    ScheduleDate(
+                        label = "Next Schedule Date",
+                        labelValue = "${data.message.nextAppointmentDateTime}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    TabScreen(state = state, viewModel = viewModel, navController = navController)
+                }
+            )
+        }
+        is BasicInformationUiState.Error->{
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                // Show actual error message
+                Text(
+                    apiState.message,
+                    fontSize = 14.sp,
+                    color = Color.Red,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
     }
+}
 
 
 
@@ -196,8 +235,8 @@ fun ConsultingMainScreen(
 fun ImageCard(
     modifier: Modifier = Modifier,
     image: Int,
+    patientId:String,
     patientName: String,
-    patientId: String,
     context: Context
 ) {
     ElevatedCard(
@@ -230,12 +269,6 @@ fun ImageCard(
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 18.sp,
                 color = Color.Black,
-            )
-            // adding patient Id
-            Text(
-                text = "Patient Id: $patientId",
-                fontSize = 14.sp,
-                color = Color(0xff7a808d)
             )
         }
     }
@@ -319,9 +352,9 @@ fun ClinicalAssessmentScreen(
         it.contains(state.symptomsSearchQuery, ignoreCase = true)
     }
     val diagnosisFilteredList = viewModel.diagnosis.filter { it ->
-        it.contains(state.symptomsSearchQuery, ignoreCase = true)
+        it.contains(state.diagnosisSearchQuery, ignoreCase = true)
     }
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp).verticalScroll(rememberScrollState())) {
 
         // section 1
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -337,6 +370,7 @@ fun ClinicalAssessmentScreen(
             Text("Symptom", color = Color.Black, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(4.dp))
+        //Search bar
         ExposedDropdownMenuBox(
             expanded = state.symptomsExpandingState && filteredList.isNotEmpty(),
             onExpandedChange = {},
@@ -348,10 +382,8 @@ fun ClinicalAssessmentScreen(
                     viewModel.onSymptomDropdownToggle(it.isNotEmpty())
                 },
                 placeHolder = "Start typing symptoms...",
-                selectedItem = state.selectedSymptoms,
-                onRemoveItem = { it ->
-                    viewModel.onSymptomRemove(it)
-                },
+                selectedItem = emptyList(), // not want the chip inside the text field
+                onRemoveItem = {}, // no chip to remove here
                 modifier = Modifier
                     .menuAnchor()
                     .onFocusChanged { it ->
@@ -375,10 +407,18 @@ fun ClinicalAssessmentScreen(
                     )
                 }
             }
-
         }
-        Spacer(Modifier.height(4.dp))
-
+        Spacer(Modifier.height(8.dp))
+        //Render the list of selected symptoms BELOW the search bar
+        state.selectedSymptoms.forEachIndexed { index, entry ->
+            MedicalEntryInputRow(
+                entry = entry,
+                onDurationChange = {viewModel.onSymptomDetailUpdate(index, duration = it)},
+                onSeverityChange = {viewModel.onSymptomDetailUpdate(index, severity = it)},
+                onRemove = {viewModel.onSymptomRemove(entry)}
+            )
+        }
+        Spacer(Modifier.height(16.dp))
         // section 2
         Row(verticalAlignment = Alignment.CenterVertically) {
             // symptom icon
@@ -404,10 +444,8 @@ fun ClinicalAssessmentScreen(
                     viewModel.onDiagnosisDropdownToggle(it.isNotEmpty())
                 },
                 placeHolder = "Start typing Diagnosis...",
-                selectedItem = state.selectedDiagnosis,
-                onRemoveItem = { it ->
-                    viewModel.onDiagnosisRemove(it)
-                },
+                selectedItem = emptyList(),
+                onRemoveItem = {},
                 modifier = Modifier
                     .menuAnchor()
                     .onFocusChanged { it ->
@@ -431,8 +469,18 @@ fun ClinicalAssessmentScreen(
                 }
             }
         }
+      //  Render the list of selected diagnosis BELOW the search bar
+        Spacer(Modifier.height(8.dp))
+        state.selectedDiagnosis.forEachIndexed { index,entry->
+            MedicalEntryInputRow(
+                entry = entry,
+                onDurationChange = { viewModel.onDiagnosisDetailsUpdated(index, duration = it) },
+                onSeverityChange = { viewModel.onDiagnosisDetailsUpdated(index, severity = it) },
+                onRemove = { viewModel.onDiagnosisRemove(entry) }
+            )
+        }
+        Spacer(Modifier.height(16.dp))
         // section 3
-        Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
 
             Spacer(Modifier.width(4.dp))
@@ -458,7 +506,9 @@ fun ClinicalAssessmentScreen(
         )
         Spacer(Modifier.height(8.dp))
         FilledTonalButton(
-            onClick = {},
+            onClick = {
+                // here you need to call submit api.
+            },
             shape = RoundedCornerShape(4.dp),
             modifier = Modifier
                 .padding(paddingValues = PaddingValues(0.dp))
@@ -506,6 +556,7 @@ fun Medication(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -533,10 +584,8 @@ fun Medication(
                     viewModel.onMedicationDropdownToggle(it.isNotEmpty())
                 },
                 placeHolder = "Start typing medication...",
-                selectedItem = state.selectedMedication,
-                onRemoveItem = { it ->
-                    viewModel.onMedicationRemoved(it)
-                },
+                selectedItem = emptyList(),
+                onRemoveItem = {},
                 modifier = Modifier
                     .menuAnchor()
                     .onFocusChanged { it ->
@@ -561,8 +610,16 @@ fun Medication(
                 }
             }
         }
-
+        // here i render the list of selected medication
         Spacer(Modifier.height(8.dp))
+        state.selectedMedication.forEachIndexed { index, entry ->
+            MedicationInputRow(
+                entry = entry,
+                onDurationChange = { viewModel.onMedicationUpdated(index, duration = it) },
+                onFrequencyChange = { viewModel.onMedicationUpdated(index, frequency = it) },
+                onRemove = { viewModel.onMedicationRemoved(entry) }
+            )
+        }
         FilledTonalButton(
             onClick = {},
             shape = RoundedCornerShape(4.dp),
@@ -1018,6 +1075,208 @@ fun SymptomsWritingTextField(
             errorIndicatorColor = Color.Red
         )
     )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MedicalEntryInputRow(
+    entry: MedicalEntry,
+    onDurationChange:(String)->Unit,
+    onSeverityChange:(String)->Unit,
+    onRemove:() ->Unit
+){
+    var expanded by remember { mutableStateOf(false) }
+    val severityOptions = listOf("Mild", "Moderate", "Severe")
+
+    ElevatedCard(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            // Header: Name and Remove Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = entry.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = "Remove",
+                    tint = Color.Gray,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable { onRemove() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Inputs: Duration and Severity
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Duration TextField
+                OutlinedTextField(
+                    value = entry.duration,
+                    onValueChange = onDurationChange,
+                    label = { Text("Duration", fontSize = 12.sp) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color(0xff1d4ed8),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    )
+                )
+
+                // Severity Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = entry.severity,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Severity", fontSize = 12.sp) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.menuAnchor(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color(0xff1d4ed8),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier.background(Color.White)
+                    ) {
+                        severityOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option,color = Color.Black) },
+                                onClick = {
+                                    onSeverityChange(option)
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MedicationInputRow(
+    entry: MedicationEntry,
+    onDurationChange: (String) -> Unit,
+    onFrequencyChange: (String) -> Unit,
+    onRemove: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    // Common frequencies
+    val frequencyOptions = listOf("1-0-1", "1-0-0", "0-0-1", "1-1-1", "SOS", "OD", "BD")
+
+    ElevatedCard(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            // Name and Remove
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(entry.medicationName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = "Remove",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp).clickable { onRemove() }
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Inputs
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Duration
+                OutlinedTextField(
+                    value = entry.duration,
+                    onValueChange = onDurationChange,
+                    label = { Text("Duration (e.g. 5 days)", fontSize = 10.sp) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color(0xff1d4ed8)
+                    ),
+                    textStyle = TextStyle(
+                        color = Color.Black
+                    )
+                )
+
+                // Frequency Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = entry.quantity,
+                        onValueChange = {}, // Read only, set by dropdown
+                        readOnly = true,
+                        label = { Text("Frequency", fontSize = 10.sp) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.menuAnchor(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color(0xff1d4ed8)
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier.background(Color.White)
+                    ) {
+                        frequencyOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option, color = Color.Black) },
+                                onClick = {
+                                    onFrequencyChange(option)
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 

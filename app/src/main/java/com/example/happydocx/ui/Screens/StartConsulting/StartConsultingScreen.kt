@@ -2,11 +2,9 @@ package com.example.happydocx.ui.Screens.StartConsulting
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -30,12 +28,18 @@ import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewM
 fun StartConsultingScreen(
     modifier: Modifier = Modifier,
     viewModel: BasicInformationViewModel,
-    navController: NavController
+    navController: NavController,
+    patientId:String,
+    token:String,
+    appointmentID:String,
 ) {
     StartConsultingScreenTabLayout(
         modifier = modifier,
         viewModel = viewModel,
-        navController = navController
+        navController = navController,
+        patientId = patientId,
+        token=token,
+        appointmentId = appointmentID
     )
 }
 
@@ -45,7 +49,10 @@ fun StartConsultingScreen(
 fun StartConsultingScreenTabLayout(
     modifier: Modifier = Modifier,
     viewModel: BasicInformationViewModel,
-    navController: NavController
+    navController: NavController,
+    patientId:String,
+    token:String,
+    appointmentId:String,
 ) {
     var tabIndex = remember { mutableIntStateOf(0) }
     val options = listOf(
@@ -110,7 +117,10 @@ fun StartConsultingScreenTabLayout(
                 0 -> {
                     ConsultingMainScreen(
                         viewModel = viewModel,
-                        navController = navController
+                        navController = navController,
+                        patientId = patientId,
+                        token = token,
+                        appointmentId = appointmentId
                     )
                 }
                 1 -> {

@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,15 +42,19 @@ import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ParticularPatientScreen(
-    patientId:String,
+    patientId: String,
     viewModel: DoctorAppointmentsViewModel,
-    navController: NavController
+    navController: NavController,
+    token: String,
+    appointmentId:String,
 ) {
 
+    val scope = rememberCoroutineScope()
     val uiState = viewModel._uiState.collectAsStateWithLifecycle()
 
     // Find the full data by ID (from loaded list)
@@ -97,7 +102,12 @@ fun ParticularPatientScreen(
                         Row {
                             Text("Last Visit:", fontWeight = FontWeight.Bold)
                             Spacer(Modifier.width(4.dp))
-                            Text(DateUtils.formatAppointmentDate(patient.createdAt), color = Color(0xff707f94))
+                            DateUtils.formatAppointmentDate(patient.createdAt)?.let {
+                                Text(
+                                    it,
+                                    color = Color(0xff707f94)
+                                )
+                            }
                         }
 
                         HorizontalDivider(
@@ -126,7 +136,10 @@ fun ParticularPatientScreen(
                                 )
                             }
                             Spacer(Modifier.width(14.dp))
-                            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.Center) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.Center
+                            ) {
                                 Text(
                                     "Contact Number",
                                     color = Color(0xff707f94)
@@ -161,7 +174,7 @@ fun ParticularPatientScreen(
                                 Text(
                                     "Visit Type",
                                     color = Color(0xff707f94)
-                                )
+                                )  
                                 Text(appointment?.visitType ?: "null", fontWeight = FontWeight.Bold)
                             }
                         }
@@ -193,7 +206,12 @@ fun ParticularPatientScreen(
                                     "Appointment Slot",
                                     color = Color(0xff707f94)
                                 )
-                                Text(DateUtils.formatAppointmentDate(appointment?.date ?: ""), fontWeight = FontWeight.Bold)
+                                DateUtils.formatAppointmentDate(appointment?.date ?: "")?.let {
+                                    Text(
+                                        it,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                         Spacer(Modifier.height(8.dp))
@@ -226,9 +244,9 @@ fun ParticularPatientScreen(
                                     color = Color(0xff707f94)
                                 )
                                 // here i add the color according to the status
-                                val statusColor = when(appointment?.status){
+                                val statusColor = when (appointment?.status) {
                                     "Confirmed" -> Color(0xff10b981)
-                                    "In Consultation","Consultation" -> Color(0xffef4444)
+                                    "In Consultation", "Consultation" -> Color(0xffef4444)
                                     else -> {
                                         // other wise the default color
                                         Color(0xfff59e0b)
@@ -244,7 +262,12 @@ fun ParticularPatientScreen(
 
                         Spacer(Modifier.height(50.dp))
                         FilledTonalButton(
-                            onClick = {navController.navigate("SartConsultationScreen")},
+                            // here i call the api
+                            onClick = {
+                                scope.launch {
+                                    navController.navigate("SartConsultationScreen/$patientId/$token/$appointmentId")
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xff3b82f6)),
                             modifier = Modifier
                                 .padding(paddingValues = PaddingValues(0.dp))
@@ -260,7 +283,7 @@ fun ParticularPatientScreen(
                         }
                         Spacer(Modifier.height(10.dp))
                         FilledTonalButton(
-                            onClick = {navController.popBackStack()},
+                            onClick = { navController.popBackStack() },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xffe1e7ef)),
                             shape = RoundedCornerShape(4.dp),
                             modifier = Modifier

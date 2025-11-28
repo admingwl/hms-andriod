@@ -350,7 +350,6 @@ fun ShowUploadedDocuments(
     date: String = "12-03-2023",
     doctor: String = "Deepak Guleria",
     result: String = "Negative Result",
-
     ) {
     Card(modifier = modifier.fillMaxWidth().padding(16.dp)) {
         Column(
