@@ -113,6 +113,7 @@ interface ApiService{
     // post request for the submit of the symptoms and diagnosis and notes
     @POST("api/v1/investigation/add")
     suspend fun SubmitSymptomsDiagnosisNotes(
-        @Body body: SaveSymptomDiagnosisRequest
+        @Header("Authentication") token:String,
+        @Body body: SaveSymptomDiagnosisRequest,
     ): Response<SaveSymptomDiagnosisResponse>
 }

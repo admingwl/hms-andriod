@@ -67,6 +67,7 @@ class BasicInformationViewModel : ViewModel() {
          patientId:String,
          appointmentId:String,
          physicianId:String,
+         token:String
     ) {
 
         viewModelScope.launch {
@@ -103,7 +104,7 @@ class BasicInformationViewModel : ViewModel() {
             )
 
             // call the repo function here
-            val result = repo.submitSymptomsDiagnosisNotes(requestBody = requestBody)
+            val result = repo.submitSymptomsDiagnosisNotes(requestBody = requestBody, token = token)
 
             // handle the result
             result.fold(
@@ -491,6 +492,6 @@ sealed class BasicInformationUiState {
 sealed class SubmitDiagnosisNotesSymptomsUiState{
     object Idle : SubmitDiagnosisNotesSymptomsUiState()
     object Loading : SubmitDiagnosisNotesSymptomsUiState()
-    object Success : SubmitDiagnosisNotesSymptomsUiState()
+    object Success: SubmitDiagnosisNotesSymptomsUiState()
     data class Error(val message: String) : SubmitDiagnosisNotesSymptomsUiState()
 }
