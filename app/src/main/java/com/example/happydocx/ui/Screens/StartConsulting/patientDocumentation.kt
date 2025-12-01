@@ -58,16 +58,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.example.happydocx.R
+import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientDocumentsUploading(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: PatientDocumentUploadViewModel
 ) {
+
+    val _state = viewModel._state.collectAsStateWithLifecycle().value
 
     val testResult = listOf(
         "Positive",
@@ -82,8 +88,8 @@ fun PatientDocumentsUploading(
         MyDashedBoxForDocuments("Image")
         // text field
         TextField(
-            value = "",
-            onValueChange = {},
+            value = _state.documentDiscription,
+            onValueChange = {viewModel.onEnterDocumentDiscriptionChange(it)},
             modifier = Modifier
                 .border(width = 1.dp, color = Color(0xfff9fafb))
                 .fillMaxWidth()
@@ -100,12 +106,12 @@ fun PatientDocumentsUploading(
         )
         // drop down text field
         ExposedDropdownMenuBox(
-            expanded = false,
+            expanded = _state.testResultExpandingState,
             modifier = modifier.padding(16.dp),
-            onExpandedChange = {},
+            onExpandedChange = { viewModel.onTestResultExpandStateChange(it) },
         ) {
             OutlinedTextField(
-                value = "",
+                value = _state.testResultSelected,
                 onValueChange = {},
                 readOnly = true,
                 placeholder = { Text("Select Test Result", color = Color(0xffdae0e7)) },
@@ -125,8 +131,8 @@ fun PatientDocumentsUploading(
                     .menuAnchor()
             )
             ExposedDropdownMenu(
-                expanded = false,
-                onDismissRequest = {},
+                expanded = _state.testResultExpandingState,
+                onDismissRequest = {viewModel.onTestResultExpandStateChange(false)},
                 containerColor = Color(0xffebedfc),
                 matchTextFieldWidth = true,
                 shape = RoundedCornerShape(30.dp)
@@ -135,7 +141,7 @@ fun PatientDocumentsUploading(
                     DropdownMenuItem(
                         text = { Text(it, color = Color.Black) },
                         onClick = {
-
+                            viewModel.onTestResultSelected(it)
                         }
                     )
                 }
@@ -143,7 +149,9 @@ fun PatientDocumentsUploading(
         }
          // upload button
         FilledTonalButton(
-            onClick = {},
+            onClick = {
+                // here i call the api for uploading the data to the server
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xff2563eb)
             ),

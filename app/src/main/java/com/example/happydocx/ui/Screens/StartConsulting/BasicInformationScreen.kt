@@ -4,6 +4,12 @@ import android.content.Context
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,6 +29,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsEndWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,7 +39,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -43,6 +55,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
+import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -76,6 +89,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -83,11 +97,13 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.happydocx.Data.Model.StartConsulting.PatientVitalSign
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVitalSignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SubmitDiagnosisNotesSymptomsUiState
 import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
@@ -102,30 +118,31 @@ import kotlinx.coroutines.launch
 fun ConsultingMainScreen(
     navController: NavController,
     viewModel: BasicInformationViewModel,
-    token:String,
-    patientId:String,
-    appointmentId:String,
+    token: String,
+    patientId: String,
+    appointmentId: String,
 
-) {
+    ) {
     val context = LocalContext.current
     val state = viewModel._state.collectAsStateWithLifecycle().value
     // api state
     val apiState = viewModel._apiState.collectAsStateWithLifecycle().value
     val submissionState = viewModel._submitState.collectAsStateWithLifecycle().value
-     LaunchedEffect(patientId) {
-    // pass patient id here through navigation
-       viewModel.onStartConsultingClicked(appointmentId = appointmentId,token = token)
-     }
+    LaunchedEffect(patientId) {
+        // pass patient id here through navigation
+        viewModel.onStartConsultingClicked(appointmentId = appointmentId, token = token)
+    }
 
 
     // when ever we use the sealed class no need to add the else branch in the when expression
-    when(apiState){
-        is BasicInformationUiState.Loading->{
+    when (apiState) {
+        is BasicInformationUiState.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
-        is BasicInformationUiState.Success->{
+
+        is BasicInformationUiState.Success -> {
             // first cast the data
             val data = apiState.data
             Column(
@@ -220,7 +237,7 @@ fun ConsultingMainScreen(
                         state = state,
                         viewModel = viewModel,
                         navController = navController,
-                        submitionState = submissionState ,
+                        submitionState = submissionState,
                         patientId = patientId,
                         appointmentId = appointmentId,
                         token = token
@@ -229,8 +246,9 @@ fun ConsultingMainScreen(
                 }
             )
         }
-        is BasicInformationUiState.Error->{
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+
+        is BasicInformationUiState.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 // Show actual error message
                 Text(
                     apiState.message,
@@ -245,13 +263,12 @@ fun ConsultingMainScreen(
 }
 
 
-
 // Image Card
 @Composable
 fun ImageCard(
     modifier: Modifier = Modifier,
     image: Int,
-    patientId:String,
+    patientId: String,
     patientName: String,
     context: Context
 ) {
@@ -363,30 +380,36 @@ fun ClinicalAssessmentScreen(
     viewModel: BasicInformationViewModel,
     state: StartConsultingUiState,
     submitionState: SubmitDiagnosisNotesSymptomsUiState,
-    patientId:String,
-    appointmentId:String,
+    patientId: String,
+    appointmentId: String,
     token: String
 ) {
 
     val apiResponse = viewModel._apiState.collectAsStateWithLifecycle().value
-    val context = LocalContext.current
     val physicianId = remember(apiResponse) {
         (apiResponse as? BasicInformationUiState.Success)?.data?.message?.doctor?.id ?: ""
     }
+    val context = LocalContext.current
 
     // launched effect for submittion state
     LaunchedEffect(submitionState) {
-        when(submitionState){
-            is SubmitDiagnosisNotesSymptomsUiState.Success->{
-                Toast.makeText(context,"Successfully Submitted",Toast.LENGTH_LONG).show()
+        when (submitionState) {
+            is SubmitDiagnosisNotesSymptomsUiState.Success -> {
+                Toast.makeText(context, "Successfully Submitted", Toast.LENGTH_LONG).show()
             }
-            is SubmitDiagnosisNotesSymptomsUiState.Error->{
-                Toast.makeText(context, (submitionState as SubmitDiagnosisNotesSymptomsUiState.Error).message, Toast.LENGTH_SHORT).show()
+
+            is SubmitDiagnosisNotesSymptomsUiState.Error -> {
+                Toast.makeText(
+                    context,
+                    (submitionState as SubmitDiagnosisNotesSymptomsUiState.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
+
             SubmitDiagnosisNotesSymptomsUiState.Idle -> {}
             SubmitDiagnosisNotesSymptomsUiState.Loading -> {
                 // show loading
-                Toast.makeText(context,"Loading",Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Loading", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -398,9 +421,11 @@ fun ClinicalAssessmentScreen(
     val diagnosisFilteredList = viewModel.diagnosis.filter { it ->
         it.contains(state.diagnosisSearchQuery, ignoreCase = true)
     }
-    Column(modifier = Modifier
-        .padding(horizontal = 16.dp, vertical = 16.dp)
-        .verticalScroll(rememberScrollState())) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
 
         // section 1
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -459,9 +484,9 @@ fun ClinicalAssessmentScreen(
         state.selectedSymptoms.forEachIndexed { index, entry ->
             MedicalEntryInputRow(
                 entry = entry,
-                onDurationChange = {viewModel.onSymptomDetailUpdate(index, duration = it)},
-                onSeverityChange = {viewModel.onSymptomDetailUpdate(index, severity = it)},
-                onRemove = {viewModel.onSymptomRemove(entry)}
+                onDurationChange = { viewModel.onSymptomDetailUpdate(index, duration = it) },
+                onSeverityChange = { viewModel.onSymptomDetailUpdate(index, severity = it) },
+                onRemove = { viewModel.onSymptomRemove(entry) }
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -515,9 +540,9 @@ fun ClinicalAssessmentScreen(
                 }
             }
         }
-      //  Render the list of selected diagnosis BELOW the search bar
+        //  Render the list of selected diagnosis BELOW the search bar
         Spacer(Modifier.height(8.dp))
-        state.selectedDiagnosis.forEachIndexed { index,entry->
+        state.selectedDiagnosis.forEachIndexed { index, entry ->
             MedicalEntryInputRow(
                 entry = entry,
                 onDurationChange = { viewModel.onDiagnosisDetailsUpdated(index, duration = it) },
@@ -575,26 +600,89 @@ fun ClinicalAssessmentScreen(
 }
 
 @Composable
-fun VitalSignAndSymtoms(modifier: Modifier = Modifier, navController: NavController) {
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-    ) {
-        Text("No vital sign recorded")
-        Spacer(Modifier.height(8.dp))
-        Column(modifier = Modifier.fillMaxWidth()) {
-            FilledTonalButton(
-                onClick = { navController.navigate("addSymptoms") },
-                shape = RoundedCornerShape(4.dp),
-                modifier = Modifier
-                    .padding(paddingValues = PaddingValues(0.dp))
-                    .align(Alignment.End),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xff1d4ed8))
+fun VitalSignAndSymtoms(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewModel: BasicInformationViewModel,
+    patientId: String,
+    appointmentId: String,
+    physicianId: String,
+    token: String,
+) {
+    val state = viewModel._saveVitalSignState.collectAsStateWithLifecycle().value
+    val scope = rememberCoroutineScope()
+
+    when(state) {
+        is SaveVitalSignsUiState.idle -> {
+            // Show your vital signs form here
+            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                FilledTonalButton(
+                    onClick = {
+                        scope.launch {
+                           navController.navigate("addSymptoms/${token}/${patientId}/${appointmentId}")
+                        }
+                    },
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text("Add Symptoms")
+                }
+            }
+        }
+
+        is SaveVitalSignsUiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
+        is SaveVitalSignsUiState.Success -> {
+
+                Column(
+                    modifier = modifier.fillMaxSize()
+                ) {
+                    LazyColumn(
+                        modifier = modifier.fillMaxSize()
+                    ) {
+                        items(state.data.patientVitalSigns) { vitalSigns ->
+                            VitalSignSymptomResponseCard(
+                                patientVitalSign = vitalSigns,
+                                viewModel = viewModel
+                            )
+                        }
+                    }
+                }
+        }
+
+        is SaveVitalSignsUiState.Error -> {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Add Symptoms", color = Color.White)
+                Image(
+                    painter = painterResource(R.drawable.nodataloaded),
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(state.message, color = Color.Red) // Show error message
+                Spacer(modifier = Modifier.height(10.dp))
+                FilledTonalButton(
+                    onClick = {
+                        scope.launch {
+                            viewModel.onSaveClicked(
+                                patientId = patientId,
+                                appointmentId = appointmentId,
+                                physicianId = physicianId,
+                                token = token
+                            )
+                        }
+                    }
+                ) {
+                    Text("Retry")
+                }
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -758,11 +846,11 @@ fun TestInvestigation(
         }
         Spacer(Modifier.height(8.dp))
         // render the tests
-        state.selectedTest.forEachIndexed {index, entry ->
+        state.selectedTest.forEachIndexed { index, entry ->
             TestInputRow(
                 entry = entry,
-                onNotesChange = {viewModel.onTestInvestigationUpdated(index, reason = it)},
-                onRemove = {viewModel.onTestInvestigationRemoved(entry)}
+                onNotesChange = { viewModel.onTestInvestigationUpdated(index, reason = it) },
+                onRemove = { viewModel.onTestInvestigationRemoved(entry) }
             )
         }
         Spacer(Modifier.height(8.dp))
@@ -788,10 +876,14 @@ fun TabScreen(
     viewModel: BasicInformationViewModel,
     navController: NavController,
     submitionState: SubmitDiagnosisNotesSymptomsUiState,
-    patientId:String,
-    appointmentId:String,
-    token:String,
+    patientId: String,
+    appointmentId: String,
+    token: String,
 ) {
+    val apiResponse = viewModel._apiState.collectAsStateWithLifecycle().value
+    val physicianId = remember(apiResponse) {
+        (apiResponse as? BasicInformationUiState.Success)?.data?.message?.doctor?.id ?: ""
+    }
     var tabIndex by remember { mutableIntStateOf(0) }
     var showFullScreen by remember { mutableStateOf(false) }
 
@@ -875,7 +967,15 @@ fun TabScreen(
                                 appointmentId = appointmentId,
                                 token = token
                             )
-                            1 -> VitalSignAndSymtoms(navController = navController)
+
+                            1 -> VitalSignAndSymtoms(
+                                navController = navController,
+                                patientId = patientId,
+                                appointmentId = appointmentId,
+                                token = token,
+                                physicianId = physicianId,
+                                viewModel = viewModel
+                            )
                             2 -> Medication(state = state, viewModel = viewModel)
                             3 -> TestInvestigation(state = state, viewModel = viewModel)
                         }
@@ -974,17 +1074,17 @@ fun ChipInputTextField(
 fun AddSymptomScreen(
     modifier: Modifier = Modifier,
     viewModel: BasicInformationViewModel,
-    navController: NavController
+    navController: NavController,
+    patinetId:String,
+    appointmentId:String,
+    token:String,
 ) {
 
-
     val state = viewModel._state.collectAsStateWithLifecycle().value
+    val apiState = viewModel._apiState.collectAsStateWithLifecycle().value
+    val data = apiState as BasicInformationUiState.Success
+    val physicianId = data.data.message.doctor.id
 
-    LaunchedEffect(Unit) {
-        if ((state.heartRate.isEmpty()) || (state.bloodPressure.isEmpty()) || (state.oxygenSaturation.isEmpty()) || (state.height.isEmpty()) || (state.weight.isEmpty()) || (state.heartRate.isEmpty())) {
-
-        }
-    }
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
@@ -1098,15 +1198,21 @@ fun AddSymptomScreen(
                 Spacer(Modifier.width(6.dp))
                 FilledTonalButton(
                     onClick = {
-                       // send data to server through the api call
+                        // send data to server through the api call
+                        viewModel.onSaveClicked(
+                            token = token,
+                            physicianId = physicianId,
+                            appointmentId = appointmentId,
+                            patientId = patinetId
+                        )
                     },
 
                     enabled = state.bloodPressure.isNotEmpty()
-                        && state.heartRate.isNotEmpty()
-                        && state.temperature.isNotEmpty()
-                        && state.oxygenSaturation.isNotEmpty()
-                        && state.height.isNotEmpty()
-                        && state.weight.isNotEmpty(),
+                            && state.heartRate.isNotEmpty()
+                            && state.temperature.isNotEmpty()
+                            && state.oxygenSaturation.isNotEmpty()
+                            && state.height.isNotEmpty()
+                            && state.weight.isNotEmpty(),
 
                     modifier = modifier.padding(paddingValues = PaddingValues(0.dp)),
                     colors = ButtonDefaults.buttonColors(
@@ -1154,10 +1260,10 @@ fun SymptomsWritingTextField(
 @Composable
 fun MedicalEntryInputRow(
     entry: MedicalEntry,
-    onDurationChange:(String)->Unit,
-    onSeverityChange:(String)->Unit,
-    onRemove:() ->Unit
-){
+    onDurationChange: (String) -> Unit,
+    onSeverityChange: (String) -> Unit,
+    onRemove: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
     val severityOptions = listOf("Mild", "Moderate", "Severe")
 
@@ -1243,7 +1349,7 @@ fun MedicalEntryInputRow(
                     ) {
                         severityOptions.forEach { option ->
                             DropdownMenuItem(
-                                text = { Text(option,color = Color.Black) },
+                                text = { Text(option, color = Color.Black) },
                                 onClick = {
                                     onSeverityChange(option)
                                     expanded = false
@@ -1284,7 +1390,12 @@ fun MedicationInputRow(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(entry.medicationName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
+                Text(
+                    entry.medicationName,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
                 Icon(
                     imageVector = Icons.Default.Clear,
                     contentDescription = "Remove",
@@ -1437,6 +1548,123 @@ fun TestInputRow(
     }
 }
 
+
+
+@Composable
+fun VitalSignSymptomResponseCard(
+    modifier: Modifier = Modifier,
+    patientVitalSign: PatientVitalSign,
+    viewModel: BasicInformationViewModel,
+
+) {
+    // take recorded as unique key
+    val key = patientVitalSign.id
+    val state = viewModel._state.collectAsStateWithLifecycle().value
+    val isExpanded = state.VitalSignSymptomsCardExpandState[key] ?: false
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(patientVitalSign.recordedAt, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("12:09 PM", fontSize = 14.sp)
+            }
+            Spacer(Modifier.weight(1f))
+            IconButton(
+                onClick = { viewModel.onVitalSignSymptomResponseCardClicked(key, isExpanded = isExpanded) }
+            ) {
+                Icon(
+                    Icons.Default.KeyboardArrowDown,
+                    contentDescription = null
+                )
+            }
+        }
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = slideInVertically(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+
+            ),
+        ) {
+            Card(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                Column(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // row 1
+                    Row(
+                        modifier = modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Blood Pressure", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text(patientVitalSign.bloodPressure, fontSize = 14.sp)
+                        }
+                        Spacer(Modifier.weight(1f))
+                        Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
+                            Text("Heart Rate", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text(patientVitalSign.heartRate ,fontSize = 14.sp)
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    // row 2
+                    Row(
+                        modifier = modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Temprature", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text(patientVitalSign.temperature, fontSize = 14.sp)
+                        }
+                        Spacer(Modifier.weight(1f))
+                        Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
+                            Text("Oxygen Saturation", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text(patientVitalSign.oxygenSaturation, fontSize = 14.sp)
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    // row 3
+                    Row(
+                        modifier = modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Height", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text(patientVitalSign.height, fontSize = 14.sp)
+                        }
+                        Spacer(Modifier.weight(1f))
+                        Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
+                            Text("Weight", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text(patientVitalSign.weight, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 

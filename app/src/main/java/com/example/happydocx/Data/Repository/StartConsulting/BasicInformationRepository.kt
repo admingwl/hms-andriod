@@ -2,6 +2,9 @@ package com.example.happydocx.Data.Repository.StartConsulting
 
 import android.util.Log
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
+import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
+import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
+import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
 import com.example.happydocx.Data.Network.ApiService
@@ -58,6 +61,48 @@ class BasicInformationRepository {
         }catch (e:Exception){
             // Handle network or parsing errors
             Result.failure(e)
+        }
+    }
+
+    // fun for repo to communicate with the server
+    suspend fun sendVitalSignsAndSymptoms(
+        token:String,
+        requestBody: SaveSendVitalSignsAndSymptomsRequestBody
+    ): Result<SaveSendVitalSignsResponseBody>{
+
+        return try {
+            // call api here first
+            val result = apiService.sendVitalSignsAndSymptoms(token = "Bearer $token", body = requestBody)
+            if(result.isSuccessful && result.body()!=null){
+                Log.d("Server Code","${result.code()}")
+                Log.d("Server Response","Success: ${result.body()}")
+                Result.success(result.body()!!)
+            }else{
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e: Exception){
+            Result.failure(e)
+        }
+    }
+
+
+    // function to get all vital signs and symptoms list
+    suspend fun getAllSignsAndSymptomsList(
+        token:String,
+        patientId:String
+    ):Result<ListOfVitalSignAndSymptomResponse>{
+        return try{
+            val result = apiService.getAllVitalSignsAndSymptoms(token = token, patientId = patientId)
+            if(result.isSuccessful && result.body()!=null){
+                Log.d("ServerMessage","Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            }else{
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (E:Exception){
+            Result.failure(E)
         }
     }
 

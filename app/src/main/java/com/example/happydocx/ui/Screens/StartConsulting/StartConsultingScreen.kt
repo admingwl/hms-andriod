@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -35,6 +36,7 @@ fun StartConsultingScreen(
     patientId:String,
     token:String,
     appointmentID:String,
+    documentViewModel: PatientDocumentUploadViewModel
 
 ) {
     StartConsultingScreenTabLayout(
@@ -44,6 +46,7 @@ fun StartConsultingScreen(
         patientId = patientId,
         token=token,
         appointmentId = appointmentID,
+        documentViewModel = documentViewModel
 
     )
 }
@@ -59,6 +62,7 @@ fun StartConsultingScreenTabLayout(
     patientId:String,
     token:String,
     appointmentId:String,
+    documentViewModel: PatientDocumentUploadViewModel
 ) {
     var tabIndex = remember { mutableIntStateOf(0) }
     val options = listOf(
@@ -133,7 +137,9 @@ fun StartConsultingScreenTabLayout(
                     InvoicesScreen()
                 }
                 2 -> {
-                    PatientDocumentsUploading()
+                    PatientDocumentsUploading(
+                        viewModel = documentViewModel
+                    )
                 }
                 3 -> {
                     Box(

@@ -53,6 +53,7 @@ import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.ParticularUserSignUpViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -71,6 +72,7 @@ fun NavigationGraph() {
         factory = FormViewModelFactory(context)
     )
     val doctorAppointmentViewModel : DoctorAppointmentsViewModel = viewModel()
+    val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
 
     NavHost(
         startDestination = "Login",
@@ -129,8 +131,25 @@ fun NavigationGraph() {
             )
         }
 
-        composable(route = "addSymptoms") {
-            AddSymptomScreen(viewModel = BasicPatientInformationViewModel, navController = navController)
+        composable(
+            route = "addSymptoms/{token}/{patientId}/{appointmentId}",
+            arguments = listOf(
+                navArgument("token"){type = NavType.StringType},
+                navArgument("patientId"){type = NavType.StringType},
+                navArgument("appointmentId"){type = NavType.StringType}
+            )
+        )
+            {backStack->
+                val token = backStack.arguments?.getString("token")?:""
+                val patientId = backStack.arguments?.getString("patientId")?:""
+                val appointmentId = backStack.arguments?.getString("appointmentId")?:""
+            AddSymptomScreen(
+                viewModel = BasicPatientInformationViewModel,
+                navController = navController,
+                token = token,
+                patinetId = patientId,
+                appointmentId = appointmentId
+                )
         }
 
         composable(route = "invoiceScreen"){
@@ -155,6 +174,7 @@ fun NavigationGraph() {
                     ,patientId = patientId,
                     token = token,
                     appointmentID = appointmentId,
+                    documentViewModel = documentUploadViewModel
                 )
             }
         composable(
