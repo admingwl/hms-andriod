@@ -51,4 +51,5 @@ data class StartConsultingUiState(
     val oxygenSaturation:String="",
     val height:String="",
     val weight:String="",
+    val VitalSignSymptomsCardExpandState:Map<String,Boolean> = emptyMap()
     )

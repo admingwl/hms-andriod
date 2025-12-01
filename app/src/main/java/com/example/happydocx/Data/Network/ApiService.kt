@@ -8,6 +8,9 @@ import com.example.happydocx.Data.Model.LoginModel.LoginResponse
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
+import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
+import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
+import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
 import okhttp3.MultipartBody
@@ -116,4 +119,21 @@ interface ApiService{
         @Header("Authentication") token:String,
         @Body body: SaveSymptomDiagnosisRequest,
     ): Response<SaveSymptomDiagnosisResponse>
+
+    // post api for the save vital signs and symptoms of patient
+    @POST("api/v1/vital-signs")
+    suspend fun sendVitalSignsAndSymptoms(
+        @Header("Authorization") token: String,
+        @Body body: SaveSendVitalSignsAndSymptomsRequestBody
+    ): Response<SaveSendVitalSignsResponseBody>
+
+
+    // get all the list of vital signs and symptoms
+    @GET("api/v1/vital-signs/{patientId}")
+    suspend fun getAllVitalSignsAndSymptoms(
+        @Header("Authorization") token: String,
+        @Path("patientId") patientId: String
+    ):Response<ListOfVitalSignAndSymptomResponse>
+
+
 }
