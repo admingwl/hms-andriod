@@ -105,6 +105,7 @@ import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationUiSta
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVitalSignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SubmitDiagnosisNotesSymptomsUiState
+import com.example.happydocx.ui.ViewModels.StartConsulting.VitalSignAndSymptomsList
 import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
@@ -396,6 +397,11 @@ fun ClinicalAssessmentScreen(
         when (submitionState) {
             is SubmitDiagnosisNotesSymptomsUiState.Success -> {
                 Toast.makeText(context, "Successfully Submitted", Toast.LENGTH_LONG).show()
+                // 1. Clear the inputs
+                viewModel.clearClinicalAssessmentFields()
+
+                // 2. Reset the state so the Toast doesn't trigger again
+                viewModel.resetSubmissionState()
             }
 
             is SubmitDiagnosisNotesSymptomsUiState.Error -> {
@@ -589,12 +595,21 @@ fun ClinicalAssessmentScreen(
                 }
             },
             shape = RoundedCornerShape(4.dp),
+            enabled = submitionState !is SubmitDiagnosisNotesSymptomsUiState.Loading,
             modifier = Modifier
                 .padding(paddingValues = PaddingValues(0.dp))
                 .align(Alignment.End),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xff1d4ed8))
         ) {
-            Text("Submit", color = Color.White)
+            if(submitionState is SubmitDiagnosisNotesSymptomsUiState.Loading){
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = Color.Blue,
+                    strokeWidth = 2.dp
+                )
+            }else{
+                Text("Submit", color = Color.White)
+            }
         }
     }
 }
@@ -609,81 +624,24 @@ fun VitalSignAndSymtoms(
     physicianId: String,
     token: String,
 ) {
-    val state = viewModel._saveVitalSignState.collectAsStateWithLifecycle().value
     val scope = rememberCoroutineScope()
 
-    when(state) {
-        is SaveVitalSignsUiState.idle -> {
-            // Show your vital signs form here
-            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                FilledTonalButton(
-                    onClick = {
-                        scope.launch {
-                           navController.navigate("addSymptoms/${token}/${patientId}/${appointmentId}")
-                        }
-                    },
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text("Add Symptoms")
+
+    // here i show the list of all the paritcular patient data of symptoms
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        FilledTonalButton(
+            onClick = {
+                scope.launch {
+                    navController.navigate("addSymptoms/${token}/${patientId}/${appointmentId}")
                 }
-            }
-        }
-
-        is SaveVitalSignsUiState.Loading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-
-        is SaveVitalSignsUiState.Success -> {
-
-                Column(
-                    modifier = modifier.fillMaxSize()
-                ) {
-                    LazyColumn(
-                        modifier = modifier.fillMaxSize()
-                    ) {
-                        items(state.data.patientVitalSigns) { vitalSigns ->
-                            VitalSignSymptomResponseCard(
-                                patientVitalSign = vitalSigns,
-                                viewModel = viewModel
-                            )
-                        }
-                    }
-                }
-        }
-
-        is SaveVitalSignsUiState.Error -> {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.nodataloaded),
-                    contentDescription = null
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(state.message, color = Color.Red) // Show error message
-                Spacer(modifier = Modifier.height(10.dp))
-                FilledTonalButton(
-                    onClick = {
-                        scope.launch {
-                            viewModel.onSaveClicked(
-                                patientId = patientId,
-                                appointmentId = appointmentId,
-                                physicianId = physicianId,
-                                token = token
-                            )
-                        }
-                    }
-                ) {
-                    Text("Retry")
-                }
-            }
+            },
+            shape = RoundedCornerShape(4.dp)
+        ) {
+            Text("Add Symptoms")
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1084,7 +1042,30 @@ fun AddSymptomScreen(
     val apiState = viewModel._apiState.collectAsStateWithLifecycle().value
     val data = apiState as BasicInformationUiState.Success
     val physicianId = data.data.message.doctor.id
+    val vitalSignAndSymptom = viewModel._saveVitalSignState.collectAsStateWithLifecycle().value
+    val context = LocalContext.current
 
+
+    // add launched effect to observe the save state
+    LaunchedEffect(vitalSignAndSymptom) {
+        when(vitalSignAndSymptom){
+            is SaveVitalSignsUiState.Success -> {
+                Toast.makeText(context, "Successfully Submitted", Toast.LENGTH_LONG).show()
+                // after that i going to clear all the fields
+                viewModel.clearVitalSignField()
+
+                // Reset the API state so we can save again if needed without re-triggering this block immediately
+                viewModel.resetSaveVitalSignState()
+            }
+            is SaveVitalSignsUiState.Error->{
+                Toast.makeText(context, vitalSignAndSymptom.message, Toast.LENGTH_SHORT).show()
+                viewModel.resetSaveVitalSignState()
+            }
+            else -> {
+                // leave the loading and idle for know
+            }
+        }
+    }
     Scaffold(
         modifier = modifier
             .fillMaxSize(),
@@ -1212,19 +1193,33 @@ fun AddSymptomScreen(
                             && state.temperature.isNotEmpty()
                             && state.oxygenSaturation.isNotEmpty()
                             && state.height.isNotEmpty()
-                            && state.weight.isNotEmpty(),
+                            && state.weight.isNotEmpty()
+                            && vitalSignAndSymptom !is SaveVitalSignsUiState.Loading, // Check loading here
 
                     modifier = modifier.padding(paddingValues = PaddingValues(0.dp)),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff1d4ed8)
                     ),
                     shape = RoundedCornerShape(4.dp)
+
+
+
                 ) {
-                    Text("Save", fontWeight = FontWeight.Bold, color = Color.White)
+                   // show circular progress indicator if loading else show text
+                    if(vitalSignAndSymptom is SaveVitalSignsUiState.Loading){
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.Blue,
+                            strokeWidth = 2.dp
+                        )
+                    }else{
+                        Text("Save", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
             }
 
         }
+
     }
 
 }

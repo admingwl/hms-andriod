@@ -60,5 +60,5 @@ data class PatientVitalSign(
     val weight: String,
     @SerializedName("_id")
     val id: String,
-    val recordedAt: String  // Add this field
+    val recordedAt: String
 )
