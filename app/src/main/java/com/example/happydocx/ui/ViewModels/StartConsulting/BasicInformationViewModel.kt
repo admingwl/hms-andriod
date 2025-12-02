@@ -39,7 +39,7 @@
         val _submitState = submissionState.asStateFlow()
     
         // send vital signs and symptoms state
-        private val saveVitalSignsState: MutableStateFlow<SaveVitalSignsUiState> = MutableStateFlow(SaveVitalSignsUiState.idle)
+        private val saveVitalSignsState: MutableStateFlow<SaveVitalSignsUiState> = MutableStateFlow(SaveVitalSignsUiState.Idle)
         val _saveVitalSignState = saveVitalSignsState.asStateFlow()
 
         private val listOfVitalSignAndSymptoms: MutableStateFlow<VitalSignAndSymptomsList> = MutableStateFlow(VitalSignAndSymptomsList.Loading)
@@ -135,6 +135,23 @@
                 )
             }
         }
+        // 1. Function to clear Clinical Assessment inputs (Symptoms, Diagnosis, Notes)
+        fun clearClinicalAssessmentFields() {
+            state.update { current ->
+                current.copy(
+                    selectedSymptoms = emptyList(),
+                    selectedDiagnosis = emptyList(),
+                    notes = "",
+                    symptomsSearchQuery = "",
+                    diagnosisSearchQuery = ""
+                )
+            }
+        }
+
+        // 2. Function to reset the Submission State back to Idle
+        fun resetSubmissionState() {
+            submissionState.value = SubmitDiagnosisNotesSymptomsUiState.Idle
+        }
     
         // function Save button  for save the vital signs and symptoms
          fun onSaveClicked(
@@ -184,6 +201,25 @@
                     }
                 )
             }
+        }
+
+        // function to clear the inputs after successful save
+        fun clearVitalSignField(){
+            state.update { it->
+                it.copy(
+                    bloodPressure = "",
+                    heartRate = "",
+                    temperature = "",
+                    oxygenSaturation = "",
+                    height = "",
+                    weight = ""
+                )
+            }
+        }
+
+        // add this above function to reset the api state so the toast not shown again on rotation
+        fun resetSaveVitalSignState(){
+            saveVitalSignsState.value = SaveVitalSignsUiState.Idle
         }
     
         // symptoms
@@ -602,7 +638,7 @@
     }
     
     sealed class SaveVitalSignsUiState {
-        object idle: SaveVitalSignsUiState()
+        object Idle : SaveVitalSignsUiState()
         object Loading : SaveVitalSignsUiState()
         data class Success(val data : SaveSendVitalSignsResponseBody) : SaveVitalSignsUiState()
         data class Error(val message: String) : SaveVitalSignsUiState()
