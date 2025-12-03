@@ -9,6 +9,7 @@ import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
+import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
@@ -129,11 +130,9 @@ interface ApiService{
 
 
     // get all the list of vital signs and symptoms
-    @GET("api/v1/vital-signs/{patientId}")
+    @GET("api/v1/vital-signs/all/{patientId}")
     suspend fun getAllVitalSignsAndSymptoms(
         @Header("Authorization") token: String,
         @Path("patientId") patientId: String
-    ):Response<ListOfVitalSignAndSymptomResponse>
-
-
+    ):Response<List<ParticularPatient>>
 }
