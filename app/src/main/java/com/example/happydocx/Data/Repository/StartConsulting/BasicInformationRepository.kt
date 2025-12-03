@@ -3,6 +3,7 @@ package com.example.happydocx.Data.Repository.StartConsulting
 import android.util.Log
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
+import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
@@ -91,9 +92,9 @@ class BasicInformationRepository {
     suspend fun getAllSignsAndSymptomsList(
         token:String,
         patientId:String
-    ):Result<ListOfVitalSignAndSymptomResponse>{
+    ):Result<List<ParticularPatient>>{
         return try{
-            val result = apiService.getAllVitalSignsAndSymptoms(token = token, patientId = patientId)
+            val result = apiService.getAllVitalSignsAndSymptoms(token = "Bearer $token", patientId = patientId)
             if(result.isSuccessful && result.body()!=null){
                 Log.d("ServerMessage","Success: ${result.body()} and code is ${result.code()}")
                 Result.success(result.body()!!)

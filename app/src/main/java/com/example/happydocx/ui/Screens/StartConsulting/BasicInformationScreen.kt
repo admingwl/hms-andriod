@@ -38,11 +38,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -97,6 +99,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
 import com.example.happydocx.Data.Model.StartConsulting.PatientVitalSign
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
@@ -614,6 +617,7 @@ fun ClinicalAssessmentScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun VitalSignAndSymtoms(
     modifier: Modifier = Modifier,
@@ -624,23 +628,55 @@ fun VitalSignAndSymtoms(
     physicianId: String,
     token: String,
 ) {
-    val scope = rememberCoroutineScope()
+    val listState = viewModel._listOfVitalSignAndSymptoms.collectAsStateWithLifecycle().value
 
+    LaunchedEffect(patientId) {
+        viewModel.getListOfSymptomsAndVitalSigns(token = token, patientId = patientId)
+    }
 
-    // here i show the list of all the paritcular patient data of symptoms
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        FilledTonalButton(
-            onClick = {
-                scope.launch {
-                    navController.navigate("addSymptoms/${token}/${patientId}/${appointmentId}")
+    when (listState) {
+        is VitalSignAndSymptomsList.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
+        is VitalSignAndSymptomsList.Success -> {
+            val data = listState.data
+            LazyColumn(
+                modifier = modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                items(data) { item ->
+                    VitalSignSymptomResponseCard(
+                        patient = item,
+                        viewModel = viewModel
+                    )
                 }
-            },
-            shape = RoundedCornerShape(4.dp)
-        ) {
-            Text("Add Symptoms")
+            }
+        }
+
+        is VitalSignAndSymptomsList.Error -> {
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Error: ${listState.message}",
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = {
+                    viewModel.getListOfSymptomsAndVitalSigns(token, patientId)
+                }) {
+                    Text("Retry")
+                }
+            }
         }
     }
 }
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -827,6 +863,7 @@ fun TestInvestigation(
 
 
 // Tab screen 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TabScreen(
     modifier: Modifier = Modifier,
@@ -896,7 +933,6 @@ fun TabScreen(
                             .fillMaxWidth()
                             .background(Color(0xfff0f5ff))
                             .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -905,6 +941,24 @@ fun TabScreen(
                             fontWeight = FontWeight.Bold,
                             color = Color.Black
                         )
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = {
+//                            viewModel.onSaveClicked(
+//                                token = token,
+//                                patientId =patientId,
+//                                appointmentId =appointmentId,
+//                                physicianId = physicianId
+//                            )
+                            // navigate to add symptom screen
+                            navController.navigate("addSymptoms/$token/$patientId/$appointmentId")
+                        }) {
+                            Icon(
+                                painter = painterResource(R.drawable.add_file),
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = modifier.padding(8.dp)
+                            )
+                        }
                         IconButton(onClick = { showFullScreen = false }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
@@ -1078,7 +1132,16 @@ fun AddSymptomScreen(
                     titleContentColor = Color.White
                 ),
                 modifier = modifier
-                    .background(brush = gradient_colors)
+                    .background(brush = gradient_colors),
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack()}) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -1545,121 +1608,127 @@ fun TestInputRow(
 
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun VitalSignSymptomResponseCard(
-    modifier: Modifier = Modifier,
-    patientVitalSign: PatientVitalSign,
-    viewModel: BasicInformationViewModel,
-
-) {
-    // take recorded as unique key
-    val key = patientVitalSign.id
-    val state = viewModel._state.collectAsStateWithLifecycle().value
-    val isExpanded = state.VitalSignSymptomsCardExpandState[key] ?: false
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp)
+    fun VitalSignSymptomResponseCard(
+        modifier: Modifier = Modifier,
+        patient: ParticularPatient,
+        viewModel: BasicInformationViewModel
     ) {
-        Row(
+        // take recorded as unique key
+        val key = patient.recordedAt ?: "unknown_${patient.hashCode()}"
+        val state = viewModel._state.collectAsStateWithLifecycle().value
+        val isExpanded = state.VitalSignSymptomsCardExpandState[key] ?: false
+        Card(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xfff0f5ff)
+            )
         ) {
-            Column {
-                Text(patientVitalSign.recordedAt, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("12:09 PM", fontSize = 14.sp)
-            }
-            Spacer(Modifier.weight(1f))
-            IconButton(
-                onClick = { viewModel.onVitalSignSymptomResponseCardClicked(key, isExpanded = isExpanded) }
-            ) {
-                Icon(
-                    Icons.Default.KeyboardArrowDown,
-                    contentDescription = null
-                )
-            }
-        }
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = slideInVertically(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium
-                )
-
-            ),
-        ) {
-            Card(
+            Row(
                 modifier = modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
+                Column {
+                    Text(DateUtils.formatAppointmentDate("${patient.recordedAt}") ?: "NA", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(
+                    onClick = { viewModel.onVitalSignSymptomResponseCardClicked(key, isExpanded = isExpanded) }
+                ) {
+                    Icon(
+                        Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = Color.Black
+                    )
+                }
+            }
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = slideInVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+
+                ),
+            ) {
+                Card(
                     modifier = modifier
                         .fillMaxWidth()
                         .padding(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xfff0f5ff)
+                    )
                 ) {
-                    // row 1
-                    Row(
-                        modifier = modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column {
-                            Text("Blood Pressure", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                            Spacer(Modifier.height(4.dp))
-                            Text(patientVitalSign.bloodPressure, fontSize = 14.sp)
+                        // row 1
+                        Row(
+                            modifier = modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Blood Pressure", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+                                Spacer(Modifier.height(4.dp))
+                                Text(patient.bloodPressure ?: "NA", fontSize = 14.sp, color = Color.Black)
+                            }
+                            Spacer(Modifier.weight(1f))
+                            Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
+                                Text("Heart Rate", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+                                Spacer(Modifier.height(4.dp))
+                                Text(patient.heartRate ?: "NA" ,fontSize = 14.sp, color = Color.Black)
+                            }
                         }
-                        Spacer(Modifier.weight(1f))
-                        Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
-                            Text("Heart Rate", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                            Spacer(Modifier.height(4.dp))
-                            Text(patientVitalSign.heartRate ,fontSize = 14.sp)
+                        Spacer(Modifier.height(8.dp))
+                        // row 2
+                        Row(
+                            modifier = modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Temprature", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+                                Spacer(Modifier.height(4.dp))
+                                Text(patient.temprature?:"NA", fontSize = 14.sp, color = Color.Black)
+                            }
+                            Spacer(Modifier.weight(1f))
+                            Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
+                                Text("Oxygen Saturation", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+                                Spacer(Modifier.height(4.dp))
+                                Text(patient.oxigenSaturation?:"NA", fontSize = 14.sp, color = Color.Black)
+                            }
                         }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    // row 2
-                    Row(
-                        modifier = modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Temprature", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                            Spacer(Modifier.height(4.dp))
-                            Text(patientVitalSign.temperature, fontSize = 14.sp)
-                        }
-                        Spacer(Modifier.weight(1f))
-                        Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
-                            Text("Oxygen Saturation", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                            Spacer(Modifier.height(4.dp))
-                            Text(patientVitalSign.oxygenSaturation, fontSize = 14.sp)
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    // row 3
-                    Row(
-                        modifier = modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Height", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                            Spacer(Modifier.height(4.dp))
-                            Text(patientVitalSign.height, fontSize = 14.sp)
-                        }
-                        Spacer(Modifier.weight(1f))
-                        Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
-                            Text("Weight", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                            Spacer(Modifier.height(4.dp))
-                            Text(patientVitalSign.weight, fontSize = 14.sp)
+                        Spacer(Modifier.height(8.dp))
+                        // row 3
+                        Row(
+                            modifier = modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Height", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+                                Spacer(Modifier.height(4.dp))
+                                Text(patient.height?:"NA", fontSize = 14.sp)
+                            }
+                            Spacer(Modifier.weight(1f))
+                            Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.End){
+                                Text("Weight", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = Color.Black)
+                                Spacer(Modifier.height(4.dp))
+                                Text(patient.weight?:"NA", fontSize = 14.sp, color = Color.Black)
+                            }
                         }
                     }
                 }
             }
         }
     }
-}
 
 
 

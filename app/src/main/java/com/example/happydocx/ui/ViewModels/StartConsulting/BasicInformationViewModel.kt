@@ -7,6 +7,7 @@
     import com.example.happydocx.Data.Model.StartConsulting.AssessmentItem
     import com.example.happydocx.Data.Model.StartConsulting.InvestigationData
     import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
+    import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
     import com.example.happydocx.Data.Model.StartConsulting.PatientVitalSigns
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
@@ -594,6 +595,9 @@
                 // set loading state
                 listOfVitalSignAndSymptoms.value = VitalSignAndSymptomsList.Loading
                 try {
+                    // Debug logs
+                    Log.d("API_CALL", "Token: Bearer ${token.take(10)}...")
+                    Log.d("API_CALL", "PatientId: $patientId")
                     val result = repo.getAllSignsAndSymptomsList(patientId = patientId,token=token)
                     result.fold(
                         onSuccess = {
@@ -650,7 +654,7 @@
         object Loading : VitalSignAndSymptomsList()
 
         data class Success(
-            val data: ListOfVitalSignAndSymptomResponse
+            val data: List<ParticularPatient>
         ) : VitalSignAndSymptomsList()
 
         data class Error(
