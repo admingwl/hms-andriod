@@ -72,6 +72,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -96,6 +97,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -106,6 +108,7 @@ import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.MedicationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVitalSignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SubmitDiagnosisNotesSymptomsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.VitalSignAndSymptomsList
@@ -684,10 +687,48 @@ fun VitalSignAndSymtoms(
 fun Medication(
     modifier: Modifier = Modifier,
     state: StartConsultingUiState,
-    viewModel: BasicInformationViewModel
+    viewModel: BasicInformationViewModel,
+    token:String,
+    patientId: String,
+    appointmentId: String,
+    physicianId: String
 ) {
+
+    val ViewModelState = viewModel._sendMedication.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val filteredList = viewModel.medication.filter { it ->
         it.contains(state.medicationSearchQuery, ignoreCase = true)
+    }
+    //handle medication submission state
+    LaunchedEffect(ViewModelState.value) {
+        when (val castState = ViewModelState.value) {
+            is MedicationUiState.Success -> {
+                Toast.makeText(
+                    context,
+                    castState.data.message,
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                // clear the text field after successfully submission
+                viewModel.clearMedicationFields()
+                // reset state
+                viewModel.resetSendMedicationState()
+            }
+
+            is MedicationUiState.Error -> {
+                Toast.makeText(
+                    context,
+                    castState.message,
+                    Toast.LENGTH_LONG
+                ).show()
+
+                viewModel.resetSendMedicationState()
+            }
+
+            else -> {
+                // left case of loading and idle
+            }
+        }
     }
     Column(
         modifier = modifier
@@ -757,13 +798,39 @@ fun Medication(
             )
         }
         FilledTonalButton(
-            onClick = {},
+            onClick = {
+                // here we call out api method
+                if (state.selectedMedication.isNotEmpty()) {
+                    viewModel.onSendMedicationClicked(
+                        token = token,
+                        patientId = patientId,
+                        appointmentId = appointmentId,
+                        physicianId = physicianId
+                    )
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Please add at least one medication",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            },
+            enabled = ViewModelState.value !is MedicationUiState.Loading &&
+                    state.selectedMedication.isNotEmpty(),
             shape = RoundedCornerShape(4.dp),
             modifier = Modifier
                 .padding(paddingValues = PaddingValues(0.dp))
                 .align(Alignment.End),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xff1d4ed8))
         ) {
+            if (ViewModelState.value is MedicationUiState.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+                Spacer(Modifier.width(8.dp))
+            }
             Text("Submit", color = Color.White)
         }
     }
@@ -988,7 +1055,13 @@ fun TabScreen(
                                 physicianId = physicianId,
                                 viewModel = viewModel
                             )
-                            2 -> Medication(state = state, viewModel = viewModel)
+                            2 -> Medication(
+                                state = state, viewModel = viewModel,
+                                token = token,
+                                patientId = patientId,
+                                appointmentId = appointmentId,
+                                physicianId = physicianId
+                            )
                             3 -> TestInvestigation(state = state, viewModel = viewModel)
                         }
                     }

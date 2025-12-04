@@ -9,6 +9,8 @@ import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
+import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
+import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
@@ -135,4 +137,11 @@ interface ApiService{
         @Header("Authorization") token: String,
         @Path("patientId") patientId: String
     ):Response<List<ParticularPatient>>
+
+    // submit medication api
+    @POST("api/v1/medical/medication")
+    suspend fun sendMedication(
+       @Header("Authorization") token:String,
+       @Body body: MedicationRequest
+    ): Response<MedicationResponse>
 }

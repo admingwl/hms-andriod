@@ -7,6 +7,10 @@
     import com.example.happydocx.Data.Model.StartConsulting.AssessmentItem
     import com.example.happydocx.Data.Model.StartConsulting.InvestigationData
     import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
+    import com.example.happydocx.Data.Model.StartConsulting.MedicationOrder
+    import com.example.happydocx.Data.Model.StartConsulting.MedicationOrders
+    import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
+    import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
     import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
     import com.example.happydocx.Data.Model.StartConsulting.PatientVitalSigns
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
@@ -45,6 +49,10 @@
 
         private val listOfVitalSignAndSymptoms: MutableStateFlow<VitalSignAndSymptomsList> = MutableStateFlow(VitalSignAndSymptomsList.Loading)
         val _listOfVitalSignAndSymptoms = listOfVitalSignAndSymptoms.asStateFlow()
+
+        // send medication state
+        private val sendMedication: MutableStateFlow<MedicationUiState> = MutableStateFlow(MedicationUiState.Idle)
+        val _sendMedication = sendMedication.asStateFlow()
 
     
     
@@ -204,6 +212,66 @@
             }
         }
 
+        // function for send medication
+        fun onSendMedicationClicked(
+            token:String,
+            patientId: String,
+            appointmentId: String,
+            physicianId: String
+        ){
+            viewModelScope.launch {
+                // initially i set it to loading
+                sendMedication.value = MedicationUiState.Loading
+                val medicationOrder = state.value.selectedMedication.map { medication->
+                    MedicationOrders(
+                        medicationName = medication.medicationName,
+                        dosage = medication.quantity,
+                        duration = medication.duration
+                    )
+                }
+
+                // create request body
+                val requestBody = MedicationRequest(
+                    patient = patientId,
+                    medicationOrders = medicationOrder,
+                    appointment = appointmentId,
+                    physicianId = physicianId
+                )
+
+                val result = repo.sendMedicationReport(
+                    token = token,
+                    requestBody = requestBody
+                )
+                // Handle the result
+                result.fold(
+                    onSuccess = { response ->
+                        sendMedication.value = MedicationUiState.Success(data = response)
+                        Log.d("SendMedication", "Successfully sent medications: ${response.message}")
+                    },
+                    onFailure = { exception ->
+                        sendMedication.value = MedicationUiState.Error(
+                            message = exception.message ?: "Failed to send medications"
+                        )
+                        Log.e("SendMedication", "Error: ${exception.message}")
+                    }
+                )
+            }
+        }
+        // clear medication fields
+        fun clearMedicationFields(
+
+        ){
+            state.update { it->
+                it.copy(
+                    selectedMedication = emptyList(),
+                    medicationSearchQuery = ""
+                )
+            }
+        }
+
+        fun resetSendMedicationState() {
+            sendMedication.value = MedicationUiState.Idle
+        }
         // function to clear the inputs after successful save
         fun clearVitalSignField(){
             state.update { it->
@@ -660,5 +728,13 @@
         data class Error(
             val message: String
         ) : VitalSignAndSymptomsList()
+    }
+
+    // create sealed class for the send medication
+    sealed class MedicationUiState{
+        object Idle : MedicationUiState()
+        object Loading : MedicationUiState()
+        data class Success(val data: MedicationResponse) : MedicationUiState()
+        data class Error(val message: String) : MedicationUiState()
     }
 
