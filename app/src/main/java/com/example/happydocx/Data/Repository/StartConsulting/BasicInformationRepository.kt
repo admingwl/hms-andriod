@@ -3,6 +3,8 @@ package com.example.happydocx.Data.Repository.StartConsulting
 import android.util.Log
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
+import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
+import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
@@ -104,6 +106,26 @@ class BasicInformationRepository {
             }
         }catch (E:Exception){
             Result.failure(E)
+        }
+    }
+
+    // function to send the medication detail
+    suspend fun sendMedicationReport(
+         token:String,
+         requestBody: MedicationRequest
+    ):Result<MedicationResponse>{
+        return try {
+            val result = apiService.sendMedication(token = "Bearer $token",requestBody)
+            if(result.isSuccessful && result.body()!=null){
+                Log.d("Server Code","${result.code()}")
+                Log.d("Server Response","Success: ${result.body()}")
+                Result.success(result.body()!!)
+            }else{
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch(e:Exception){
+            Result.failure(e)
         }
     }
 
