@@ -16,6 +16,10 @@
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
     import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
+    import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationOrder
+    import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationOrders
+    import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
+    import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
     import com.example.happydocx.Data.Repository.StartConsulting.BasicInformationRepository
     import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
     import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
@@ -54,6 +58,9 @@
         private val sendMedication: MutableStateFlow<MedicationUiState> = MutableStateFlow(MedicationUiState.Idle)
         val _sendMedication = sendMedication.asStateFlow()
 
+        // get state for test and investigation
+        private val testAndInvestigation:MutableStateFlow<TestAndInvestigation> = MutableStateFlow(TestAndInvestigation.Idle)
+        val _testAndInvestigation = testAndInvestigation.asStateFlow()
     
     
         // function for the api response
@@ -271,6 +278,66 @@
 
         fun resetSendMedicationState() {
             sendMedication.value = MedicationUiState.Idle
+        }
+
+        // function for the testAndInvestigation
+        fun sendTestAndInvestigationRepo(
+            token:String,
+            patientId: String,
+            appointmentId: String,
+            physicianId: String
+        ){
+            viewModelScope.launch {
+                testAndInvestigation.value = TestAndInvestigation.Loading
+               // Map the selected test to InvestigationOrder format
+                val investigationOrderList = state.value.selectedTest.map { test->
+                    TestAndInvestigationOrders(
+                        testName = test.testInvestigationName,
+                        reason = test.testInvestigationReason
+                    )
+                }
+                // create the request body
+                val requestBody = TestAndInvestigationRequest(
+                    patient = patientId,
+                    appointment = appointmentId,
+                    physicianId = physicianId,
+                    investigationOrders = investigationOrderList
+                )
+
+                // call repo function
+                val result = repo.submitTestAndInvestigation(
+                    token = token,
+                    requestBody = requestBody
+                )
+
+                // Handle the result
+                result.fold(
+                    onSuccess = { response ->
+                        testAndInvestigation.value = TestAndInvestigation.Success(data = response)
+                        Log.d("TestInvestigation", "Successfully sent: ${response.message}")
+                    },
+                    onFailure = { exception ->
+                        testAndInvestigation.value = TestAndInvestigation.Error(
+                            message = exception.message ?: "Failed to send test & investigation"
+                        )
+                        Log.e("TestInvestigation", "Error: ${exception.message}")
+                    }
+                )
+            }
+        }
+        // Clear test & investigation fields
+        fun clearTestInvestigationFields() {
+            state.update { it ->
+                it.copy(
+                    selectedTest = emptyList(),
+                    testSearchQuery = ""
+                )
+            }
+        }
+
+        // Reset test & investigation state
+        fun resetTestInvestigationState() {
+            testAndInvestigation.value = TestAndInvestigation.Idle
         }
         // function to clear the inputs after successful save
         fun clearVitalSignField(){
@@ -736,5 +803,12 @@
         object Loading : MedicationUiState()
         data class Success(val data: MedicationResponse) : MedicationUiState()
         data class Error(val message: String) : MedicationUiState()
+    }
+
+    sealed class TestAndInvestigation{
+        object Idle : TestAndInvestigation()
+        object Loading: TestAndInvestigation()
+        data class Success(val data : TestAndInvestigationResponse): TestAndInvestigation()
+        data class Error(val message:String): TestAndInvestigation()
     }
 
