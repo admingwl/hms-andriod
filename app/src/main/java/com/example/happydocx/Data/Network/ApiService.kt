@@ -16,6 +16,8 @@ import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSym
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
+import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
+import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -144,4 +146,12 @@ interface ApiService{
        @Header("Authorization") token:String,
        @Body body: MedicationRequest
     ): Response<MedicationResponse>
+
+    // here is my api call for the test and investigation
+    @POST("api/v1/medical-record/add-order")
+    suspend fun submitTestAndInvestigation(
+        @Header("Authorization") token: String,
+        @Body body: TestAndInvestigationRequest
+    ): Response<TestAndInvestigationResponse>
+
 }

@@ -10,6 +10,8 @@ import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSym
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
+import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
+import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
 import com.example.happydocx.Data.Network.ApiService
 import com.example.happydocx.Utils.RetrofitInstance
 import okhttp3.Request
@@ -129,4 +131,23 @@ class BasicInformationRepository {
         }
     }
 
+    // function for the test and investigation
+    suspend fun submitTestAndInvestigation(
+        token:String,
+        requestBody: TestAndInvestigationRequest
+    ):Result<TestAndInvestigationResponse>{
+
+        return try{
+            val result = apiService.submitTestAndInvestigation(token = "Bearer $token", body = requestBody)
+            if(result.isSuccessful && result.body()!=null){
+                Log.d("Server Code","${result.code()}")
+                Result.success(result.body()!!)
+            }else{
+                val errorMessage = result.errorBody()?.string() ?: "unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch(e:Exception){
+            Result.failure(e)
+        }
+    }
 }
