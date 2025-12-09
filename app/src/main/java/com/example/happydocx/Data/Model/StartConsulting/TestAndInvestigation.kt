@@ -7,6 +7,6 @@ data class TestAndInvestigationRequest(
     val investigationOrders:List<TestAndInvestigationOrders>
 )
 data class TestAndInvestigationOrders(
-    val testName:String,
+    val name:String,
     val reason:String,
 )

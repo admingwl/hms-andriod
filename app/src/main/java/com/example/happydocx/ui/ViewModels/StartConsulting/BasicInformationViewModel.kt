@@ -289,13 +289,22 @@
         ){
             viewModelScope.launch {
                 testAndInvestigation.value = TestAndInvestigation.Loading
-               // Map the selected test to InvestigationOrder format
+
+                // ADD THIS DEBUG LOGGING
+                Log.d("DEBUG_SELECTED_TESTS", "Selected tests before mapping:")
+                state.value.selectedTest.forEachIndexed { index, test ->
+                    Log.d("DEBUG_TEST_$index", "Name: '${test.testInvestigationName}' | Reason: '${test.testInvestigationReason}'")
+                }
+
+
+                // Map the selected test to InvestigationOrder format
                 val investigationOrderList = state.value.selectedTest.map { test->
                     TestAndInvestigationOrders(
-                        testName = test.testInvestigationName,
+                        name = test.testInvestigationName,
                         reason = test.testInvestigationReason
                     )
                 }
+
                 // create the request body
                 val requestBody = TestAndInvestigationRequest(
                     patient = patientId,
@@ -309,6 +318,9 @@
                     token = token,
                     requestBody = requestBody
                 )
+
+                Log.d("DEBUG_REQUEST_BODY", "Request body: $requestBody")
+                Log.d("DEBUG_INVESTIGATION_ORDERS", "Investigation orders: $investigationOrderList")
 
                 // Handle the result
                 result.fold(

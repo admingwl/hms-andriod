@@ -849,7 +849,7 @@ fun TestInvestigation(
     patientId: String
 ) {
     val context = LocalContext.current
-    // get viewModel State
+    // get viewModel Statelllakite
     val testState = viewModel._testAndInvestigation.collectAsStateWithLifecycle().value
     // filter the list of test based on the search query from viewModel
     val filteredList = viewModel.testInvestigation.filter { it ->
@@ -954,7 +954,7 @@ fun TestInvestigation(
                 if (state.selectedTest.isNotEmpty()) {
                     viewModel.sendTestAndInvestigationRepo(
                         token = token,
-                        physicianId = patientId,
+                        physicianId = physicianId,
                         appointmentId = appointmentId,
                         patientId = patientId
                     )

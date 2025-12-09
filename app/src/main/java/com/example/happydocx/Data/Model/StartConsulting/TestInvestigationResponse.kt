@@ -36,4 +36,5 @@ data class TestAndInvestigationMedicationOrder(
 data class TestAndInvestigationOrder(
     val testName: String,
     val reason: String,
+    val _id:String
 )

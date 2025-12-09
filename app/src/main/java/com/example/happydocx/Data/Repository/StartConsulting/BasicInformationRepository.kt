@@ -140,7 +140,7 @@ class BasicInformationRepository {
         return try{
             val result = apiService.submitTestAndInvestigation(token = "Bearer $token", body = requestBody)
             if(result.isSuccessful && result.body()!=null){
-                Log.d("Server Code","${result.code()}")
+                Log.d("Server Code","${result.code()} , ${result.body()}")
                 Result.success(result.body()!!)
             }else{
                 val errorMessage = result.errorBody()?.string() ?: "unknown server error"
