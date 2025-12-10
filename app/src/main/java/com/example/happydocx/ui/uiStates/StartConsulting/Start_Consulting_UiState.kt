@@ -12,7 +12,7 @@ data class MedicalEntry(
 data class MedicationEntry(
     val medicationName:String,
     val duration:String="",
-    val quantity:String=""
+    val storage:String="",
 )
 
 data class InvestigationEntry(
