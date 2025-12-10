@@ -27,8 +27,8 @@ data class MedicationInvestigation(
 )
 
 data class MedicationOrderss(
-    val _id: String,
     val genericName: String,
     val strength: String,
-    val duration: String
+    val duration: String,
+    val _id: String,
 )

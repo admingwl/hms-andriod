@@ -6,17 +6,14 @@
     import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
     import com.example.happydocx.Data.Model.StartConsulting.AssessmentItem
     import com.example.happydocx.Data.Model.StartConsulting.InvestigationData
-    import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
-    import com.example.happydocx.Data.Model.StartConsulting.MedicationOrder
-    import com.example.happydocx.Data.Model.StartConsulting.MedicationOrders
     import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
     import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
+    import com.example.happydocx.Data.Model.StartConsulting.MedicationsOrders
     import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
     import com.example.happydocx.Data.Model.StartConsulting.PatientVitalSigns
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
     import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
-    import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationOrder
     import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationOrders
     import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
     import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
@@ -29,7 +26,7 @@
     import kotlinx.coroutines.flow.asStateFlow
     import kotlinx.coroutines.flow.update
     import kotlinx.coroutines.launch
-    
+
     class BasicInformationViewModel : ViewModel() {
     
     
@@ -222,42 +219,55 @@
         // function for send medication
         fun onSendMedicationClicked(
             token:String,
-            patientId: String,
-            appointmentId: String,
-            physicianId: String
+            patientId:String,
+            appointmentId:String,
+            physicianId:String
         ){
             viewModelScope.launch {
-                // initially i set it to loading
                 sendMedication.value = MedicationUiState.Loading
-                val medicationOrder = state.value.selectedMedication.map { medication->
-                    MedicationOrders(
-                        medicationName = medication.medicationName,
-                        dosage = medication.quantity,
-                        duration = medication.duration
+
+                // Debug logging (optional)
+                Log.d("DEBUG_MEDICATION", "Selected medications before mapping:")
+                state.value.selectedMedication.forEachIndexed { index, med ->
+                    Log.d("DEBUG_MED_$index", "Name: '${med.medicationName}' | Strength: '${med.storage}' | Duration: '${med.duration}'")
+                }
+
+                // Map the selected medications to MedicationOrder format
+                val medicationOrdersList = state.value.selectedMedication.mapIndexed { index, med ->
+                    MedicationsOrders(
+                        name = med.medicationName,
+                        power = med.storage, // storage field maps to power (strength)
+                        duration = med.duration,
                     )
                 }
 
-                // create request body
+                    // create reqeust body
                 val requestBody = MedicationRequest(
                     patient = patientId,
-                    medicationOrders = medicationOrder,
                     appointment = appointmentId,
-                    physicianId = physicianId
+                    physicianId = physicianId,
+                    medicationOrders = medicationOrdersList
                 )
 
+                // Debug log for request body
+                Log.d("DEBUG_REQUEST_BODY", "Request body: $requestBody")
+                Log.d("DEBUG_MEDICATION_ORDERS", "Medication orders: $medicationOrdersList")
+
+                // Call repository function
                 val result = repo.sendMedicationReport(
                     token = token,
                     requestBody = requestBody
                 )
+
                 // Handle the result
                 result.fold(
                     onSuccess = { response ->
                         sendMedication.value = MedicationUiState.Success(data = response)
-                        Log.d("SendMedication", "Successfully sent medications: ${response.message}")
+                        Log.d("SendMedication", "Successfully sent: ${response.message}")
                     },
                     onFailure = { exception ->
                         sendMedication.value = MedicationUiState.Error(
-                            message = exception.message ?: "Failed to send medications"
+                            message = exception.message ?: "Failed to send medication"
                         )
                         Log.e("SendMedication", "Error: ${exception.message}")
                     }
@@ -534,13 +544,18 @@
            }
         }
     
-        fun onMedicationUpdated(index:Int,duration:String?=null,frequency:String?=null){
+        fun onMedicationUpdated(
+            index:Int,
+            duration:String?=null,
+            storage:String?=null,
+        ){
             state.update { it->
                 val mutableList = it.selectedMedication.toMutableList()
                 val currentItem = mutableList[index]
                 mutableList[index] = currentItem.copy(
                     duration = duration ?: currentItem.duration,
-                    quantity = frequency ?: currentItem.quantity)
+                    storage = storage ?: currentItem.storage,
+                )
                 it.copy(selectedMedication = mutableList)
             }
         }

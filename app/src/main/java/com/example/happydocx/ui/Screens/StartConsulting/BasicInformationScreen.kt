@@ -791,30 +791,21 @@ fun Medication(
         Spacer(Modifier.height(8.dp))
         state.selectedMedication.forEachIndexed { index, entry ->
             MedicationInputRow(
-                entry = entry,
-                onDurationChange = { viewModel.onMedicationUpdated(index, duration = it) },
-                onFrequencyChange = { viewModel.onMedicationUpdated(index, frequency = it) },
-                onRemove = { viewModel.onMedicationRemoved(entry) }
+                     entry = entry,
+                     onDurationChange = { viewModel.onMedicationUpdated(index, duration = it) },
+                     onStorageChange = { viewModel.onMedicationUpdated(index, storage = it) },
+                     onRemove = { viewModel.onMedicationRemoved(entry) }
             )
         }
         FilledTonalButton(
             onClick = {
-                // here we call out api method
-                if (state.selectedMedication.isNotEmpty()) {
                     viewModel.onSendMedicationClicked(
                         token = token,
                         patientId = patientId,
                         appointmentId = appointmentId,
                         physicianId = physicianId
                     )
-                } else {
-                    Toast.makeText(
-                        context,
-                        "Please add at least one medication",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            },
+                },
             enabled = ViewModelState.value !is MedicationUiState.Loading &&
                     state.selectedMedication.isNotEmpty(),
             shape = RoundedCornerShape(4.dp),
@@ -1563,13 +1554,9 @@ fun MedicalEntryInputRow(
 fun MedicationInputRow(
     entry: MedicationEntry,
     onDurationChange: (String) -> Unit,
-    onFrequencyChange: (String) -> Unit,
+    onStorageChange: (String) -> Unit,
     onRemove: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    // Common frequencies
-    val frequencyOptions = listOf("1-0-1", "1-0-0", "0-0-1", "1-1-1", "SOS", "OD", "BD")
-
     ElevatedCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -1602,13 +1589,14 @@ fun MedicationInputRow(
             }
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Inputs
+            // All three fields as simple TextFields in one Row
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Duration
+                // Duration - Simple TextField
                 OutlinedTextField(
                     value = entry.duration,
                     onValueChange = onDurationChange,
-                    label = { Text("Duration (e.g. 5 days)", fontSize = 10.sp) },
+                    label = { Text("Duration", fontSize = 10.sp) },
+                    placeholder = { Text("5 days", fontSize = 10.sp) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
@@ -1620,42 +1608,23 @@ fun MedicationInputRow(
                         color = Color.Black
                     )
                 )
-
-                // Frequency Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = entry.quantity,
-                        onValueChange = {}, // Read only, set by dropdown
-                        readOnly = true,
-                        label = { Text("Frequency", fontSize = 10.sp) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier.menuAnchor(),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color(0xff1d4ed8)
-                        )
+                // storage - Simple TextField
+                OutlinedTextField(
+                    value = entry.storage,
+                    onValueChange = onStorageChange,
+                    label = { Text("Frequency", fontSize = 10.sp) },
+                    placeholder = { Text("10mg", fontSize = 10.sp) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color(0xff1d4ed8)
+                    ),
+                    textStyle = TextStyle(
+                        color = Color.Black
                     )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        modifier = Modifier.background(Color.White)
-                    ) {
-                        frequencyOptions.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option, color = Color.Black) },
-                                onClick = {
-                                    onFrequencyChange(option)
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                )
             }
         }
     }
