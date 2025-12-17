@@ -170,8 +170,8 @@ fun NavigationGraph() {
 
                 StartConsultingScreen(
                     viewModel = BasicPatientInformationViewModel,
-                    navController = navController
-                    ,patientId = patientId,
+                    navController = navController ,
+                    patientId = patientId,
                     token = token,
                     appointmentID = appointmentId,
                     documentViewModel = documentUploadViewModel

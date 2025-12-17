@@ -22,6 +22,7 @@
     import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
     import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
     import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
+    import kotlinx.coroutines.delay
     import kotlinx.coroutines.flow.MutableStateFlow
     import kotlinx.coroutines.flow.asStateFlow
     import kotlinx.coroutines.flow.update
@@ -49,7 +50,7 @@
         val _saveVitalSignState = saveVitalSignsState.asStateFlow()
 
         private val listOfVitalSignAndSymptoms: MutableStateFlow<VitalSignAndSymptomsList> = MutableStateFlow(VitalSignAndSymptomsList.Loading)
-        val _listOfVitalSignAndSymptoms = listOfVitalSignAndSymptoms.asStateFlow()
+        val    _listOfVitalSignAndSymptoms = listOfVitalSignAndSymptoms.asStateFlow()
 
         // send medication state
         private val sendMedication: MutableStateFlow<MedicationUiState> = MutableStateFlow(MedicationUiState.Idle)
@@ -176,8 +177,15 @@
             viewModelScope.launch {
                 // first set to loading
                 saveVitalSignsState.value = SaveVitalSignsUiState.Loading
+
+                // ADD THESE LOGS
+                Log.d("SAVE_DEBUG", "=== SAVE BUTTON CLICKED ===")
+                Log.d("SAVE_DEBUG", "Patient ID: $patientId")
+                Log.d("SAVE_DEBUG", "Blood Pressure: ${state.value.bloodPressure}")
+                Log.d("SAVE_DEBUG", "Heart Rate: ${state.value.heartRate}")
+                Log.d("SAVE_DEBUG", "Temperature: ${state.value.temperature}")
+
                 val patientVitalSigns = listOf(
-    
                     PatientVitalSigns(
                         bloodPressure = state.value.bloodPressure,
                         heartRate = state.value.heartRate,
@@ -189,12 +197,9 @@
                 )
                 val requestBody = SaveSendVitalSignsAndSymptomsRequestBody(
                     patient = patientId,
-                    appointment = appointmentId,
-                    physicianId = physicianId,
                     patientVitalSigns = patientVitalSigns
                 )
-    
-    
+
                 // call repo function here
                 val result = repo.sendVitalSignsAndSymptoms(
                     token = token,
@@ -203,14 +208,23 @@
                 // Handle the result
                 result.fold(
                     onSuccess = {
+                        Log.d("SAVE_DEBUG", "✅ SAVE SUCCESS!")
+                        Log.d("SAVE_DEBUG", "Response ID: ${it.id}")
+                        Log.d("SAVE_DEBUG", "Response: $it")
                         saveVitalSignsState.value = SaveVitalSignsUiState.Success(data = it)
-                        Log.d("SaveVitalSigns", "Successfully saved: ${it.id}")
+                        // refresh here
+                        delay(1000)
+                        Log.d("SAVE_DEBUG", "Now refreshing list...")
+                          getListOfSymptomsAndVitalSigns(token = token, patientId = patientId)
+                   //     Log.d("SaveVitalSigns", "Successfully saved: ${it.id}")
                     },
                     onFailure = { exception ->
+                        Log.e("SAVE_DEBUG", "❌ SAVE FAILED!")
+                        Log.e("SAVE_DEBUG", "Error: ${exception.message}", exception)
                         saveVitalSignsState.value = SaveVitalSignsUiState.Error(
                             message = exception.message ?: "Failed to save vital signs"
                         )
-                        Log.e("SaveVitalSigns", "Error: ${exception.message}")
+                      //  Log.e("SaveVitalSigns", "Error: ${exception.message}")
                     }
                 )
             }
@@ -751,15 +765,15 @@
         // fun on getting the list of all the vital signs and symptoms of a particular patient
         fun getListOfSymptomsAndVitalSigns(
             token:String,
-            patientId:String
+            patientId:String,
+
         ) {
             viewModelScope.launch {
                 // set loading state
                 listOfVitalSignAndSymptoms.value = VitalSignAndSymptomsList.Loading
                 try {
                     // Debug logs
-                    Log.d("API_CALL", "Token: Bearer ${token.take(10)}...")
-                    Log.d("API_CALL", "PatientId: $patientId")
+
                     val result = repo.getAllSignsAndSymptomsList(patientId = patientId,token=token)
                     result.fold(
                         onSuccess = {

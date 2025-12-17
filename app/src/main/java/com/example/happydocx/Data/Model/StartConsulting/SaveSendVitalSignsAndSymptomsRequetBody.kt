@@ -2,8 +2,6 @@ package com.example.happydocx.Data.Model.StartConsulting
 
 data class SaveSendVitalSignsAndSymptomsRequestBody(
     val patient: String,
-    val appointment: String,
-    val physicianId: String,
     val patientVitalSigns: List<PatientVitalSigns>
 )
 

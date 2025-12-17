@@ -5,10 +5,19 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,6 +33,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,6 +46,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
@@ -73,19 +84,25 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -107,6 +124,7 @@ import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -268,8 +286,27 @@ fun ImageCard(
     image: Int,
     patientId: String,
     patientName: String,
-    context: Context
+    context: Context,
+    appointmentStatus:String = ""// Add this parameter to receive status from API
 ) {
+    var currentStepIndex by rememberSaveable(appointmentStatus) {
+        mutableStateOf(
+            when (appointmentStatus.lowercase()) {
+                "confirmed" -> 0
+                "waiting" -> 1
+                "inconsultation" -> 2
+                "completed" -> 3
+                else -> -1 //-1 means nothing is selected yet (All Gray)
+            }
+        )
+    }
+
+    val steps = listOf(
+        "Confirmed",
+        "Waiting",
+        "In Consultation",
+        "Completed"
+    )
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -301,6 +338,23 @@ fun ImageCard(
                 fontSize = 18.sp,
                 color = Color.Black,
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            // Status Stepper
+            HorizontalStatusStepper(
+                steps = steps,
+                currentStepIndex = currentStepIndex,
+                onStepClick = { index ->
+                 // Update the current step when clicked
+                    currentStepIndex = index
+                    // Show toast with step name
+                    val stepName = steps[index]
+                    Toast.makeText(context, "Status: $stepName", Toast.LENGTH_SHORT).show()
+
+                    // TODO: Here I can also call an API to update the status on the server
+                    // viewModel.updateAppointmentStatus(appointmentId, stepName)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -311,7 +365,7 @@ fun ImageCard(
 fun InformationCard(
     modifier: Modifier = Modifier,
     label: String,
-    labelValue: String,
+    labelValue: String?,
 ) {
     ElevatedCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -327,7 +381,9 @@ fun InformationCard(
                     // add label
                     Text(label, color = Color(0xff858b96))
                     // add label value
-                    Text(labelValue, color = Color.Black)
+                    if (labelValue != null) {
+                        Text(labelValue, color = Color.Black)
+                    }
                 }
             }
         }
@@ -623,6 +679,7 @@ fun VitalSignAndSymtoms(
     token: String,
 ) {
     val listState = viewModel._listOfVitalSignAndSymptoms.collectAsStateWithLifecycle().value
+
 
     LaunchedEffect(patientId) {
         viewModel.getListOfSymptomsAndVitalSigns(token = token, patientId = patientId)
@@ -1227,6 +1284,10 @@ fun AddSymptomScreen(
 
                 // Reset the API state so we can save again if needed without re-triggering this block immediately
                 viewModel.resetSaveVitalSignState()
+
+                // IMPORTANT: Navigate back to list screen
+                delay(300) // Small delay so toast is visible
+                navController.popBackStack()
             }
 
             is SaveVitalSignsUiState.Error -> {
@@ -1714,6 +1775,8 @@ fun VitalSignSymptomResponseCard(
     val key = patient.recordedAt ?: "unknown_${patient.hashCode()}"
     val state = viewModel._state.collectAsStateWithLifecycle().value
     val isExpanded = state.VitalSignSymptomsCardExpandState[key] ?: false
+    val vitalSignAndSymptom = viewModel._saveVitalSignState.collectAsStateWithLifecycle().value
+    val dateOfCreation = vitalSignAndSymptom as SaveVitalSignsUiState.Success?
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -1824,7 +1887,7 @@ fun VitalSignSymptomResponseCard(
                                 color = Color.Black
                             )
                             Spacer(Modifier.height(4.dp))
-                            Text(patient.temprature ?: "NA", fontSize = 14.sp, color = Color.Black)
+                            Text(patient.temperature ?: "NA", fontSize = 14.sp, color = Color.Black)
                         }
                         Spacer(Modifier.weight(1f))
                         Column(
@@ -1883,4 +1946,159 @@ fun VitalSignSymptomResponseCard(
 }
 
 
+data class StepItem(
+    val label: String,
+    val status: StepStatus
+)
+enum class StepStatus{
+    COMPLETED,
+    WAITING,
+    IN_CONSULTATION,
+    PENDING
+}
 
+@Composable
+fun ConsultationPulseIndicator(
+    color: Color = Color(0xFF2196F3),
+    size: Dp = 32.dp,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
+    Box(
+        modifier = modifier.size(size),
+        contentAlignment = Alignment.Center
+    ) {
+        // Outer pulsing circle
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(
+                color = color.copy(alpha = alpha),
+                radius = this.size.minDimension / 2 * scale
+            )
+        }
+
+        // Inner static circle
+        Box(
+            modifier = Modifier
+                .size(size * 0.6f)
+                .background(color, CircleShape)
+        )
+    }
+}
+@Composable
+fun HorizontalStatusStepper(
+    steps: List<String>,
+    currentStepIndex: Int,
+    onStepClick: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+//        // Draw connecting lines first (behind circles)
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .align(Alignment.TopCenter)
+//                .padding(top = 24.dp),
+//            verticalAlignment = Alignment.CenterVertically,
+//            horizontalArrangement = Arrangement.SpaceBetween
+//        ) {
+//            steps.forEachIndexed { index, _ ->
+//                Box(modifier = Modifier.weight(1f))
+//
+//                if (index < steps.lastIndex) {
+//                    // Logic: If the CURRENT step is greater than this index,
+//                    // the line leading from here should be green.
+//                    val isLineActive = index < currentStepIndex
+//                    Canvas(
+//                        modifier = Modifier
+//                            .weight(1f)
+//                            .height(4.dp)
+//                    ) {
+//                        drawLine(
+//                            color = if (index < currentStepIndex) Color(0xFF4CAF50) else Color(0xFFE0E0E0),
+//                            start = Offset(0f, size.height / 2),
+//                            end = Offset(size.width, size.height / 2),
+//                            strokeWidth = 4.dp.toPx(),
+//                            cap = StrokeCap.Round
+//                        )
+//                    }
+//                }
+//            }
+//        }
+
+        // Draw circles and labels on top
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            steps.forEachIndexed { index, label ->
+                // Logic: If the clicked step (currentStepIndex) is equal to or
+                // higher than this circle's index, make it Green.
+                val isActive = index <= currentStepIndex
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(35.dp)
+                            .border(width = 1.dp, color = if(isActive) Color(0xff28a745) else Color.Black, shape = CircleShape)
+                            .clickable { onStepClick(index) }// Clicking updates the state
+                            .background(  color = if (isActive) Color(0xff28a745) else Color.LightGray,
+                                shape = CircleShape),
+                        contentAlignment = Alignment.Center
+
+                    ) {
+                        if (isActive) {
+                            // Show Checkmark for active steps
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Completed",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = label,
+                        color = Color.Black,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+    }
+}
