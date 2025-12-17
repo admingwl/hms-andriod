@@ -8,7 +8,6 @@ import com.example.happydocx.Data.Model.LoginModel.LoginResponse
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
-import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
 import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
@@ -126,7 +125,7 @@ interface ApiService{
     ): Response<SaveSymptomDiagnosisResponse>
 
     // post api for the save vital signs and symptoms of patient
-    @POST("api/v1/vital-signs")
+    @POST("api/v1/vital-signs/")
     suspend fun sendVitalSignsAndSymptoms(
         @Header("Authorization") token: String,
         @Body body: SaveSendVitalSignsAndSymptomsRequestBody

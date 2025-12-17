@@ -2,7 +2,6 @@ package com.example.happydocx.Data.Repository.StartConsulting
 
 import android.util.Log
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
-import com.example.happydocx.Data.Model.StartConsulting.ListOfVitalSignAndSymptomResponse
 import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
@@ -51,13 +50,13 @@ class BasicInformationRepository {
     ): Result<SaveSymptomDiagnosisResponse> {
         return try {
           // api call
-            Log.d("Api Request", "Token: Bearer $token")
-            Log.d("Api Request", "Body: $requestBody")
+//            Log.d("Api Request", "Token: Bearer $token")
+//            Log.d("Api Request", "Body: $requestBody")
             val result = apiService.SubmitSymptomsDiagnosisNotes(body = requestBody,token = "Bearer $token")
-            Log.d("Api Response method","Api call is successful")
+//            Log.d("Api Response method","Api call is successful")
             // handle response
             if(result.isSuccessful && result.body() != null){
-                Log.d("Api Response", "Success: ${result.body()}")
+//                Log.d("Api Response", "Success: ${result.body()}")
                 Result.success(result.body()!!)
             }else{
                 val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
@@ -76,17 +75,26 @@ class BasicInformationRepository {
     ): Result<SaveSendVitalSignsResponseBody>{
 
         return try {
+            Log.d("REPO_SAVE", "Calling API...")
+            Log.d("REPO_SAVE", "Token: Bearer ${token.take(20)}...")
+            Log.d("REPO_SAVE", "Request: $requestBody")
             // call api here first
             val result = apiService.sendVitalSignsAndSymptoms(token = "Bearer $token", body = requestBody)
+            Log.d("REPO_SAVE", "Response Code: ${result.code()}")
+            Log.d("REPO_SAVE", "Response Body: ${result.body()}")
+
             if(result.isSuccessful && result.body()!=null){
+                Log.d("REPO_SAVE", "✅ API Success")
                 Log.d("Server Code","${result.code()}")
                 Log.d("Server Response","Success: ${result.body()}")
                 Result.success(result.body()!!)
             }else{
                 val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Log.e("REPO_SAVE", "❌ API Failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
         }catch (e: Exception){
+            Log.e("REPO_SAVE", "❌ Exception: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -99,6 +107,8 @@ class BasicInformationRepository {
     ):Result<List<ParticularPatient>>{
         return try{
             val result = apiService.getAllVitalSignsAndSymptoms(token = "Bearer $token", patientId = patientId)
+            Log.d("API_CALL", "URL: ${result.raw().request.url}")
+            Log.d("API_CALL", "Response Code: ${result.code()}")
             if(result.isSuccessful && result.body()!=null){
                 Log.d("ServerMessage","Success: ${result.body()} and code is ${result.code()}")
                 Result.success(result.body()!!)
@@ -119,8 +129,8 @@ class BasicInformationRepository {
         return try {
             val result = apiService.sendMedication(token = "Bearer $token",requestBody)
             if(result.isSuccessful && result.body()!=null){
-                Log.d("Server Code","${result.code()}")
-                Log.d("Server Response","Success: ${result.body()}")
+//                Log.d("Server Code","${result.code()}")
+//                Log.d("Server Response","Success: ${result.body()}")
                 Result.success(result.body()!!)
             }else{
                 val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
@@ -140,7 +150,7 @@ class BasicInformationRepository {
         return try{
             val result = apiService.submitTestAndInvestigation(token = "Bearer $token", body = requestBody)
             if(result.isSuccessful && result.body()!=null){
-                Log.d("Server Code","${result.code()} , ${result.body()}")
+//                Log.d("Server Code","${result.code()} , ${result.body()}")
                 Result.success(result.body()!!)
             }else{
                 val errorMessage = result.errorBody()?.string() ?: "unknown server error"
