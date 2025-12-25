@@ -17,6 +17,8 @@ import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequ
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
+import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusRequestBody
+import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusResponseBody
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -153,4 +155,10 @@ interface ApiService{
         @Body body: TestAndInvestigationRequest
     ): Response<TestAndInvestigationResponse>
 
+    @POST("api/v1/appointment/update/status/{id}") // id -> appointment Id
+    suspend fun updateAppointmentStatus(
+        @Header("Authorization") token:String,
+        @Path("id") appointmentId:String,
+        @Body body : UpdateAppointmentStatusRequestBody
+    ): Response<UpdateAppointmentStatusResponseBody>
 }
