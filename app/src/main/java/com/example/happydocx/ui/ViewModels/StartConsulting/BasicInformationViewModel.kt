@@ -17,6 +17,7 @@
     import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationOrders
     import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
     import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
+    import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusResponseBody
     import com.example.happydocx.Data.Repository.StartConsulting.BasicInformationRepository
     import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
     import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
@@ -59,6 +60,10 @@
         // get state for test and investigation
         private val testAndInvestigation:MutableStateFlow<TestAndInvestigation> = MutableStateFlow(TestAndInvestigation.Idle)
         val _testAndInvestigation = testAndInvestigation.asStateFlow()
+
+        // get state for update appoitment Status of the patient
+        private val updateStausState = MutableStateFlow<UpdateAppointmentStatusUiState>(UpdateAppointmentStatusUiState.Idle)
+        val _upateStatusState = updateStausState.asStateFlow()
     
     
         // function for the api response
@@ -393,7 +398,46 @@
         fun resetSaveVitalSignState(){
             saveVitalSignsState.value = SaveVitalSignsUiState.Idle
         }
-    
+
+        // function for update the appointment status of the patient.
+        fun updateAppointmentStatus(
+            token:String,
+            appointmentId: String,
+            status:String
+        ){
+
+            viewModelScope.launch {
+                updateStausState.value = UpdateAppointmentStatusUiState.Loading
+
+                try{
+                    val result  = repo.updateAppointmentStatus(
+                        token = token,
+                        appointmentId = appointmentId,
+                        status = status
+                    )
+                    result.fold(
+                        onSuccess = {it->
+                            Log.d("STATUS_UPDATE", "Success: ${it.message}")
+                            updateStausState.value = UpdateAppointmentStatusUiState.Success(apiResponse = it)
+                        },
+                        onFailure = {it->
+                            Log.e("STATUS_UPDATE", "Failed: ${it.message}")
+                            updateStausState.value = UpdateAppointmentStatusUiState.Error(message = it.message ?: "Failed to update appointment status")
+                        }
+                    )
+                }catch (e:Exception){
+                    Log.e("STATUS_UPDATE", " Exception: ${e.message}", e)
+                    updateStausState.value = UpdateAppointmentStatusUiState.Error(
+                        message = e.message ?: "An unexpected error occurred"
+                    )
+                }
+            }
+        }
+
+        // In your ViewModel
+        fun resetUpdateStatusState() {
+            updateStausState.value = UpdateAppointmentStatusUiState.Idle
+        }
         // symptoms
         val Symtoms = listOf(
             "chest Pain",
@@ -851,5 +895,13 @@
         object Loading: TestAndInvestigation()
         data class Success(val data : TestAndInvestigationResponse): TestAndInvestigation()
         data class Error(val message:String): TestAndInvestigation()
+    }
+
+    // sealed class for update the appointment status
+    sealed class UpdateAppointmentStatusUiState {
+        object Idle: UpdateAppointmentStatusUiState()
+        object Loading: UpdateAppointmentStatusUiState()
+        data class Success(val apiResponse: UpdateAppointmentStatusResponseBody): UpdateAppointmentStatusUiState()
+        data class Error(val message:String): UpdateAppointmentStatusUiState()
     }
 

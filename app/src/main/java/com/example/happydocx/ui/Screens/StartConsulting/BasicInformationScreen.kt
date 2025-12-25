@@ -5,6 +5,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -95,6 +96,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -119,6 +121,7 @@ import com.example.happydocx.ui.ViewModels.StartConsulting.MedicationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVitalSignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SubmitDiagnosisNotesSymptomsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.TestAndInvestigation
+import com.example.happydocx.ui.ViewModels.StartConsulting.UpdateAppointmentStatusUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.VitalSignAndSymptomsList
 import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
@@ -144,6 +147,7 @@ fun ConsultingMainScreen(
     // api state
     val apiState = viewModel._apiState.collectAsStateWithLifecycle().value
     val submissionState = viewModel._submitState.collectAsStateWithLifecycle().value
+    
     LaunchedEffect(patientId) {
         // pass patient id here through navigation
         viewModel.onStartConsultingClicked(appointmentId = appointmentId, token = token)
@@ -171,7 +175,11 @@ fun ConsultingMainScreen(
                         image = R.drawable.patientimage,
                         patientName = "${data.message.patient.firstName} ${data.message.patient.lastName}",
                         context = context,
-                        patientId = data.message.id
+                        patientId = data.message.id,
+                        token = token,
+                        appointmentId = appointmentId,
+                        viewModel = viewModel,
+                        appointmentStatus = data.message.status
                     )
                     // information cards
                     Row(
@@ -285,17 +293,20 @@ fun ImageCard(
     modifier: Modifier = Modifier,
     image: Int,
     patientId: String,
+    appointmentId:String,
+    viewModel: BasicInformationViewModel,
     patientName: String,
     context: Context,
+    token:String,
     appointmentStatus:String = ""// Add this parameter to receive status from API
 ) {
     var currentStepIndex by rememberSaveable(appointmentStatus) {
         mutableStateOf(
-            when (appointmentStatus.lowercase()) {
-                "confirmed" -> 0
-                "waiting" -> 1
-                "inconsultation" -> 2
-                "completed" -> 3
+            when (appointmentStatus) {
+                "Confirmed" -> 0
+                "Waiting" -> 1
+                "In Consultation" -> 2
+                "Completed" -> 3
                 else -> -1 //-1 means nothing is selected yet (All Gray)
             }
         )
@@ -307,6 +318,33 @@ fun ImageCard(
         "In Consultation",
         "Completed"
     )
+
+    // know see the state from the viewModel
+    val statusUpdateState = viewModel._upateStatusState.collectAsStateWithLifecycle()
+  // handle the status update response
+    LaunchedEffect(statusUpdateState.value) {
+        when(val state = statusUpdateState.value){
+            is UpdateAppointmentStatusUiState.Success ->{
+                Toast.makeText(
+                    context,
+                    state.apiResponse.message,
+                    Toast.LENGTH_SHORT
+                ).show()
+                // important to not show toast again and again
+                viewModel.resetUpdateStatusState()
+            }
+            is UpdateAppointmentStatusUiState.Error->{
+
+                Toast.makeText(
+                    context,
+                    state.message,
+                    Toast.LENGTH_SHORT
+                ).show()
+                viewModel.resetUpdateStatusState()
+            }
+            else -> {}
+        }
+    }
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -346,15 +384,34 @@ fun ImageCard(
                 onStepClick = { index ->
                  // Update the current step when clicked
                     currentStepIndex = index
-                    // Show toast with step name
-                    val stepName = steps[index]
-                    Toast.makeText(context, "Status: $stepName", Toast.LENGTH_SHORT).show()
+                   // map index to api status value
+                    val statusValue = when(index){
+                        0-> "Confirmed"
+                        1 -> "Waiting"
+                        2 -> "In Consultation"
+                        3 -> "Completed"
+                        else -> return@HorizontalStatusStepper
+                    }
+                    Toast.makeText(context, "update Status...", Toast.LENGTH_SHORT).show()
 
                     // TODO: Here I can also call an API to update the status on the server
-                    // viewModel.updateAppointmentStatus(appointmentId, stepName)
+                     viewModel.updateAppointmentStatus(
+                         token = token,
+                         appointmentId = appointmentId,
+                         status = statusValue
+                     )
                 },
                 modifier = Modifier.fillMaxWidth()
             )
+            // Show loading indicator during API call
+            if (statusUpdateState.value is UpdateAppointmentStatusUiState.Loading) {
+                Spacer(modifier = Modifier.height(8.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color(0xff1d4ed8),
+                    strokeWidth = 2.dp
+                )
+            }
         }
     }
 }
@@ -1979,7 +2036,7 @@ fun ConsultationPulseIndicator(
         initialValue = 0.3f,
         targetValue = 0.1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(990, easing = FastOutLinearInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "alpha"
@@ -2012,90 +2069,118 @@ fun HorizontalStatusStepper(
     onStepClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val circleSize = 30.dp
+    val lineThickness = 4.dp
+    val circleCenterOffset = circleSize / 2 // 17.5.dp
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+            .padding(16.dp)
     ) {
-//        // Draw connecting lines first (behind circles)
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .align(Alignment.TopCenter)
-//                .padding(top = 24.dp),
-//            verticalAlignment = Alignment.CenterVertically,
-//            horizontalArrangement = Arrangement.SpaceBetween
-//        ) {
-//            steps.forEachIndexed { index, _ ->
-//                Box(modifier = Modifier.weight(1f))
-//
-//                if (index < steps.lastIndex) {
-//                    // Logic: If the CURRENT step is greater than this index,
-//                    // the line leading from here should be green.
-//                    val isLineActive = index < currentStepIndex
-//                    Canvas(
-//                        modifier = Modifier
-//                            .weight(1f)
-//                            .height(4.dp)
-//                    ) {
-//                        drawLine(
-//                            color = if (index < currentStepIndex) Color(0xFF4CAF50) else Color(0xFFE0E0E0),
-//                            start = Offset(0f, size.height / 2),
-//                            end = Offset(size.width, size.height / 2),
-//                            strokeWidth = 4.dp.toPx(),
-//                            cap = StrokeCap.Round
-//                        )
-//                    }
-//                }
-//            }
-//        }
-
-        // Draw circles and labels on top
+        // --- LAYER 1: CONNECTING LINES ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(circleSize)
                 .align(Alignment.TopCenter),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            steps.forEachIndexed { index, _ ->
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (index < steps.lastIndex) {
+                        // Draw line from the center of THIS step to the center of the NEXT step
+                        Canvas(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(lineThickness)
+                                // Offset the line so it starts at the center of the circle
+                                .graphicsLayer { translationX = size.width / 2 }
+                        ) {
+                            drawLine(
+                                color = if (index < currentStepIndex) Color(0xFF4CAF50) else Color(0xFFE0E0E0),
+                                start = Offset(0f, size.height / 2),
+                                end = Offset(size.width, size.height / 2),
+                                strokeWidth = lineThickness.toPx(),
+                                cap = StrokeCap.Round
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- LAYER 2: CIRCLES AND LABELS ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             steps.forEachIndexed { index, label ->
-                // Logic: If the clicked step (currentStepIndex) is equal to or
-                // higher than this circle's index, make it Green.
-                val isActive = index <= currentStepIndex
+                val isCompleted = index < currentStepIndex
+                val isCurrent = index == currentStepIndex
+                val isPending = index > currentStepIndex
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
+                    // Circle Container
                     Box(
                         modifier = Modifier
-                            .size(35.dp)
-                            .border(width = 1.dp, color = if(isActive) Color(0xff28a745) else Color.Black, shape = CircleShape)
-                            .clickable { onStepClick(index) }// Clicking updates the state
-                            .background(  color = if (isActive) Color(0xff28a745) else Color.LightGray,
-                                shape = CircleShape),
-                        contentAlignment = Alignment.Center
-
-                    ) {
-                        if (isActive) {
-                            // Show Checkmark for active steps
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Completed",
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp)
+                            .size(circleSize)
+                            .then(
+                                if (!isCurrent) Modifier.border(
+                                    width = 1.dp,
+                                    color = if (isCompleted) Color(0xff28a745) else Color.LightGray,
+                                    shape = CircleShape
+                                ) else Modifier
                             )
+                            .clickable { onStepClick(index) }
+                            .background(
+                                color = when {
+                                    isCompleted -> Color(0xff28a745)
+                                    isCurrent -> Color.Transparent
+                                    else -> Color.LightGray
+                                },
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            isCompleted -> {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Completed",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            isCurrent -> {
+                                ConsultationPulseIndicator(
+                                    color = Color(0xff28a745),
+                                    size = circleSize
+                                )
+                            }
+                            isPending -> {
+
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // Label
                     Text(
                         text = label,
-                        color = Color.Black,
+                        color = if (isCurrent) Color.Black else Color.Gray,
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        lineHeight = 12.sp
                     )
                 }
             }
