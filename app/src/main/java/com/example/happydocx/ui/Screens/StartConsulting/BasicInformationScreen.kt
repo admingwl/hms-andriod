@@ -300,6 +300,7 @@ fun ImageCard(
     token:String,
     appointmentStatus:String = ""// Add this parameter to receive status from API
 ) {
+    var scope = rememberCoroutineScope()
     var currentStepIndex by rememberSaveable(appointmentStatus) {
         mutableStateOf(
             when (appointmentStatus) {
@@ -377,41 +378,66 @@ fun ImageCard(
                 color = Color.Black,
             )
             Spacer(modifier = Modifier.height(16.dp))
-            // Status Stepper
-            HorizontalStatusStepper(
-                steps = steps,
-                currentStepIndex = currentStepIndex,
-                onStepClick = { index ->
-                 // Update the current step when clicked
-                    currentStepIndex = index
-                   // map index to api status value
-                    val statusValue = when(index){
-                        0-> "Confirmed"
-                        1 -> "Waiting"
-                        2 -> "In Consultation"
-                        3 -> "Completed"
-                        else -> return@HorizontalStatusStepper
+            if(currentStepIndex == 3){
+                // Button to show when all 4 steps are completed successfully
+                FilledTonalButton(
+                    modifier = modifier.fillMaxWidth().padding(15.dp).padding(paddingValues = PaddingValues(0.dp)),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff4f61e3),
+                        contentColor = Color.White
+                    ),
+                    onClick = {
+                        scope.launch {
+                            // here the actual api will called for get the prescription pdf.
+                            // for know show simple toast message when user press the button.
+                            Toast.makeText(context,"Pdf Generated...",Toast.LENGTH_SHORT).show()
+                        }
                     }
-                    Toast.makeText(context, "update Status...", Toast.LENGTH_SHORT).show()
+                ) {
+                    Text(
+                        text = "Get Prescription",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }else{
+                // Status Stepper
+                HorizontalStatusStepper(
+                    steps = steps,
+                    currentStepIndex = currentStepIndex,
+                    onStepClick = { index ->
+                        // Update the current step when clicked
+                        currentStepIndex = index
+                        // map index to api status value
+                        val statusValue = when(index){
+                            0-> "Confirmed"
+                            1 -> "Waiting"
+                            2 -> "In Consultation"
+                            3 -> "Completed"
+                            else -> return@HorizontalStatusStepper
+                        }
+                        Toast.makeText(context, "update Status...", Toast.LENGTH_SHORT).show()
 
-                    // TODO: Here I can also call an API to update the status on the server
-                     viewModel.updateAppointmentStatus(
-                         token = token,
-                         appointmentId = appointmentId,
-                         status = statusValue
-                     )
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-            // Show loading indicator during API call
-            if (statusUpdateState.value is UpdateAppointmentStatusUiState.Loading) {
-                Spacer(modifier = Modifier.height(8.dp))
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color(0xff1d4ed8),
-                    strokeWidth = 2.dp
+                        // TODO: Here I can also call an API to update the status on the server
+                        viewModel.updateAppointmentStatus(
+                            token = token,
+                            appointmentId = appointmentId,
+                            status = statusValue
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
+
+//            // Show loading indicator during API call
+//            if (statusUpdateState.value is UpdateAppointmentStatusUiState.Loading) {
+//                Spacer(modifier = Modifier.height(8.dp))
+//                CircularProgressIndicator(
+//                    modifier = Modifier.size(24.dp),
+//                    color = Color(0xff1d4ed8),
+//                    strokeWidth = 2.dp
+//                )
+//            }
         }
     }
 }
