@@ -377,7 +377,35 @@ fun ImageCard(
                 fontSize = 18.sp,
                 color = Color.Black,
             )
+            // Status Stepper
+            // show steper always. even if the uesr click on completed .
+            HorizontalStatusStepper(
+                steps = steps,
+                currentStepIndex = currentStepIndex,
+                onStepClick = { index ->
+                    // Update the current step when clicked
+                    currentStepIndex = index
+                    // map index to api status value
+                    val statusValue = when(index){
+                        0-> "Confirmed"
+                        1 -> "Waiting"
+                        2 -> "In Consultation"
+                        3 -> "Completed"
+                        else -> return@HorizontalStatusStepper
+                    }
+                    Toast.makeText(context, "update Status...", Toast.LENGTH_SHORT).show()
+
+                    // TODO: Here I can also call an API to update the status on the server
+                    viewModel.updateAppointmentStatus(
+                        token = token,
+                        appointmentId = appointmentId,
+                        status = statusValue
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
             Spacer(modifier = Modifier.height(16.dp))
+
             if(currentStepIndex == 3){
                 // Button to show when all 4 steps are completed successfully
                 FilledTonalButton(
@@ -400,33 +428,8 @@ fun ImageCard(
                         fontWeight = FontWeight.Bold
                     )
                 }
-            }else{
-                // Status Stepper
-                HorizontalStatusStepper(
-                    steps = steps,
-                    currentStepIndex = currentStepIndex,
-                    onStepClick = { index ->
-                        // Update the current step when clicked
-                        currentStepIndex = index
-                        // map index to api status value
-                        val statusValue = when(index){
-                            0-> "Confirmed"
-                            1 -> "Waiting"
-                            2 -> "In Consultation"
-                            3 -> "Completed"
-                            else -> return@HorizontalStatusStepper
-                        }
-                        Toast.makeText(context, "update Status...", Toast.LENGTH_SHORT).show()
+            }
 
-                        // TODO: Here I can also call an API to update the status on the server
-                        viewModel.updateAppointmentStatus(
-                            token = token,
-                            appointmentId = appointmentId,
-                            status = statusValue
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
 
 //            // Show loading indicator during API call
@@ -440,7 +443,7 @@ fun ImageCard(
 //            }
         }
     }
-}
+
 
 // information card
 
@@ -2117,6 +2120,8 @@ fun HorizontalStatusStepper(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
+                    // Logic: Line is green if the NEXT step is reached or completed
+                    val isLineActive = index < currentStepIndex
                     if (index < steps.lastIndex) {
                         // Draw line from the center of THIS step to the center of the NEXT step
                         Canvas(
@@ -2145,6 +2150,13 @@ fun HorizontalStatusStepper(
             verticalAlignment = Alignment.CenterVertically
         ) {
             steps.forEachIndexed { index, label ->
+                // 1. A step is "Active/Pulsing" ONLY if it is current AND NOT the final "Completed" step
+                val isActivePulse = index == currentStepIndex && index != steps.lastIndex
+
+                // 2. A step is "Done/Tick" if it is previous OR if it is the current one AND it's the final step
+                val isDone = index < currentStepIndex || (index == currentStepIndex && index == steps.lastIndex)
+
+
                 val isCompleted = index < currentStepIndex
                 val isCurrent = index == currentStepIndex
                 val isPending = index > currentStepIndex
@@ -2158,17 +2170,17 @@ fun HorizontalStatusStepper(
                         modifier = Modifier
                             .size(circleSize)
                             .then(
-                                if (!isCurrent) Modifier.border(
+                                if (isActivePulse) Modifier.border(
                                     width = 1.dp,
-                                    color = if (isCompleted) Color(0xff28a745) else Color.LightGray,
+                                    color = Color(0xff28a745),
                                     shape = CircleShape
                                 ) else Modifier
                             )
                             .clickable { onStepClick(index) }
                             .background(
                                 color = when {
-                                    isCompleted -> Color(0xff28a745)
-                                    isCurrent -> Color.Transparent
+                                    isDone -> Color(0xff28a745) // Green Fill
+                                    isActivePulse -> Color.Transparent // Transparent for Pulse
                                     else -> Color.LightGray
                                 },
                                 shape = CircleShape
@@ -2176,22 +2188,23 @@ fun HorizontalStatusStepper(
                         contentAlignment = Alignment.Center
                     ) {
                         when {
-                            isCompleted -> {
+                            isDone -> {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Completed",
                                     tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
-                            isCurrent -> {
+                            isActivePulse -> {
+                                // Only show pulse for steps 0, 1, 2
                                 ConsultationPulseIndicator(
                                     color = Color(0xff28a745),
                                     size = circleSize
                                 )
                             }
                             isPending -> {
-
+ // future steps
                             }
                         }
                     }
@@ -2201,9 +2214,10 @@ fun HorizontalStatusStepper(
                     // Label
                     Text(
                         text = label,
-                        color = if (isCurrent) Color.Black else Color.Gray,
+                        // If it's done or active, make it black/bold. Else gray.
+                        color = if (isDone || isActivePulse) Color.Black else Color.Gray,
                         fontSize = 10.sp,
-                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                        fontWeight = if (isDone || isActivePulse) FontWeight.Bold else FontWeight.Normal,
                         textAlign = TextAlign.Center,
                         maxLines = 2,
                         lineHeight = 12.sp
