@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HappyDocxTheme {
-                HappyDocx()
+                HappyDocxOne()
             }
         }
     }
@@ -25,6 +25,6 @@ class MainActivity : ComponentActivity() {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HappyDocx(){
+fun HappyDocxOne(){
     NavigationGraph()
 }
