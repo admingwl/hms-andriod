@@ -199,14 +199,16 @@
                         bloodPressure = state.value.bloodPressure,
                         heartRate = state.value.heartRate,
                         temperature = state.value.temperature,
-                        oxigenSaturation = state.value.oxygenSaturation,
+                        oxygenSaturation = state.value.oxygenSaturation,
                         height = state.value.height,
                         weight = state.value.weight
                     )
                 )
                 val requestBody = SaveSendVitalSignsAndSymptomsRequestBody(
-                    patient = patientId,
-                    patientVitalSigns = patientVitalSigns
+                    patientId = patientId,
+                    vitalSigns = patientVitalSigns,
+                    appointmentId = appointmentId,
+                    physicianId = physicianId
                 )
 
                 // call repo function here
@@ -218,7 +220,7 @@
                 result.fold(
                     onSuccess = {
                         Log.d("SAVE_DEBUG", "✅ SAVE SUCCESS!")
-                        Log.d("SAVE_DEBUG", "Response ID: ${it.id}")
+                        Log.d("SAVE_DEBUG", "Response ID: ${it._id}")
                         Log.d("SAVE_DEBUG", "Response: $it")
                         saveVitalSignsState.value = SaveVitalSignsUiState.Success(data = it)
                         // refresh here
@@ -228,7 +230,7 @@
                    //     Log.d("SaveVitalSigns", "Successfully saved: ${it.id}")
                     },
                     onFailure = { exception ->
-                        Log.e("SAVE_DEBUG", "❌ SAVE FAILED!")
+                        Log.e("SAVE_DEBUG", " SAVE FAILED!")
                         Log.e("SAVE_DEBUG", "Error: ${exception.message}", exception)
                         saveVitalSignsState.value = SaveVitalSignsUiState.Error(
                             message = exception.message ?: "Failed to save vital signs"
@@ -863,18 +865,17 @@
         fun getListOfSymptomsAndVitalSigns(
             token:String,
             patientId:String,
-
         ) {
             viewModelScope.launch {
                 // set loading state
                 listOfVitalSignAndSymptoms.value = VitalSignAndSymptomsList.Loading
                 try {
                     // Debug logs
-
                     val result = repo.getAllSignsAndSymptomsList(patientId = patientId,token=token)
                     result.fold(
                         onSuccess = {
-                            listOfVitalSignAndSymptoms.value = VitalSignAndSymptomsList.Success(data = it)
+                            // return the list of vital signs of that particular patient.
+                            listOfVitalSignAndSymptoms.value = VitalSignAndSymptomsList.Success(data = it.vitalSigns)
                         },
                         onFailure = { exception ->
                             listOfVitalSignAndSymptoms.value = VitalSignAndSymptomsList.Error(
