@@ -14,6 +14,7 @@ import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequ
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusResponseBody
+import com.example.happydocx.Data.Model.StartConsulting.vitalSignList
 import com.example.happydocx.Data.Network.ApiService
 import com.example.happydocx.Utils.RetrofitInstance
 import okhttp3.Request
@@ -89,17 +90,17 @@ class BasicInformationRepository {
             Log.d("REPO_SAVE", "Response Body: ${result.body()}")
 
             if (result.isSuccessful && result.body() != null) {
-                Log.d("REPO_SAVE", "✅ API Success")
+                Log.d("REPO_SAVE", " API Success")
                 Log.d("Server Code", "${result.code()}")
                 Log.d("Server Response", "Success: ${result.body()}")
                 Result.success(result.body()!!)
             } else {
                 val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
-                Log.e("REPO_SAVE", "❌ API Failed: $errorMessage")
+                Log.e("REPO_SAVE", " API Failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
         } catch (e: Exception) {
-            Log.e("REPO_SAVE", "❌ Exception: ${e.message}", e)
+            Log.e("REPO_SAVE", " Exception: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -109,7 +110,7 @@ class BasicInformationRepository {
     suspend fun getAllSignsAndSymptomsList(
         token: String,
         patientId: String
-    ): Result<List<ParticularPatient>> {
+    ): Result<vitalSignList> {
         return try {
             val result = apiService.getAllVitalSignsAndSymptoms(
                 token = "Bearer $token",

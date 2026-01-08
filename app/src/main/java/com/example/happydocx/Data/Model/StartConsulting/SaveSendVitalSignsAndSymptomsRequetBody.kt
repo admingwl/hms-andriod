@@ -1,15 +1,37 @@
 package com.example.happydocx.Data.Model.StartConsulting
 
+import com.google.gson.annotations.SerializedName
+
 data class SaveSendVitalSignsAndSymptomsRequestBody(
-    val patient: String,
-    val patientVitalSigns: List<PatientVitalSigns>
+    @SerializedName("patient")
+    val patientId: String?,
+
+    @SerializedName("patientVitalSigns")
+    val vitalSigns: List<PatientVitalSigns>?,
+
+    @SerializedName("appointment")
+    val appointmentId: String?,
+
+    @SerializedName("physicianId")
+    val physicianId: String?
 )
 
 data class PatientVitalSigns(
-    val bloodPressure:String,
-    val heartRate:String,
-    val temperature:String,
-    val oxigenSaturation:String,
-    val height:String,
-    val weight:String,
+    @SerializedName("bloodPressure")
+    val bloodPressure: String?,
+
+    @SerializedName("heartRate")
+    val heartRate: String?,
+
+    @SerializedName("temperature")
+    val temperature: String?,
+
+    @SerializedName("oxygenSaturation")
+    val oxygenSaturation: String?,
+
+    @SerializedName("height")
+    val height: String?,
+
+    @SerializedName("weight")
+    val weight: String?
 )

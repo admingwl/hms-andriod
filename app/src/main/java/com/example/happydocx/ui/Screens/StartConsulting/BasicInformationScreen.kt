@@ -773,10 +773,12 @@ fun VitalSignAndSymtoms(
 
 
     LaunchedEffect(patientId) {
-        viewModel.getListOfSymptomsAndVitalSigns(token = token, patientId = patientId)
+        if(patientId.isNotEmpty()) {
+            viewModel.getListOfSymptomsAndVitalSigns(token = token, patientId = patientId)
+        }
     }
 
-    when (listState) {
+    when (val state  = listState) {
         is VitalSignAndSymptomsList.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -784,16 +786,26 @@ fun VitalSignAndSymtoms(
         }
 
         is VitalSignAndSymptomsList.Success -> {
-            val data = listState.data
-            LazyColumn(
-                modifier = modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                items(data) { item ->
-                    VitalSignSymptomResponseCard(
-                        patient = item,
-                        viewModel = viewModel
+            if (state.data.isEmpty()) {
+                Box(
+                    modifier = modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No records found for this patient.",
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    items(state.data) { item ->
+                        VitalSignSymptomResponseCard(
+                            patient = item,
+                            viewModel = viewModel
+                        )
+                    }
                 }
             }
         }
@@ -1867,7 +1879,7 @@ fun VitalSignSymptomResponseCard(
     val state = viewModel._state.collectAsStateWithLifecycle().value
     val isExpanded = state.VitalSignSymptomsCardExpandState[key] ?: false
     val vitalSignAndSymptom = viewModel._saveVitalSignState.collectAsStateWithLifecycle().value
-    val dateOfCreation = vitalSignAndSymptom as SaveVitalSignsUiState.Success?
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -1993,7 +2005,7 @@ fun VitalSignSymptomResponseCard(
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                patient.oxigenSaturation ?: "NA",
+                                patient.oxygenSaturation ?: "NA",
                                 fontSize = 14.sp,
                                 color = Color.Black
                             )

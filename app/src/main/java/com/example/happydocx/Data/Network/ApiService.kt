@@ -20,6 +20,7 @@ import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequ
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusResponseBody
+import com.example.happydocx.Data.Model.StartConsulting.vitalSignList
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -128,7 +129,7 @@ interface ApiService{
     ): Response<SaveSymptomDiagnosisResponse>
 
     // post api for the save vital signs and symptoms of patient
-    @POST("api/v1/vital-signs/")
+    @POST("api/v1/vital-signs")
     suspend fun sendVitalSignsAndSymptoms(
         @Header("Authorization") token: String,
         @Body body: SaveSendVitalSignsAndSymptomsRequestBody
@@ -140,7 +141,7 @@ interface ApiService{
     suspend fun getAllVitalSignsAndSymptoms(
         @Header("Authorization") token: String,
         @Path("patientId") patientId: String
-    ):Response<List<ParticularPatient>>
+    ):Response<vitalSignList>
 
     // submit medication api
     @POST("api/v1/medical/medication")
