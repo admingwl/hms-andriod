@@ -11,6 +11,7 @@
     import com.example.happydocx.Data.Model.StartConsulting.MedicationsOrders
     import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
     import com.example.happydocx.Data.Model.StartConsulting.PatientVitalSigns
+    import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
     import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
     import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
@@ -64,7 +65,10 @@
         // get state for update appoitment Status of the patient
         private val updateStausState = MutableStateFlow<UpdateAppointmentStatusUiState>(UpdateAppointmentStatusUiState.Idle)
         val _upateStatusState = updateStausState.asStateFlow()
-    
+
+        // get medical records ui MedicalRecordUiState
+        private val medicalRecordsState = MutableStateFlow<MedicalRecordUiState>(MedicalRecordUiState.Idle)
+        val _medicalRecordsState = medicalRecordsState.asStateFlow()
     
         // function for the api response
          fun onStartConsultingClicked(
@@ -437,6 +441,55 @@
         // In your ViewModel
         fun resetUpdateStatusState() {
             updateStausState.value = UpdateAppointmentStatusUiState.Idle
+        }
+
+        // function to fetch the medical records by appointment Id.
+        fun getMedicalRecordsByAppointment(
+            token:String,
+            appointmentId:String
+        ){
+            viewModelScope.launch {
+                medicalRecordsState.value = MedicalRecordUiState.Loading
+
+                try {
+                    Log.d("MEDICAL_RECORDS", "Fetching records for appointment: $appointmentId")
+
+                    val result = repo.getHealthRecord(
+                        token = token,
+                        appointmentId = appointmentId
+                    )
+
+                    result.fold(
+                        onSuccess = { records ->
+                            Log.d("MEDICAL_RECORDS", " Successfully fetched ${records.size} records")
+                            medicalRecordsState.value = MedicalRecordUiState.Success(data = records)
+                        },
+                        onFailure = { exception ->
+                            Log.e("MEDICAL_RECORDS", " Failed to fetch records: ${exception.message}")
+                            medicalRecordsState.value = MedicalRecordUiState.Error(
+                                message = exception.message ?: "Failed to load medical records"
+                            )
+                        }
+                    )
+                } catch (e: Exception) {
+                    Log.e("MEDICAL_RECORDS", " Exception occurred: ${e.message}", e)
+                    medicalRecordsState.value = MedicalRecordUiState.Error(
+                        message = e.message ?: "An unexpected error occurred while loading records"
+                    )
+                }
+            }
+        }
+        // Function to reset medical records state
+        fun resetMedicalRecordsState() {
+            medicalRecordsState.value = MedicalRecordUiState.Idle
+        }
+
+        // Optional: Function to refresh medical records
+        fun refreshMedicalRecords(
+            token: String,
+            appointmentId: String
+        ) {
+            getMedicalRecordsByAppointment(token, appointmentId)
         }
         // symptoms
         val Symtoms = listOf(
@@ -903,5 +956,13 @@
         object Loading: UpdateAppointmentStatusUiState()
         data class Success(val apiResponse: UpdateAppointmentStatusResponseBody): UpdateAppointmentStatusUiState()
         data class Error(val message:String): UpdateAppointmentStatusUiState()
+    }
+
+    // sealed class for the Medical records of the particular patient.
+    sealed class MedicalRecordUiState{
+        object Idle : MedicalRecordUiState()
+        object Loading : MedicalRecordUiState()
+        data class Success(val data: List<PrescriptionRecord>) : MedicalRecordUiState()
+        data class Error(val message: String) : MedicalRecordUiState()
     }
 

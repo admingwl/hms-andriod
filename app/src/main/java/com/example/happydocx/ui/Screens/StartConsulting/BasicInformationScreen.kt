@@ -2,6 +2,7 @@ package com.example.happydocx.ui.Screens.StartConsulting
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
@@ -419,7 +420,11 @@ fun ImageCard(
                         scope.launch {
                             // here the actual api will called for get the prescription pdf.
                             // for know show simple toast message when user press the button.
-                            Toast.makeText(context,"Pdf Generated...",Toast.LENGTH_SHORT).show()
+                                viewModel.getMedicalRecordsByAppointment(
+                                    token = token,
+                                    appointmentId = appointmentId
+                                )
+                            Log.d("Appointment ID:", appointmentId)
                         }
                     }
                 ) {
