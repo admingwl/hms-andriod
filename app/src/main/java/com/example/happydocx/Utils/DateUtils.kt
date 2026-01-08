@@ -11,7 +11,7 @@ import java.util.TimeZone
 
 object DateUtils {
     @RequiresApi(Build.VERSION_CODES.O)
-    fun formatAppointmentDate(isoDate: String): String {
+    fun formatAppointmentDate(isoDate: String?): String? {
         return try {
             // For Android API 26+ (Use this if minSdk >= 26)
             val zonedDateTime = ZonedDateTime.parse(isoDate)
