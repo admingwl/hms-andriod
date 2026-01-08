@@ -252,7 +252,7 @@ fun ConsultingMainScreen(
                     Spacer(Modifier.height(4.dp))
                     ScheduleDate(
                         label = "Next Schedule Date",
-                        labelValue = "${data.message.nextAppointmentDateTime}",
+                        labelValue = DateUtils.formatAppointmentDate(data.message.nextAppointmentDateTime),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
@@ -486,7 +486,7 @@ fun InformationCard(
 fun ScheduleDate(
     modifier: Modifier = Modifier,
     label: String,
-    labelValue: String,
+    labelValue: String?,
 ) {
     ElevatedCard(
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -502,7 +502,9 @@ fun ScheduleDate(
                     // add label
                     Text(label, color = Color(0xff858b96))
                     // add label value
-                    Text(labelValue, color = Color.Black)
+                    if (labelValue != null) {
+                        Text(labelValue, color = Color.Black)
+                    }
                 }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = {}) {
@@ -1984,7 +1986,7 @@ fun VitalSignSymptomResponseCard(
                     ) {
                         Column {
                             Text(
-                                "Temprature",
+                                "Temperature",
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 16.sp,
                                 color = Color.Black
