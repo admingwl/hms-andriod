@@ -5,6 +5,7 @@ import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
+import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
@@ -200,6 +201,33 @@ class BasicInformationRepository {
         }catch(e:Exception){
             Log.e("REPO_STATUS_UPDATE", "Exception: ${e.message}", e)
             Result.failure(e)
+        }
+    }
+
+
+    // get particular patient health record.
+    suspend fun getHealthRecord(
+        token:String,
+        appointmentId:String,
+    ): Result<List<PrescriptionRecord>>{
+        return try {
+            val result = apiService.getMedicalRecords(
+                token = "Bearer $token",
+               appointmentId = appointmentId
+            )
+            Log.d("API_CALL", "URL: ${result.raw().request.url}")
+            Log.d("API_CALL", "Response Code: ${result.code()}")
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Log.d("API_ERROR", "Error message: $errorMessage")
+                Result.failure(Exception(errorMessage))
+
+            }
+        } catch (E: Exception) {
+            Result.failure(E)
         }
     }
 }

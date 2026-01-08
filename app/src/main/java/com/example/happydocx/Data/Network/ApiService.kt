@@ -11,6 +11,7 @@ import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
+import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
@@ -161,4 +162,10 @@ interface ApiService{
         @Path("id") appointmentId:String,
         @Body body : UpdateAppointmentStatusRequestBody
     ): Response<UpdateAppointmentStatusResponseBody>
+
+    @GET("api/v1/record/by-appointment/{appointmentId}")
+    suspend fun getMedicalRecords(
+        @Header("Authorization") token:String,
+        @Path("appointmentId") appointmentId: String
+    ): Response<List<PrescriptionRecord>>
 }
