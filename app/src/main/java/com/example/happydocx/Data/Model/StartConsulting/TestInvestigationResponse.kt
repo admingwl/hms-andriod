@@ -1,40 +1,65 @@
 package com.example.happydocx.Data.Model.StartConsulting
 
-data class TestAndInvestigationResponse(
+import com.google.gson.annotations.SerializedName
+
+data class TestInvestigationResponse(
     val message: String,
-    val data: TestAndInvestigationMedicalRecord
+    val data: TestInvestigationRecord
 )
 
-data class TestAndInvestigationMedicalRecord(
-    val investigation: InvestigationOfTestAndInvestigation,
-    val _id: String,
+data class TestInvestigationRecord(
+    @SerializedName("_id") val id: String,
     val patient: String,
     val physician: String,
     val appointment: String,
     val status: String,
-    val medicationOrders: List<TestAndInvestigationMedicationOrder>,
+    val investigation: MedicationInvestigation,
+    val notes: MedicationNotes,
+    val orders: LabOrders,
+    val patientVitalSigns: List<VitalSignThree>,
     val encounterDate: String,
-    val patientVitalSigns: List<Any>,
-    val investigationOrders: List<TestAndInvestigationOrder>,
+    val medicationOrders: List<MedicationOrder>,
+    val investigationOrders: List<InvestigationOrder>, // Now has a specific type
+    val prescription: List<Any>, // Keep as Any if always empty, or create a class if data appears
     val createdAt: String,
     val updatedAt: String,
-    val __v: Int
+    @SerializedName("__v") val version: Int
 )
 
-data class InvestigationOfTestAndInvestigation(
+data class MedicationInvestigation(
     val status: String,
     val problemDiagnosis: List<String>,
     val symptoms: List<String>
 )
 
-data class TestAndInvestigationMedicationOrder(
+data class MedicationNotes(
+    val priority: String
+)
+
+data class LabOrders(
+    val labTests: List<String>
+)
+
+data class VitalSignThree(
+    val bloodPressure: String,
+    val heartRate: String,
+    val temperature: String,
+    val oxigenSaturation: String,
+    val height: String,
+    val weight: String,
+    @SerializedName("_id") val id: String,
+    val recordedAt: String
+)
+
+data class MedicationOrder(
     val genericName: String,
     val strength: String,
     val duration: String,
-    val _id: String
+    @SerializedName("_id") val id: String
 )
-data class TestAndInvestigationOrder(
+
+data class InvestigationOrder(
     val testName: String,
     val reason: String,
-    val _id:String
+    @SerializedName("_id") val id: String
 )

@@ -11,9 +11,9 @@ data class SaveSendVitalSignsResponseBody(
     val investigation: SaveSendVitalResponseInvestigation?,
     val notes: SaveSendNotes?, // Missing tha
     val orders: SaveSendOrders?, // Missing tha
-    val medicationOrders: List<MedicationOrder>?,
+    val medicationOrders: List<MedicationOrderTwo>?,
     val patientVitalSigns: List<PatientVitalSign>?,
-    val investigationOrders: List<InvestigationOrder>?, // Isse String se Object kar diya
+    val investigationOrders: List<InvestigationOrderTwo>?, // Isse String se Object kar diya
     val encounterDate: String?,
     val createdAt: String?,
     val updatedAt: String?,
@@ -34,7 +34,7 @@ data class SaveSendVitalResponseInvestigation(
     val symptoms: List<Any>?
 )
 
-data class MedicationOrder(
+data class MedicationOrderTwo(
     val genericName: String?,
     val strength: String?,
     val duration: String?,
@@ -42,7 +42,7 @@ data class MedicationOrder(
     val id: String?
 )
 
-data class InvestigationOrder(
+data class InvestigationOrderTwo(
     val testName: String?,
     val reason: String?,
     @SerializedName("_id")
