@@ -7,7 +7,9 @@ import android.graphics.Paint
 
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
+import android.os.Build
 import android.os.Environment
+import androidx.annotation.RequiresApi
 import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
 import com.example.happydocx.Data.Model.StartConsulting.VitalSign
 import com.example.happydocx.Utils.DateUtils
@@ -74,6 +76,7 @@ class PrescriptionPdfGenerator(private val context: Context) {
     }
 
     // here the whole pdf is generated with the different designs .
+    @RequiresApi(Build.VERSION_CODES.O)
     fun generatePdf(record: PrescriptionRecord): File? {
         val pdfDocument = PdfDocument()
         var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create()
@@ -219,6 +222,7 @@ class PrescriptionPdfGenerator(private val context: Context) {
         return maxOf(y, y2) + 5f
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun drawVitalSigns(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
         var y = startY
 
@@ -235,6 +239,7 @@ class PrescriptionPdfGenerator(private val context: Context) {
         return y
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun drawVitalSignRecord(canvas: Canvas, startY: Float, vital: VitalSign): Float {
         var y = startY
 
