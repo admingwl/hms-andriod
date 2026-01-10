@@ -2,7 +2,9 @@ package com.example.happydocx.PdfGeneration
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun pdfGeneratorButton(
     record : PrescriptionRecord,

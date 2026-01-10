@@ -15,7 +15,7 @@ data class MedicalRecord(
     val orders: LabOrder?,      // Added
     val medicationOrders: List<MedicationOrderss>,
     val encounterDate: String,
-    val patientVitalSigns: List<VitalSign>, // Changed from Any
+    val patientVitalSigns: List<VitalSignss>, // Changed from Any
     val investigationOrders: List<Any>,
     val prescription: List<Any>, // Added
     val createdAt: String,

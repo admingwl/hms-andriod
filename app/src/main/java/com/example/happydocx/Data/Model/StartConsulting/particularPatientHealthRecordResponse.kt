@@ -19,7 +19,6 @@ data class PrescriptionRecord(
     val investigationOrders: List<Any>?, // Type unknown from empty array
     val createdAt: String?,
     val updatedAt: String?,
-    val version: Int?,
     val prescription: List<Any>? // Type unknown from empty array
 )
 
