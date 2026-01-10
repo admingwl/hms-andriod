@@ -1,6 +1,7 @@
 package com.example.happydocx.ui.Screens.StartConsulting
 
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -50,30 +51,37 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -110,14 +118,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
+import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
+import com.example.happydocx.PdfGeneration.PrescriptionPdfGenerator
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.MedicalRecordUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.MedicationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVitalSignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SubmitDiagnosisNotesSymptomsUiState
@@ -128,8 +140,11 @@ import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -148,7 +163,7 @@ fun ConsultingMainScreen(
     // api state
     val apiState = viewModel._apiState.collectAsStateWithLifecycle().value
     val submissionState = viewModel._submitState.collectAsStateWithLifecycle().value
-    
+
     LaunchedEffect(patientId) {
         // pass patient id here through navigation
         viewModel.onStartConsultingClicked(appointmentId = appointmentId, token = token)
@@ -294,14 +309,15 @@ fun ImageCard(
     modifier: Modifier = Modifier,
     image: Int,
     patientId: String,
-    appointmentId:String,
+    appointmentId: String,
     viewModel: BasicInformationViewModel,
     patientName: String,
     context: Context,
-    token:String,
-    appointmentStatus:String = ""// Add this parameter to receive status from API
+    token: String,
+    appointmentStatus: String = ""// Add this parameter to receive status from API
 ) {
     var scope = rememberCoroutineScope()
+    // Observe status update state
     var currentStepIndex by rememberSaveable(appointmentStatus) {
         mutableStateOf(
             when (appointmentStatus) {
@@ -321,12 +337,23 @@ fun ImageCard(
         "Completed"
     )
 
+    // State for prescription dialog
+    var showPrescriptionDialog by remember { mutableStateOf(false) }
+    var prescriptionRecords by remember { mutableStateOf<List<PrescriptionRecord>>(emptyList()) }
+
+    // helper function .
+    fun dismissDialog() {
+        showPrescriptionDialog = false
+        prescriptionRecords = emptyList()
+    }
+    // Observe medical records state (using your existing state)
+    val medicalRecordsState = viewModel._medicalRecordsState.collectAsStateWithLifecycle()
     // know see the state from the viewModel
     val statusUpdateState = viewModel._upateStatusState.collectAsStateWithLifecycle()
-  // handle the status update response
+    // handle the status update response
     LaunchedEffect(statusUpdateState.value) {
-        when(val state = statusUpdateState.value){
-            is UpdateAppointmentStatusUiState.Success ->{
+        when (val state = statusUpdateState.value) {
+            is UpdateAppointmentStatusUiState.Success -> {
                 Toast.makeText(
                     context,
                     state.apiResponse.message,
@@ -335,7 +362,8 @@ fun ImageCard(
                 // important to not show toast again and again
                 viewModel.resetUpdateStatusState()
             }
-            is UpdateAppointmentStatusUiState.Error->{
+
+            is UpdateAppointmentStatusUiState.Error -> {
 
                 Toast.makeText(
                     context,
@@ -344,9 +372,42 @@ fun ImageCard(
                 ).show()
                 viewModel.resetUpdateStatusState()
             }
+
             else -> {}
         }
     }
+
+
+    // Handle medical records fetch response
+    LaunchedEffect(medicalRecordsState.value) {
+        when (val state = medicalRecordsState.value) {
+            is MedicalRecordUiState.Success -> {
+                if (state.data.isNotEmpty()) {
+                    prescriptionRecords = state.data
+                    showPrescriptionDialog = true
+                } else {
+                    Toast.makeText(
+                        context,
+                        "No prescription records found",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                viewModel.resetMedicalRecordsState()
+            }
+
+            is MedicalRecordUiState.Error -> {
+                Toast.makeText(
+                    context,
+                    "Error fetching prescription: ${state.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+                viewModel.resetMedicalRecordsState()
+            }
+
+            else -> {}
+        }
+    }
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -387,8 +448,8 @@ fun ImageCard(
                     // Update the current step when clicked
                     currentStepIndex = index
                     // map index to api status value
-                    val statusValue = when(index){
-                        0-> "Confirmed"
+                    val statusValue = when (index) {
+                        0 -> "Confirmed"
                         1 -> "Waiting"
                         2 -> "In Consultation"
                         3 -> "Completed"
@@ -407,10 +468,13 @@ fun ImageCard(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            if(currentStepIndex == 3){
+            if (currentStepIndex == 3) {
                 // Button to show when all 4 steps are completed successfully
                 FilledTonalButton(
-                    modifier = modifier.fillMaxWidth().padding(15.dp).padding(paddingValues = PaddingValues(0.dp)),
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .padding(15.dp)
+                        .padding(paddingValues = PaddingValues(0.dp)),
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff4f61e3),
@@ -420,34 +484,43 @@ fun ImageCard(
                         scope.launch {
                             // here the actual api will called for get the prescription pdf.
                             // for know show simple toast message when user press the button.
-                                viewModel.getMedicalRecordsByAppointment(
-                                    token = token,
-                                    appointmentId = appointmentId
-                                )
+                            viewModel.getMedicalRecordsByAppointment(
+                                token = token,
+                                appointmentId = appointmentId
+                            )
                             Log.d("Appointment ID:", appointmentId)
                         }
                     }
                 ) {
-                    Text(
-                        text = "Get Prescription",
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (medicalRecordsState.value is MedicalRecordUiState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Loading...", fontWeight = FontWeight.Bold)
+                    } else {
+                        Icon(
+                            painter = painterResource(android.R.drawable.ic_menu_save),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Get Prescription", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
-
-            }
-
-//            // Show loading indicator during API call
-//            if (statusUpdateState.value is UpdateAppointmentStatusUiState.Loading) {
-//                Spacer(modifier = Modifier.height(8.dp))
-//                CircularProgressIndicator(
-//                    modifier = Modifier.size(24.dp),
-//                    color = Color(0xff1d4ed8),
-//                    strokeWidth = 2.dp
-//                )
-//            }
         }
     }
+        if(showPrescriptionDialog && prescriptionRecords.isNotEmpty()){
+            PrescriptionPreviewDialog(
+                prescriptionRecords.firstOrNull(),
+                onDismiss = ::dismissDialog
+            )
+        }
+
+}
 
 
 // information card
@@ -775,12 +848,12 @@ fun VitalSignAndSymtoms(
 
 
     LaunchedEffect(patientId) {
-        if(patientId.isNotEmpty()) {
+        if (patientId.isNotEmpty()) {
             viewModel.getListOfSymptomsAndVitalSigns(token = token, patientId = patientId)
         }
     }
 
-    when (val state  = listState) {
+    when (val state = listState) {
         is VitalSignAndSymptomsList.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -943,21 +1016,21 @@ fun Medication(
         Spacer(Modifier.height(8.dp))
         state.selectedMedication.forEachIndexed { index, entry ->
             MedicationInputRow(
-                     entry = entry,
-                     onDurationChange = { viewModel.onMedicationUpdated(index, duration = it) },
-                     onStorageChange = { viewModel.onMedicationUpdated(index, storage = it) },
-                     onRemove = { viewModel.onMedicationRemoved(entry) }
+                entry = entry,
+                onDurationChange = { viewModel.onMedicationUpdated(index, duration = it) },
+                onStorageChange = { viewModel.onMedicationUpdated(index, storage = it) },
+                onRemove = { viewModel.onMedicationRemoved(entry) }
             )
         }
         FilledTonalButton(
             onClick = {
-                    viewModel.onSendMedicationClicked(
-                        token = token,
-                        patientId = patientId,
-                        appointmentId = appointmentId,
-                        physicianId = physicianId
-                    )
-                },
+                viewModel.onSendMedicationClicked(
+                    token = token,
+                    patientId = patientId,
+                    appointmentId = appointmentId,
+                    physicianId = physicianId
+                )
+            },
             enabled = ViewModelState.value !is MedicationUiState.Loading &&
                     state.selectedMedication.isNotEmpty(),
             shape = RoundedCornerShape(4.dp),
@@ -2055,7 +2128,8 @@ data class StepItem(
     val label: String,
     val status: StepStatus
 )
-enum class StepStatus{
+
+enum class StepStatus {
     COMPLETED,
     WAITING,
     IN_CONSULTATION,
@@ -2110,6 +2184,7 @@ fun ConsultationPulseIndicator(
         )
     }
 }
+
 @Composable
 fun HorizontalStatusStepper(
     steps: List<String>,
@@ -2151,7 +2226,9 @@ fun HorizontalStatusStepper(
                                 .graphicsLayer { translationX = size.width / 2 }
                         ) {
                             drawLine(
-                                color = if (index < currentStepIndex) Color(0xFF4CAF50) else Color(0xFFE0E0E0),
+                                color = if (index < currentStepIndex) Color(0xFF4CAF50) else Color(
+                                    0xFFE0E0E0
+                                ),
                                 start = Offset(0f, size.height / 2),
                                 end = Offset(size.width, size.height / 2),
                                 strokeWidth = lineThickness.toPx(),
@@ -2173,7 +2250,8 @@ fun HorizontalStatusStepper(
                 val isActivePulse = index == currentStepIndex && index != steps.lastIndex
 
                 // 2. A step is "Done/Tick" if it is previous OR if it is the current one AND it's the final step
-                val isDone = index < currentStepIndex || (index == currentStepIndex && index == steps.lastIndex)
+                val isDone =
+                    index < currentStepIndex || (index == currentStepIndex && index == steps.lastIndex)
 
 
                 val isCompleted = index < currentStepIndex
@@ -2215,6 +2293,7 @@ fun HorizontalStatusStepper(
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
+
                             isActivePulse -> {
                                 // Only show pulse for steps 0, 1, 2
                                 ConsultationPulseIndicator(
@@ -2222,8 +2301,9 @@ fun HorizontalStatusStepper(
                                     size = circleSize
                                 )
                             }
+
                             isPending -> {
- // future steps
+                                // future steps
                             }
                         }
                     }
@@ -2244,5 +2324,420 @@ fun HorizontalStatusStepper(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PrescriptionPreviewDialog(
+    prescriptionRecord: PrescriptionRecord?,
+    onDismiss: () -> Unit,
+    context: Context = LocalContext.current
+) {
+    var pdfFile by remember { mutableStateOf<File?>(null) }
+    var isGenerating by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // Auto-generate PDF when dialog opens
+    LaunchedEffect(prescriptionRecord) {
+        if (prescriptionRecord != null && pdfFile == null) {
+            isGenerating = true
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val generator = PrescriptionPdfGenerator(context)
+                    val file = generator.generatePdf(prescriptionRecord)
+                    withContext(Dispatchers.Main) {
+                        pdfFile = file
+                        isGenerating = false
+                        if (file != null) {
+                            Toast.makeText(
+                                context,
+                                "Prescription PDF generated successfully",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Failed to generate PDF",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        isGenerating = false
+                        Toast.makeText(
+                            context,
+                            "Error: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color(0xfff0f5ff)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Top Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xff1d4ed8))
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Prescription Preview",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(
+                        onClick = onDismiss,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Close"
+                        )
+                    }
+                }
+
+                // Content Area
+                if (isGenerating) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = Color(0xff1d4ed8),
+                                strokeWidth = 4.dp
+                            )
+                            Text(
+                                text = "Generating prescription PDF...",
+                                fontSize = 16.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                } else if (pdfFile != null) {
+                    // PDF Info Display
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Success Card
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xffdcfce7)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(android.R.drawable.ic_menu_save),
+                                    contentDescription = null,
+                                    tint = Color(0xff16a34a),
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = "PDF Generated Successfully!",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp,
+                                        color = Color(0xff16a34a)
+                                    )
+                                    Text(
+                                        text = "Your prescription is ready",
+                                        fontSize = 14.sp,
+                                        color = Color(0xff166534)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Prescription Details Card
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            elevation = CardDefaults.cardElevation(2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "Prescription Details",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                    color = Color.Black
+                                )
+                                HorizontalDivider(color = Color.LightGray)
+
+                                PrescriptionDetailRow(
+                                    label = "Patient Name",
+                                    value = "${prescriptionRecord?.patient?.firstName ?: ""} ${prescriptionRecord?.patient?.lastName ?: ""}"
+                                )
+                                PrescriptionDetailRow(
+                                    label = "Patient ID",
+                                    value = prescriptionRecord?.patient?.id ?: "N/A"
+                                )
+                                PrescriptionDetailRow(
+                                    label = "Physician",
+                                    value = "Dr. ${prescriptionRecord?.physician?.firstName ?: ""} ${prescriptionRecord?.physician?.lastName ?: ""}"
+                                )
+                                PrescriptionDetailRow(
+                                    label = "Date",
+                                    value = prescriptionRecord?.encounterDate ?: "N/A"
+                                )
+                                PrescriptionDetailRow(
+                                    label = "Status",
+                                    value = prescriptionRecord?.status ?: "N/A"
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Medications Count
+                                Text(
+                                    text = "Medications: ${prescriptionRecord?.medicationOrders?.size ?: 0}",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
+
+                                // File Path
+                                Text(
+                                    text = "Saved to: ${pdfFile?.name}",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Failed to generate PDF",
+                            fontSize = 16.sp,
+                            color = Color.Red
+                        )
+                    }
+                }
+
+                // Action Buttons (Always visible at bottom)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                    elevation = CardDefaults.cardElevation(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Preview PDF Button
+                        Button(
+                            onClick = {
+                                pdfFile?.let { file ->
+                                    try {
+                                        val uri = FileProvider.getUriForFile(
+                                            context,
+                                            "${context.packageName}.provider",
+                                            file
+                                        )
+                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                            setDataAndType(uri, "application/pdf")
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(
+                                            context,
+                                            "Error opening PDF: ${e.message}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            },
+                            enabled = pdfFile != null && !isGenerating,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xff1d4ed8)
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(16.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(android.R.drawable.ic_menu_view),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Preview PDF",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Share PDF Button
+                        OutlinedButton(
+                            onClick = {
+                                pdfFile?.let { file ->
+                                    try {
+                                        val uri = FileProvider.getUriForFile(
+                                            context,
+                                            "${context.packageName}.provider",
+                                            file
+                                        )
+                                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "application/pdf"
+                                            putExtra(Intent.EXTRA_STREAM, uri)
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(
+                                            Intent.createChooser(shareIntent, "Share Prescription")
+                                        )
+                                    } catch (e: Exception) {
+                                        Toast.makeText(
+                                            context,
+                                            "Error sharing PDF: ${e.message}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            },
+                            enabled = pdfFile != null && !isGenerating,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xff1d4ed8)
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(16.dp)
+                        ) {
+                            Icon(
+                               imageVector = Icons.Default.Share,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Share PDF",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Download Again Button
+                        TextButton(
+                            onClick = {
+                                isGenerating = true
+                                scope.launch(Dispatchers.IO) {
+                                    try {
+                                        if (prescriptionRecord != null) {
+                                            val generator = PrescriptionPdfGenerator(context)
+                                            val file = generator.generatePdf(prescriptionRecord)
+                                            withContext(Dispatchers.Main) {
+                                                pdfFile = file
+                                                isGenerating = false
+                                                Toast.makeText(
+                                                    context,
+                                                    "PDF regenerated successfully",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        withContext(Dispatchers.Main) {
+                                            isGenerating = false
+                                            Toast.makeText(
+                                                context,
+                                                "Error: ${e.message}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = !isGenerating,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Download Again",
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrescriptionDetailRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Normal
+        )
     }
 }

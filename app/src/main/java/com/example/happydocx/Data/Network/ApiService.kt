@@ -10,14 +10,13 @@ import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
-import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
 import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
-import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
+import com.example.happydocx.Data.Model.StartConsulting.TestInvestigationResponse
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.vitalSignList
@@ -155,7 +154,7 @@ interface ApiService{
     suspend fun submitTestAndInvestigation(
         @Header("Authorization") token: String,
         @Body body: TestAndInvestigationRequest
-    ): Response<TestAndInvestigationResponse>
+    ): Response<TestInvestigationResponse>
 
     @POST("api/v1/appointment/update/status/{id}") // id -> appointment Id
     suspend fun updateAppointmentStatus(

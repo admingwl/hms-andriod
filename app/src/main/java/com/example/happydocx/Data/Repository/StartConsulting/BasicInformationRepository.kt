@@ -11,7 +11,7 @@ import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsRespon
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
-import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
+import com.example.happydocx.Data.Model.StartConsulting.TestInvestigationResponse
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.vitalSignList
@@ -154,7 +154,7 @@ class BasicInformationRepository {
     suspend fun submitTestAndInvestigation(
         token: String,
         requestBody: TestAndInvestigationRequest
-    ): Result<TestAndInvestigationResponse> {
+    ): Result<TestInvestigationResponse> {
 
         return try {
             val result =

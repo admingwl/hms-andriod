@@ -17,7 +17,7 @@
     import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
     import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationOrders
     import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
-    import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationResponse
+    import com.example.happydocx.Data.Model.StartConsulting.TestInvestigationResponse
     import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusResponseBody
     import com.example.happydocx.Data.Repository.StartConsulting.BasicInformationRepository
     import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
@@ -336,7 +336,7 @@
                 val investigationOrderList = state.value.selectedTest.map { test->
                     TestAndInvestigationOrders(
                         name = test.testInvestigationName,
-                        reason = test.testInvestigationReason
+                        reason = test.testInvestigationReason,
                     )
                 }
 
@@ -947,7 +947,7 @@
     sealed class TestAndInvestigation{
         object Idle : TestAndInvestigation()
         object Loading: TestAndInvestigation()
-        data class Success(val data : TestAndInvestigationResponse): TestAndInvestigation()
+        data class Success(val data : TestInvestigationResponse): TestAndInvestigation()
         data class Error(val message:String): TestAndInvestigation()
     }
 

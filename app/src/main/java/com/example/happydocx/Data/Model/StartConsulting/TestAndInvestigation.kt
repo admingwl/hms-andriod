@@ -7,6 +7,9 @@ data class TestAndInvestigationRequest(
     val investigationOrders:List<TestAndInvestigationOrders>
 )
 data class TestAndInvestigationOrders(
+    val unit:String="",
+    val duration:String="",
+    val severity:String="",
     val name:String,
     val reason:String,
 )
