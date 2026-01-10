@@ -219,7 +219,7 @@ class BasicInformationRepository {
             Log.d("API_CALL", "URL: ${result.raw().request.url}")
             Log.d("API_CALL", "Response Code: ${result.code()}")
             if (result.isSuccessful && result.body() != null) {
-                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Log.d("ServerKaMessage", "Success: ${result.body()} and code is ${result.code()}")
                 Result.success(result.body()!!)
             } else {
                 val errorMessage = result.errorBody()?.string() ?: "Unknown server error"

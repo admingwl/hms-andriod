@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.os.Build
@@ -12,7 +11,6 @@ import android.os.Environment
 import androidx.annotation.RequiresApi
 import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
 import com.example.happydocx.Data.Model.StartConsulting.VitalSign
-import com.example.happydocx.Utils.DateUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -78,12 +76,22 @@ class PrescriptionPdfGenerator(private val context: Context) {
     // here the whole pdf is generated with the different designs .
     @RequiresApi(Build.VERSION_CODES.O)
     fun generatePdf(record: PrescriptionRecord): File? {
+
+
         val pdfDocument = PdfDocument()
         var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create()
         var page = pdfDocument.startPage(pageInfo)
         var canvas = page.canvas
         var yPosition = margin
 
+//        //  Debug logging
+//        Log.d("PDF_DEBUG", "=== PDF Generation Started ===")
+//        Log.d("PDF_DEBUG", "Patient: ${record.patient?.firstName} ${record.patient?.lastName}")
+//        Log.d("PDF_DEBUG", "Vital Signs: ${record.patientVitalSigns?.size ?: 0}")
+//
+//        record.patientVitalSigns?.forEachIndexed { index, vital ->
+//            Log.d("PDF_DEBUG", "Vital[$index]: BP=${vital.bloodPressure}, HR=${vital.heartRate}, Temp=${vital.temperature}")
+//        }
         try {
             // Header with logo and clinic info
             yPosition = drawHeader(canvas, yPosition)
@@ -222,7 +230,6 @@ class PrescriptionPdfGenerator(private val context: Context) {
         return maxOf(y, y2) + 5f
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun drawVitalSigns(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
         var y = startY
 
@@ -239,12 +246,12 @@ class PrescriptionPdfGenerator(private val context: Context) {
         return y
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
     private fun drawVitalSignRecord(canvas: Canvas, startY: Float, vital: VitalSign): Float {
         var y = startY
 
         // Record header
-        val recordTitle = "RECORDED AT ${DateUtils.formatAppointmentDate(vital.recordedAt) ?: "N/A"}"
+        val recordTitle = "RECORDED AT ${vital.recordedAt ?: "N/A"}"
         canvas.drawText(recordTitle, margin, y, labelPaint)
         y += 15f
 

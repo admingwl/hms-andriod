@@ -304,6 +304,7 @@ fun ConsultingMainScreen(
 
 
 // Image Card
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ImageCard(
     modifier: Modifier = Modifier,
@@ -440,7 +441,7 @@ fun ImageCard(
                 color = Color.Black,
             )
             // Status Stepper
-            // show steper always. even if the uesr click on completed .
+            // show stepper always. even if the user click on completed .
             HorizontalStatusStepper(
                 steps = steps,
                 currentStepIndex = currentStepIndex,
@@ -2327,6 +2328,7 @@ fun HorizontalStatusStepper(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PrescriptionPreviewDialog(
     prescriptionRecord: PrescriptionRecord?,
