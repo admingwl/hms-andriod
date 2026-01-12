@@ -76,4 +76,7 @@ dependencies {
     // adding the coil library
     implementation("io.coil-kt.coil3:coil-compose:3.3.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
+
+//      // PDF Viewer
+    implementation("io.github.grizzi91:bouquet:1.1.3")
 }

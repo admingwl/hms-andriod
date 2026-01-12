@@ -1,19 +1,21 @@
 package com.example.happydocx.ui.Screens.StartConsulting
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.media.MediaScannerConnection
 import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -36,7 +38,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,10 +49,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -59,7 +64,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -81,7 +85,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -104,7 +107,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -112,13 +114,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
@@ -140,6 +143,9 @@ import com.example.happydocx.ui.uiStates.StartConsulting.InvestigationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicalEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicationEntry
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiState
+import com.rizzi.bouquet.ResourceType
+import com.rizzi.bouquet.VerticalPDFReader
+import com.rizzi.bouquet.rememberVerticalPdfReaderState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -458,7 +464,7 @@ fun ImageCard(
                     }
                     Toast.makeText(context, "update Status...", Toast.LENGTH_SHORT).show()
 
-                    // TODO: Here I can also call an API to update the status on the server
+                    // TODO: Here I  call an API to update the status on the server
                     viewModel.updateAppointmentStatus(
                         token = token,
                         appointmentId = appointmentId,
@@ -503,7 +509,7 @@ fun ImageCard(
                         Text("Loading...", fontWeight = FontWeight.Bold)
                     } else {
                         Icon(
-                            painter = painterResource(android.R.drawable.ic_menu_save),
+                            imageVector = Icons.Default.Done,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp)
                         )
@@ -1290,7 +1296,7 @@ fun TabScreen(
                                 navController.navigate("addSymptoms/$token/$patientId/$appointmentId")
                             }) {
                                 Icon(
-                                    painter = painterResource(R.drawable.add_file),
+                                    imageVector = Icons.Default.Add,
                                     contentDescription = null,
                                     tint = Color.Black,
                                     modifier = modifier.padding(8.dp)
@@ -1495,7 +1501,7 @@ fun AddSymptomScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            Icons.Default.ArrowBack,
+                           imageVector =  Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
                             tint = Color.White
                         )
@@ -1988,7 +1994,7 @@ fun VitalSignSymptomResponseCard(
                 }
             ) {
                 Icon(
-                    Icons.Default.KeyboardArrowDown,
+                    imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
                     tint = Color.Black
                 )
@@ -2337,6 +2343,7 @@ fun PrescriptionPreviewDialog(
 ) {
     var pdfFile by remember { mutableStateOf<File?>(null) }
     var isGenerating by remember { mutableStateOf(false) }
+    var showPdfPreview by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Auto-generate PDF when dialog opens
@@ -2397,8 +2404,21 @@ fun PrescriptionPreviewDialog(
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    if (showPdfPreview) {
+                        IconButton(
+                            onClick = { showPdfPreview = false },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
                     Text(
-                        text = "Prescription Preview",
+                        text = if (showPdfPreview) "PDF Preview" else "Prescription Preview",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -2418,300 +2438,247 @@ fun PrescriptionPreviewDialog(
                 }
 
                 // Content Area
-                if (isGenerating) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(48.dp),
-                                color = Color(0xff1d4ed8),
-                                strokeWidth = 4.dp
-                            )
-                            Text(
-                                text = "Generating prescription PDF...",
-                                fontSize = 16.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-                } else if (pdfFile != null) {
-                    // PDF Info Display
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Success Card
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xffdcfce7)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(android.R.drawable.ic_menu_save),
-                                    contentDescription = null,
-                                    tint = Color(0xff16a34a),
-                                    modifier = Modifier.size(32.dp)
-                                )
-                                Column {
-                                    Text(
-                                        text = "PDF Generated Successfully!",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp,
-                                        color = Color(0xff16a34a)
-                                    )
-                                    Text(
-                                        text = "Your prescription is ready",
-                                        fontSize = 14.sp,
-                                        color = Color(0xff166534)
-                                    )
-                                }
-                            }
-                        }
-
-                        // Prescription Details Card
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(2.dp)
+                if (showPdfPreview && pdfFile != null) {
+                    // PDF Preview Screen using Bouquet
+                    PdfPreviewScreen(pdfFile = pdfFile!!)
+                } else {
+                    // Original Content
+                    if (isGenerating) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
                         ) {
                             Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(48.dp),
+                                    color = Color(0xff1d4ed8),
+                                    strokeWidth = 4.dp
+                                )
                                 Text(
-                                    text = "Prescription Details",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    color = Color.Black
-                                )
-                                HorizontalDivider(color = Color.LightGray)
-
-                                PrescriptionDetailRow(
-                                    label = "Patient Name",
-                                    value = "${prescriptionRecord?.patient?.firstName ?: ""} ${prescriptionRecord?.patient?.lastName ?: ""}"
-                                )
-                                PrescriptionDetailRow(
-                                    label = "Patient ID",
-                                    value = prescriptionRecord?.patient?.id ?: "N/A"
-                                )
-                                PrescriptionDetailRow(
-                                    label = "Physician",
-                                    value = "Dr. ${prescriptionRecord?.physician?.firstName ?: ""} ${prescriptionRecord?.physician?.lastName ?: ""}"
-                                )
-                                PrescriptionDetailRow(
-                                    label = "Date",
-                                    value = prescriptionRecord?.encounterDate ?: "N/A"
-                                )
-                                PrescriptionDetailRow(
-                                    label = "Status",
-                                    value = prescriptionRecord?.status ?: "N/A"
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                // Medications Count
-                                Text(
-                                    text = "Medications: ${prescriptionRecord?.medicationOrders?.size ?: 0}",
-                                    fontSize = 14.sp,
-                                    color = Color.Gray
-                                )
-
-                                // File Path
-                                Text(
-                                    text = "Saved to: ${pdfFile?.name}",
-                                    fontSize = 12.sp,
+                                    text = "Generating prescription PDF...",
+                                    fontSize = 16.sp,
                                     color = Color.Gray
                                 )
                             }
                         }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Failed to generate PDF",
-                            fontSize = 16.sp,
-                            color = Color.Red
-                        )
-                    }
-                }
-
-                // Action Buttons (Always visible at bottom)
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                    elevation = CardDefaults.cardElevation(8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Preview PDF Button
-                        Button(
-                            onClick = {
-                                pdfFile?.let { file ->
-                                    try {
-                                        val uri = FileProvider.getUriForFile(
-                                            context,
-                                            "${context.packageName}.provider",
-                                            file
+                    } else if (pdfFile != null) {
+                        // PDF Info Display
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Success Card
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xffdcfce7)
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color(0xff16a34a),
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "PDF Generated Successfully!",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp,
+                                            color = Color(0xff16a34a)
                                         )
-                                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                                            setDataAndType(uri, "application/pdf")
-                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        }
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        Toast.makeText(
-                                            context,
-                                            "Error opening PDF: ${e.message}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        Text(
+                                            text = "Your prescription is ready",
+                                            fontSize = 14.sp,
+                                            color = Color(0xff166534)
+                                        )
                                     }
                                 }
-                            },
-                            enabled = pdfFile != null && !isGenerating,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xff1d4ed8)
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(16.dp)
+                            }
+
+                            // Prescription Details Card
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                elevation = CardDefaults.cardElevation(2.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Text(
+                                        text = "Prescription Details",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = Color.Black
+                                    )
+                                    HorizontalDivider(color = Color.LightGray)
+
+                                    PrescriptionDetailRow(
+                                        label = "Patient Name",
+                                        value = "${prescriptionRecord?.patient?.firstName ?: ""} ${prescriptionRecord?.patient?.lastName ?: ""}"
+                                    )
+                                    PrescriptionDetailRow(
+                                        label = "Physician",
+                                        value = "Dr. ${prescriptionRecord?.physician?.firstName ?: ""} ${prescriptionRecord?.physician?.lastName ?: ""}"
+                                    )
+                                    PrescriptionDetailRow(
+                                        label = "Date",
+                                        value = prescriptionRecord?.encounterDate ?: "N/A"
+                                    )
+                                    PrescriptionDetailRow(
+                                        label = "Status",
+                                        value = prescriptionRecord?.status ?: "N/A"
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Medications: ${prescriptionRecord?.medicationOrders?.size ?: 0}",
+                                        fontSize = 14.sp,
+                                        color = Color.Gray
+                                    )
+
+                                    Text(
+                                        text = "Saved to: ${pdfFile?.name}",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                painter = painterResource(android.R.drawable.ic_menu_view),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
                             Text(
-                                text = "Preview PDF",
+                                text = "Failed to generate PDF",
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
+                                color = Color.Red
                             )
                         }
+                    }
 
-                        // Share PDF Button
-                        OutlinedButton(
-                            onClick = {
-                                pdfFile?.let { file ->
-                                    try {
-                                        val uri = FileProvider.getUriForFile(
-                                            context,
-                                            "${context.packageName}.provider",
-                                            file
-                                        )
-                                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "application/pdf"
-                                            putExtra(Intent.EXTRA_STREAM, uri)
-                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        }
-                                        context.startActivity(
-                                            Intent.createChooser(shareIntent, "Share Prescription")
-                                        )
-                                    } catch (e: Exception) {
-                                        Toast.makeText(
-                                            context,
-                                            "Error sharing PDF: ${e.message}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            },
-                            enabled = pdfFile != null && !isGenerating,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xff1d4ed8)
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(16.dp)
+                    // Action Buttons
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                        elevation = CardDefaults.cardElevation(8.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                               imageVector = Icons.Default.Share,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "Share PDF",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                            // Preview PDF Button (Opens inside app with Bouquet)
+                            Button(
+                                onClick = {
+                                    if (pdfFile != null) {
+                                        showPdfPreview = true
+                                    }
+                                },
+                                enabled = pdfFile != null && !isGenerating,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xff1d4ed8),
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "Preview PDF",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
 
-                        // Download Again Button
-                        TextButton(
-                            onClick = {
-                                isGenerating = true
-                                scope.launch(Dispatchers.IO) {
-                                    try {
-                                        if (prescriptionRecord != null) {
-                                            val generator = PrescriptionPdfGenerator(context)
-                                            val file = generator.generatePdf(prescriptionRecord)
-                                            withContext(Dispatchers.Main) {
-                                                pdfFile = file
-                                                isGenerating = false
-                                                Toast.makeText(
-                                                    context,
-                                                    "PDF regenerated successfully",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-                                    } catch (e: Exception) {
-                                        withContext(Dispatchers.Main) {
-                                            isGenerating = false
-                                            Toast.makeText(
-                                                context,
-                                                "Error: ${e.message}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
+//                            // Download PDF Button
+//                            Button(
+//                                onClick = {
+//                                    pdfFile?.let { file ->
+//                                        downloadPdfToDownloads(context, file, prescriptionRecord)
+//                                    }
+//                                },
+//                                enabled = pdfFile != null && !isGenerating,
+//                                modifier = Modifier.fillMaxWidth(),
+//                                colors = ButtonDefaults.buttonColors(
+//                                    containerColor = Color(0xff1d4ed8),
+//                                    contentColor = Color.White
+//                                ),
+//                                shape = RoundedCornerShape(8.dp),
+//                                contentPadding = PaddingValues(16.dp)
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Default.Done,
+//                                    contentDescription = null,
+//                                    modifier = Modifier.size(20.dp)
+//                                )
+//                                Spacer(Modifier.width(8.dp))
+//                                Text(
+//                                    text = "Download to Device",
+//                                    fontSize = 16.sp,
+//                                    fontWeight = FontWeight.Bold
+//                                )
+//                            }
+
+                            // Share PDF Button
+                            OutlinedButton(
+                                onClick = {
+                                    pdfFile?.let { file ->
+                                        sharePdf(context, file)
                                     }
-                                }
-                            },
-                            enabled = !isGenerating,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Favorite,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "Download Again",
-                                fontSize = 14.sp
-                            )
+                                },
+                                enabled = pdfFile != null && !isGenerating,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color(0xff1d4ed8),
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "Share PDF",
+                                    fontSize = 16.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -2721,10 +2688,133 @@ fun PrescriptionPreviewDialog(
 }
 
 @Composable
-private fun PrescriptionDetailRow(
-    label: String,
-    value: String
-) {
+fun PdfPreviewScreen(
+    modifier: Modifier = Modifier,
+    pdfFile:File) {
+
+    // Create the PDF state - REQUIRED for Bouquet
+    val pdfState = rememberVerticalPdfReaderState(
+        resource = ResourceType.Local(pdfFile.toUri()),
+        isZoomEnable = true
+    )
+    Box(
+        modifier = modifier.fillMaxSize()
+            .background(Color(0xff2d2d2d))
+    ){
+        // get this composable from the bouquet library.
+            VerticalPDFReader(
+                state = pdfState,
+                modifier = modifier.fillMaxSize()
+            )
+    }
+}
+// Download PDF to Downloads folder
+//fun downloadPdfToDownloads(
+//    context: Context,
+//    sourceFile: File,
+//    prescriptionRecord: PrescriptionRecord?
+//) {
+//    try {
+//        // Generate filename with patient name and timestamp
+//        val patientName = prescriptionRecord?.patient?.firstName ?: "Patient"
+//        val timestamp = System.currentTimeMillis()
+//        val fileName = "Prescription_${patientName}_$timestamp.pdf"
+//
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//            // Android 10+ - Use MediaStore
+//            val contentValues = ContentValues().apply {
+//                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+//                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+//                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+//            }
+//
+//            val resolver = context.contentResolver
+//            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+//
+//            uri?.let {
+//                resolver.openOutputStream(it)?.use { outputStream ->
+//                    sourceFile.inputStream().use { inputStream ->
+//                        inputStream.copyTo(outputStream)
+//                    }
+//                }
+//                Toast.makeText(
+//                    context,
+//                    "✓ Downloaded to Downloads/$fileName",
+//                    Toast.LENGTH_LONG
+//                ).show()
+//            } ?: run {
+//                Toast.makeText(
+//                    context,
+//                    "Failed to download PDF",
+//                    Toast.LENGTH_SHORT
+//                ).show()
+//            }
+//        } else {
+//            // Android 9 and below - Use legacy method
+//            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+//            val destFile = File(downloadsDir, fileName)
+//
+//            sourceFile.inputStream().use { input ->
+//                destFile.outputStream().use { output ->
+//                    input.copyTo(output)
+//                }
+//            }
+//
+//            // Notify media scanner
+//            MediaScannerConnection.scanFile(
+//                context,
+//                arrayOf(destFile.absolutePath),
+//                arrayOf("application/pdf"),
+//                null
+//            )
+//
+//            Toast.makeText(
+//                context,
+//                "✓ Downloaded to Downloads/$fileName",
+//                Toast.LENGTH_LONG
+//            ).show()
+//        }
+//    } catch (e: Exception) {
+//        Toast.makeText(
+//            context,
+//            "Download failed: ${e.message}",
+//            Toast.LENGTH_SHORT
+//        ).show()
+//        Log.e("PrescriptionDownload", "Error downloading PDF", e)
+//    }
+//}
+
+// Share PDF function
+fun sharePdf(context: Context, file: File) {
+    try {
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            file
+        )
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "Prescription")
+            putExtra(Intent.EXTRA_TEXT, "Please find the prescription attached.")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(
+            Intent.createChooser(shareIntent, "Share Prescription PDF")
+        )
+    } catch (e: Exception) {
+        Toast.makeText(
+            context,
+            "Error sharing PDF: ${e.message}",
+            Toast.LENGTH_SHORT
+        ).show()
+        Log.e("PrescriptionShare", "Error sharing PDF", e)
+    }
+}
+
+// Helper Composable for Detail Rows
+@Composable
+fun PrescriptionDetailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -2739,7 +2829,9 @@ private fun PrescriptionDetailRow(
             text = value,
             fontSize = 14.sp,
             color = Color.Black,
-            fontWeight = FontWeight.Normal
+            fontWeight = FontWeight.Normal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

@@ -8,6 +8,9 @@ import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.os.Build
 import android.os.Environment
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import androidx.annotation.RequiresApi
 import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
 import com.example.happydocx.Data.Model.StartConsulting.VitalSign
@@ -15,47 +18,48 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.math.max
 
+private const val TOP_MARGIN = 40f
+private const val BOTTOM_MARGIN = 60f
+private const val PAGE_WIDTH = 595    // A4 in points
+private const val PAGE_HEIGHT = 842
 
+@RequiresApi(Build.VERSION_CODES.O)
 class PrescriptionPdfGenerator(private val context: Context) {
 
-    private val pageWidth = 595 // A4 width in points
-    private val pageHeight = 842 // A4 height in points
-    private val margin = 40f
-    private val contentWidth = pageWidth - (2 * margin)
-
-    // Paint objects
+    // Paints
     private val titlePaint = Paint().apply {
         color = Color.BLACK
-        textSize = 20f
+        textSize = 30f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         isAntiAlias = true
     }
 
     private val headerPaint = Paint().apply {
         color = Color.BLACK
-        textSize = 14f
+        textSize = 24f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         isAntiAlias = true
     }
 
     private val labelPaint = Paint().apply {
         color = Color.GRAY
-        textSize = 10f
+        textSize = 14f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
         isAntiAlias = true
     }
 
     private val valuePaint = Paint().apply {
         color = Color.BLACK
-        textSize = 11f
+        textSize = 13f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
         isAntiAlias = true
     }
 
     private val sectionTitlePaint = Paint().apply {
         color = Color.BLACK
-        textSize = 11f
+        textSize = 17f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         isAntiAlias = true
         letterSpacing = 0.1f
@@ -73,66 +77,63 @@ class PrescriptionPdfGenerator(private val context: Context) {
         isAntiAlias = true
     }
 
-    // here the whole pdf is generated with the different designs .
-    @RequiresApi(Build.VERSION_CODES.O)
+    private val contentWidth = PAGE_WIDTH - (2 * 40f) // 40f margin both sides
+
     fun generatePdf(record: PrescriptionRecord): File? {
-
-
         val pdfDocument = PdfDocument()
-        var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create()
-        var page = pdfDocument.startPage(pageInfo)
-        var canvas = page.canvas
-        var yPosition = margin
 
-//        //  Debug logging
-//        Log.d("PDF_DEBUG", "=== PDF Generation Started ===")
-//        Log.d("PDF_DEBUG", "Patient: ${record.patient?.firstName} ${record.patient?.lastName}")
-//        Log.d("PDF_DEBUG", "Vital Signs: ${record.patientVitalSigns?.size ?: 0}")
-//
-//        record.patientVitalSigns?.forEachIndexed { index, vital ->
-//            Log.d("PDF_DEBUG", "Vital[$index]: BP=${vital.bloodPressure}, HR=${vital.heartRate}, Temp=${vital.temperature}")
-//        }
+        var pageNumber = 1
+        var page = pdfDocument.startPage(
+            PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pageNumber).create()
+        )
+        var canvas: Canvas = page.canvas
+        var y = TOP_MARGIN
+
         try {
-            // Header with logo and clinic info
-            yPosition = drawHeader(canvas, yPosition)
-            yPosition += 30f
+            // Header
+            y = drawHeader(canvas, y)
+            y += 30f
 
-            // Patient Info Section
-            yPosition = drawPatientInfo(canvas, yPosition, record)
-            yPosition += 25f
+            // Patient Info
+            y = ensureSpace(pdfDocument, page, y, 140f, ++pageNumber) { page = it; canvas = page.canvas }
+            y = drawPatientInfo(canvas, y, record)
+            y += 30f
 
-            // Patient Vital Signs Section
-            yPosition = drawVitalSigns(canvas, yPosition, record)
-            yPosition += 25f
+            // Vital Signs
+            y = ensureSpace(pdfDocument, page, y, 220f, ++pageNumber) { page = it; canvas = page.canvas }
+            y = drawVitalSigns(canvas, y, record)
+            y += 30f
 
             // Investigation Details
-            yPosition = drawInvestigationDetails(canvas, yPosition, record)
-            yPosition += 25f
+            y = ensureSpace(pdfDocument, page, y, 240f, ++pageNumber) { page = it; canvas = page.canvas }
+            y = drawInvestigationDetails(canvas, y, record)
+            y += 30f
 
-            // Physician Notes
-            yPosition = drawPhysicianNotes(canvas, yPosition, record)
-            yPosition += 25f
-
-            // Check if we need a new page for medication orders
-            if (yPosition > pageHeight - 150) {
-                pdfDocument.finishPage(page)
-                pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 2).create()
-                page = pdfDocument.startPage(pageInfo)
-                canvas = page.canvas
-                yPosition = margin
-            }
+            // Physician Notes (multi-page capable)
+            val (newPage, newY) = drawPhysicianNotes(pdfDocument, page, canvas, y, record, pageNumber)
+            page = newPage
+            canvas = page.canvas
+            y = newY
+            y += 30f
+            pageNumber = pdfDocument.pages.size
 
             // Medication Orders
-            yPosition = drawMedicationOrders(canvas, yPosition, record)
+            y = ensureSpace(pdfDocument, page, y, 300f, ++pageNumber) { page = it; canvas = page.canvas }
+            y = drawMedicationOrders(canvas, y, record)
 
             pdfDocument.finishPage(page)
 
-            // Save PDF
-            val fileName = "Prescription_${record.patient?.firstName}_${System.currentTimeMillis()}.pdf"
-            val file = File(
-                context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),
-                fileName
-            )
+            // Save file
+            val timestamp = System.currentTimeMillis()
+            val patientName = "${record.patient?.firstName.orEmpty()}_${record.patient?.lastName.orEmpty()}".trim()
+            val fileName = if (patientName.isNotEmpty()) {
+                "Prescription_${patientName}_$timestamp.pdf"
+            } else {
+                "Prescription_$timestamp.pdf"
+            }
+
+            val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) ?: return null
+            val file = File(dir, fileName)
 
             pdfDocument.writeTo(FileOutputStream(file))
             pdfDocument.close()
@@ -145,17 +146,40 @@ class PrescriptionPdfGenerator(private val context: Context) {
         }
     }
 
+    /**
+     * Checks if there's enough space left on current page.
+     * If not → finishes current page and starts new one.
+     */
+    private inline fun ensureSpace(
+        pdfDocument: PdfDocument,
+        currentPage: PdfDocument.Page,
+        currentY: Float,
+        requiredHeight: Float,
+        nextPageNumber: Int,
+        updatePage: (PdfDocument.Page) -> Unit
+    ): Float {
+        if (currentY + requiredHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+            pdfDocument.finishPage(currentPage)
+            val newPage = pdfDocument.startPage(
+                PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, nextPageNumber).create()
+            )
+            updatePage(newPage)
+            return TOP_MARGIN
+        }
+        return currentY
+    }
+
     private fun drawHeader(canvas: Canvas, startY: Float): Float {
         var y = startY
-
-        // Draw clinic logo placeholder (shield icon)
         val logoSize = 40f
+
+        // Logo placeholder
         val logoPaint = Paint().apply {
             color = Color.parseColor("#2E3B55")
             style = Paint.Style.FILL
             isAntiAlias = true
         }
-        canvas.drawCircle(pageWidth / 2f, y + logoSize / 2, logoSize / 2, logoPaint)
+        canvas.drawCircle(PAGE_WIDTH / 2f, y + logoSize / 2, logoSize / 2, logoPaint)
         y += logoSize + 10f
 
         // Clinic name
@@ -166,23 +190,23 @@ class PrescriptionPdfGenerator(private val context: Context) {
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
-        canvas.drawText("ABC CLINIC", pageWidth / 2f, y, clinicNamePaint)
+        canvas.drawText("ABC CLINIC", PAGE_WIDTH / 2f, y, clinicNamePaint)
         y += 20f
 
-        // Clinic address
+        // Address
         val addressPaint = Paint().apply {
             color = Color.GRAY
             textSize = 9f
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
-        canvas.drawText("123 Medical Street, Healthcare District", pageWidth / 2f, y, addressPaint)
+        canvas.drawText("123 Medical Street, Healthcare District", PAGE_WIDTH / 2f, y, addressPaint)
         y += 12f
-        canvas.drawText("Utako Idoko Greeny, 252650 • Tel: +234 700 000 000", pageWidth / 2f, y, addressPaint)
+        canvas.drawText("Utako Idoko Greeny, 252650 • Tel: +234 700 000 000", PAGE_WIDTH / 2f, y, addressPaint)
         y += 15f
 
-        // Horizontal line
-        canvas.drawLine(margin, y, pageWidth - margin, y, linePaint)
+        // Line
+        canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, linePaint)
         y += 20f
 
         return y
@@ -193,229 +217,220 @@ class PrescriptionPdfGenerator(private val context: Context) {
         val patient = record.patient
         val appointment = record.appointment
 
-        // Two column layout
-        val col1X = margin
-        val col2X = pageWidth / 2f + 20f
+        val col1X = 40f
+        val col2X = PAGE_WIDTH / 2f + 20f
 
-        // Column 1
-        y = drawLabelValue(canvas, "PATIENT NAME",
-            "${patient?.firstName ?: ""} ${patient?.lastName ?: ""}", col1X, y)
-        y += 5f
+        // Left column
+        y = drawLabelValue(canvas, "PATIENT NAME", "${patient?.firstName.orEmpty()} ${patient?.lastName.orEmpty()}", col1X, y)
+        y = drawLabelValue(canvas, "APPOINTMENT DATE", formatDate(appointment?.appointmentDate), col1X, y)
+        y = drawLabelValue(canvas, "ATTENDING PHYSICIAN", "Dr. ${record.physician?.firstName.orEmpty()} ${record.physician?.lastName.orEmpty()}", col1X, y)
 
-        y = drawLabelValue(canvas, "APPOINTMENT DATE",
-            formatDate(appointment?.appointmentDate), col1X, y)
-        y += 5f
+        val address = patient?.let { "Flat 402, Garden View Apartments, Langa, Eldoret" } ?: "N/A"
+        y = drawLabelValue(canvas, "ADDRESS", address, col1X, y)
 
-        y = drawLabelValue(canvas, "ATTENDING PHYSICIAN",
-            "Dr. ${record.physician?.firstName ?: ""} ${record.physician?.lastName ?: ""}", col1X, y)
-        y += 5f
-
-        val addressLines = mutableListOf<String>()
-        patient?.let { p ->
-            val address = "Flat 402, Garden View Apartments, Langa, Eldoret"
-            addressLines.add(address)
-        }
-
-        y = drawLabelValue(canvas, "ADDRESS", addressLines.firstOrNull() ?: "N/A", col1X, y)
-
-        // Column 2 (reset y to startY)
+        // Right column
         var y2 = startY
-        y2 = drawLabelValue(canvas, "PATIENT NO.",
-            "PAT-3e8b-ff8d", col2X, y2)
-        y2 += 5f
+        y2 = drawLabelValue(canvas, "PATIENT NO.", "PAT-3e8b-ff8d", col2X, y2)
+        y2 = drawLabelValue(canvas, "AGE / GENDER", "${patient?.ageString ?: "N/A"} / ${patient?.gender ?: "N/A"}", col2X, y2)
 
-        y2 = drawLabelValue(canvas, "AGE / GENDER",
-            "${patient?.ageString ?: "N/A"} / ${patient?.gender ?: "N/A"}", col2X, y2)
-
-        return maxOf(y, y2) + 5f
+        return max(y, y2) + 10f
     }
 
     private fun drawVitalSigns(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
         var y = startY
 
-        // Section title
-        canvas.drawText("PATIENT VITAL SIGNS", margin, y, sectionTitlePaint)
-        y += 20f
+        canvas.drawText("PATIENT VITAL SIGNS", 40f, y, sectionTitlePaint)
+        y += 25f
 
         record.patientVitalSigns?.forEach { vital ->
-            // Draw vital sign record
             y = drawVitalSignRecord(canvas, y, vital)
-            y += 15f
-        }
-
-        return y
-    }
-
-
-    private fun drawVitalSignRecord(canvas: Canvas, startY: Float, vital: VitalSign): Float {
-        var y = startY
-
-        // Record header
-        val recordTitle = "RECORDED AT ${vital.recordedAt ?: "N/A"}"
-        canvas.drawText(recordTitle, margin, y, labelPaint)
-        y += 15f
-
-        // Create 4 columns for vital signs
-        val colWidth = contentWidth / 4f
-        val cols = listOf(margin, margin + colWidth, margin + 2 * colWidth, margin + 3 * colWidth)
-
-        // Blood Pressure
-        drawVitalItem(canvas, cols[0], y, "BLOOD\nPRESSURE", vital.bloodPressure ?: "N/A")
-
-        // Heart Rate
-        drawVitalItem(canvas, cols[1], y, "HEART RATE", "${vital.heartRate ?: "N/A"} bpm")
-
-        // Temperature
-        drawVitalItem(canvas, cols[2], y, "TEMP", "${vital.temperature ?: "N/A"}°C")
-
-        y += 35f
-
-        // Weight and Height
-        drawVitalItem(canvas, cols[0], y, "WEIGHT", "${vital.weight ?: "N/A"} kg")
-        drawVitalItem(canvas, cols[1], y, "HEIGHT", "${vital.height ?: "N/A"} cm")
-
-        y += 30f
-
-        // Bottom line
-        canvas.drawLine(margin, y, pageWidth - margin, y, dividerPaint)
-        y += 5f
-
-        return y
-    }
-
-    private fun drawVitalItem(canvas: Canvas, x: Float, y: Float, label: String, value: String) {
-        val lines = label.split("\n")
-        var currentY = y
-
-        lines.forEach { line ->
-            canvas.drawText(line, x, currentY, labelPaint)
-            currentY += 12f
-        }
-
-        canvas.drawText(value, x, currentY + 5f, valuePaint)
-    }
-
-    private fun drawInvestigationDetails(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
-        var y = startY
-
-        canvas.drawText("INVESTIGATION DETAILS", margin, y, sectionTitlePaint)
-        y += 20f
-
-        val investigation = record.investigation
-
-        // Diagnosis
-        canvas.drawText("DIAGNOSIS", margin, y, labelPaint)
-        y += 15f
-
-        investigation?.problemDiagnosis?.forEach { diagnosis ->
-            canvas.drawText(diagnosis.diagnosis ?: "N/A", margin, y, valuePaint)
-            y += 12f
-            val details = "Severity: ${diagnosis.severity} • Duration: ${diagnosis.duration}"
-            canvas.drawText(details, margin, y, labelPaint)
-            y += 15f
-        }
-
-        // Symptoms
-        canvas.drawText("PRIMARY SYMPTOM", margin, y, labelPaint)
-        y += 15f
-
-        investigation?.symptoms?.firstOrNull()?.let { symptom ->
-            canvas.drawText(symptom.symptom ?: "N/A", margin, y, valuePaint)
-            y += 12f
-            val details = "Severity: ${symptom.severity} • Status: Active"
-            canvas.drawText(details, margin, y, labelPaint)
-            y += 15f
-        }
-
-        return y
-    }
-
-    private fun drawPhysicianNotes(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
-        var y = startY
-
-        canvas.drawText("PHYSICIAN NOTES", margin, y, sectionTitlePaint)
-        y += 20f
-
-        val notes = record.investigation?.notes ?: "No notes available"
-
-        // Word wrap the notes
-        val words = notes.split(" ")
-        var line = ""
-        val maxWidth = contentWidth
-
-        words.forEach { word ->
-            val testLine = if (line.isEmpty()) word else "$line $word"
-            if (valuePaint.measureText(testLine) > maxWidth) {
-                canvas.drawText(line, margin, y, valuePaint)
-                y += 15f
-                line = word
-            } else {
-                line = testLine
-            }
-        }
-
-        if (line.isNotEmpty()) {
-            canvas.drawText(line, margin, y, valuePaint)
-            y += 15f
-        }
-
-        return y
-    }
-
-    private fun drawMedicationOrders(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
-        var y = startY
-
-        canvas.drawText("MEDICATION ORDERS", margin, y, sectionTitlePaint)
-        y += 20f
-
-        record.medicationOrders?.forEach { medication ->
-            y = drawMedicationItem(canvas, y, medication)
             y += 20f
         }
 
         return y
     }
 
-    private fun drawMedicationItem(canvas: Canvas, startY: Float, medication: com.example.happydocx.Data.Model.StartConsulting.MedicationOrderOne): Float {
+    private fun drawVitalSignRecord(canvas: Canvas, startY: Float, vital: VitalSign): Float {
         var y = startY
 
-        // Create two columns
-        val col1X = margin
-        val col2X = pageWidth / 2f + 20f
+        canvas.drawText("RECORDED AT ${vital.recordedAt ?: "N/A"}", 40f, y, labelPaint)
+        y += 32f
 
-        // Column 1
-        y = drawLabelValue(canvas, "GENERIC", medication.genericName ?: "N/A", col1X, y)
-        y += 5f
-        y = drawLabelValue(canvas, "FREQUENCY", "2x Daily", col1X, y)
-        y += 5f
-        y = drawLabelValue(canvas, "DURATION", medication.duration ?: "N/A", col1X, y)
-        y += 5f
-        y = drawLabelValue(canvas, "SCHEDULE", "Morning, Empty Stomach", col1X, y)
+        val colWidth = contentWidth / 4f
+        val cols = listOf(40f, 40f + colWidth, 40f + 2 * colWidth, 40f + 3 * colWidth)
 
-        // Column 2 (reset y)
-        var y2 = startY
-        y2 = drawLabelValue(canvas, "BRAND", "Glucophage", col2X, y2)
-        y2 += 5f
-        y2 = drawLabelValue(canvas, "DOSAGE", medication.strength ?: "N/A", col2X, y2)
-        y2 += 5f
-        y2 = drawLabelValue(canvas, "ROUTE", "Oral", col2X, y2)
+        drawVitalItem(canvas, cols[0], y, "BLOOD PRESSURE", vital.bloodPressure ?: "N/A")
+        drawVitalItem(canvas, cols[1], y, "HEART RATE", "${vital.heartRate ?: "N/A"} bpm")
+        drawVitalItem(canvas, cols[2], y, "TEMP", "${vital.temperature ?: "N/A"}°C")
 
-        return maxOf(y, y2)
+        y += 35f
+
+        drawVitalItem(canvas, cols[0], y, "WEIGHT", "${vital.weight ?: "N/A"} kg")
+        drawVitalItem(canvas, cols[1], y, "HEIGHT", "${vital.height ?: "N/A"} cm")
+
+        y += 30f
+        canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, dividerPaint)
+        y += 10f
+
+        return y
     }
 
-    private fun drawLabelValue(canvas: Canvas, label: String, value: String, x: Float, y: Float): Float {
+    private fun drawVitalItem(canvas: Canvas, x: Float, y: Float, label: String, value: String) {
         canvas.drawText(label, x, y, labelPaint)
-        canvas.drawText(value, x, y + 12f, valuePaint)
-        return y + 27f
+        canvas.drawText(value, x, y + 16f, valuePaint)
+    }
+
+    private fun drawInvestigationDetails(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
+        var y = startY
+
+        canvas.drawText("INVESTIGATION DETAILS", 40f, y, sectionTitlePaint)
+        y += 25f
+
+        val investigation = record.investigation
+
+        // Diagnosis
+        canvas.drawText("DIAGNOSIS", 40f, y, labelPaint)
+        y += 18f
+
+        investigation?.problemDiagnosis?.forEach { diag ->
+            canvas.drawText(diag.diagnosis ?: "N/A", 40f, y, valuePaint)
+            y += 14f
+            val details = "Severity: ${diag.severity} • Duration: ${diag.duration}"
+            canvas.drawText(details, 40f, y, labelPaint)
+            y += 18f
+        }
+
+        y += 8f
+
+        // Primary Symptom
+        canvas.drawText("PRIMARY SYMPTOM", 40f, y, labelPaint)
+        y += 18f
+
+        investigation?.symptoms?.firstOrNull()?.let { symptom ->
+            canvas.drawText(symptom.symptom ?: "N/A", 40f, y, valuePaint)
+            y += 14f
+            val details = "Severity: ${symptom.severity} • Status: Active"
+            canvas.drawText(details, 40f, y, labelPaint)
+            y += 20f
+        } ?: run {
+            canvas.drawText("No primary symptom recorded", 40f, y, valuePaint)
+            y += 20f
+        }
+
+        return y
+    }
+
+    private fun drawPhysicianNotes(
+        pdfDocument: PdfDocument,
+        currentPage: PdfDocument.Page,
+        canvas: Canvas,
+        startY: Float,
+        record: PrescriptionRecord,
+        pageNumber: Int
+    ): Pair<PdfDocument.Page, Float> {
+
+        var page = currentPage
+        var y = startY
+        var currentCanvas = canvas
+        var currentPageNumber = pageNumber
+
+        val notes = record.investigation?.notes ?: "No physician notes available."
+
+        val textPaint = TextPaint(valuePaint).apply { textSize = 12f }
+
+        val staticLayout = StaticLayout.Builder.obtain(
+            notes, 0, notes.length, textPaint, contentWidth.toInt()
+        )
+            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            .setLineSpacing(4f, 1f)
+            .build()
+
+        val neededHeight = 25f + staticLayout.height + 30f
+
+        if (y + neededHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+            pdfDocument.finishPage(page)
+            currentPageNumber++
+            page = pdfDocument.startPage(
+                PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, currentPageNumber).create()
+            )
+            currentCanvas = page.canvas
+            y = TOP_MARGIN
+        }
+
+        currentCanvas.drawText("PHYSICIAN NOTES", 40f, y, sectionTitlePaint)
+        y += 25f
+
+        currentCanvas.save()
+        currentCanvas.translate(40f, y)
+        staticLayout.draw(currentCanvas)
+        currentCanvas.restore()
+
+        y += staticLayout.height + 30f
+
+        return page to y
+    }
+
+    private fun drawMedicationOrders(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
+        var y = startY
+
+        canvas.drawText("MEDICATION ORDERS", 40f, y, sectionTitlePaint)
+        y += 25f
+
+        record.medicationOrders?.forEach { med ->
+            y = drawMedicationItem(canvas, y, med)
+            y += 25f
+        }
+
+        return y
+    }
+
+    private fun drawMedicationItem(
+        canvas: Canvas,
+        startY: Float,
+        medication: com.example.happydocx.Data.Model.StartConsulting.MedicationOrderOne
+    ): Float {
+
+        var y = startY
+        val col1X = 40f
+        val col2X = PAGE_WIDTH / 2f + 20f
+
+        // Left column
+        y = drawLabelValue(canvas, "GENERIC", medication.genericName ?: "N/A", col1X, y)
+        y = drawLabelValue(canvas, "FREQUENCY", "2x Daily", col1X, y)
+        y = drawLabelValue(canvas, "DURATION", medication.duration ?: "N/A", col1X, y)
+        y = drawLabelValue(canvas, "SCHEDULE", "Morning, Empty Stomach", col1X, y)
+
+        // Right column
+        var y2 = startY
+        y2 = drawLabelValue(canvas, "BRAND", "Glucophage", col2X, y2)
+        y2 = drawLabelValue(canvas, "DOSAGE", medication.strength ?: "N/A", col2X, y2)
+        y2 = drawLabelValue(canvas, "ROUTE", "Oral", col2X, y2)
+
+        return max(y, y2) + 10f
+    }
+
+    private fun drawLabelValue(
+        canvas: Canvas,
+        label: String,
+        value: String,
+        x: Float,
+        y: Float
+    ): Float {
+        canvas.drawText(label, x, y, labelPaint)
+        //control vertical space here ↓↓↓
+        val offsetValue =  18f
+        canvas.drawText(value, x, y + offsetValue, valuePaint)
+        val rowHeight = 40f
+        return y + rowHeight
     }
 
     private fun formatDate(dateString: String?): String {
-        if (dateString == null) return "N/A"
+        if (dateString.isNullOrBlank()) return "N/A"
+
         return try {
-            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-            val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-            val date = inputFormat.parse(dateString)
-            date?.let { outputFormat.format(it) } ?: dateString
+            val input = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+            val output = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+            input.parse(dateString)?.let { output.format(it) } ?: dateString
         } catch (e: Exception) {
             dateString
         }
