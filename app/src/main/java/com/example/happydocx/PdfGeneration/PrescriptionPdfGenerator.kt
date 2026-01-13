@@ -120,7 +120,12 @@ class PrescriptionPdfGenerator(private val context: Context) {
             // Medication Orders
             y = ensureSpace(pdfDocument, page, y, 300f, ++pageNumber) { page = it; canvas = page.canvas }
             y = drawMedicationOrders(canvas, y, record)
+            y += 30f
 
+            // Investigation Orders (NEW SECTION)
+            val estimatedInvestigationHeight = 100f + (record.investigationOrders?.size ?: 0) * 50f
+            y = ensureSpace(pdfDocument, page, y, estimatedInvestigationHeight, ++pageNumber) { page = it; canvas = page.canvas }
+            y = drawInvestigationOrders(canvas, y, record)
             pdfDocument.finishPage(page)
 
             // Save file
@@ -376,14 +381,203 @@ class PrescriptionPdfGenerator(private val context: Context) {
         canvas.drawText("MEDICATION ORDERS", 40f, y, sectionTitlePaint)
         y += 25f
 
+        // Check if medication orders exist
+        if (record.medicationOrders.isNullOrEmpty()) {
+            canvas.drawText("No medication orders", 40f, y, valuePaint)
+            y += 30f
+            return y
+        }
+
+        // Define columns
+        val col1X = 40f   // Generic Name
+        val col2X = 120f  // Brand
+        val col3X = 200f  // Frequency
+        val col4X = 290f  // Dosage
+        val col5X = 370f  // Duration
+        val col6X = 450f  // Route
+        val col7X = 510f  // Schedule
+
+        // Draw header background (blue)
+        val headerBgPaint = Paint().apply {
+            color = Color.parseColor("#60A5FA")
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRect(40f, y - 5f, PAGE_WIDTH - 40f, y + 20f, headerBgPaint)
+
+        // Draw header text (white)
+        val headerTextPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 11f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            isAntiAlias = true
+        }
+
+        canvas.drawText("Generic Name", col1X + 3f, y + 12f, headerTextPaint)
+        canvas.drawText("Brand", col2X + 3f, y + 12f, headerTextPaint)
+        canvas.drawText("Frequency", col3X + 3f, y + 12f, headerTextPaint)
+        canvas.drawText("Dosage", col4X + 3f, y + 12f, headerTextPaint)
+        canvas.drawText("Duration", col5X + 3f, y + 12f, headerTextPaint)
+        canvas.drawText("Route", col6X + 3f, y + 12f, headerTextPaint)
+        canvas.drawText("Schedule", col7X + 3f, y + 12f, headerTextPaint)
+
+        y += 25f
+
+        // Draw horizontal line after header
+        canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, linePaint)
+        y += 15f
+
+        // Draw each medication order row
         record.medicationOrders?.forEach { med ->
-            y = drawMedicationItem(canvas, y, med)
-            y += 25f
+            // Generic Name
+            canvas.drawText(med.genericName ?: "—", col1X + 3f, y, valuePaint)
+
+            // Brand (empty in your data)
+            canvas.drawText("—", col2X + 3f, y, valuePaint)
+
+            // Frequency (empty in your data)
+            canvas.drawText("—", col3X + 3f, y, valuePaint)
+
+            // Dosage (using strength field)
+            canvas.drawText(med.strength ?: "—", col4X + 3f, y, valuePaint)
+
+            // Duration
+            canvas.drawText(med.duration ?: "—", col5X + 3f, y, valuePaint)
+
+            // Route (empty in your data)
+            canvas.drawText("—", col6X + 3f, y, valuePaint)
+
+            // Schedule (empty in your data)
+            canvas.drawText("—", col7X + 3f, y, valuePaint)
+
+            y += 20f
+
+            // Draw separator line
+            canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, dividerPaint)
+            y += 15f
         }
 
         return y
     }
 
+
+    private fun drawInvestigationOrders(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
+        var y = startY
+
+        canvas.drawText("INVESTIGATION ORDERS", 40f, y, sectionTitlePaint)
+        y += 25f
+
+        // Check if investigation orders exist
+        if (record.investigationOrders.isNullOrEmpty()) {
+            canvas.drawText("No investigation orders", 40f, y, valuePaint)
+            y += 30f
+            return y
+        }
+
+        // Draw table header
+        val col1X = 40f  // Test Name column
+        val col2X = 240f // Reason column
+        val col3X = 440f // Status column
+        val col4X = 500f // Date column
+
+        val headerY = y
+
+        // Draw header background (light green)
+        val headerBgPaint = Paint().apply {
+            color = Color.parseColor("#4ADE80")
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRect(40f, y - 5f, PAGE_WIDTH - 40f, y + 20f, headerBgPaint)
+
+        // Draw header text (white)
+        val headerTextPaint = Paint().apply {
+            color = Color.WHITE
+            textSize = 13f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            isAntiAlias = true
+        }
+
+        canvas.drawText("Test Name", col1X + 5f, y + 12f, headerTextPaint)
+        canvas.drawText("Reason", col2X + 5f, y + 12f, headerTextPaint)
+        canvas.drawText("Status", col3X + 5f, y + 12f, headerTextPaint)
+        canvas.drawText("Date", col4X + 5f, y + 12f, headerTextPaint)
+
+        y += 25f
+
+        // Draw horizontal line after header
+        canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, linePaint)
+        y += 15f
+
+        // Draw each investigation order row
+        record.investigationOrders?.forEach { order ->
+            val rowStartY = y
+
+            // Draw alternating row background (very light gray for even rows)
+            val rowBgPaint = Paint().apply {
+                color = Color.parseColor("#F9FAFB")
+                style = Paint.Style.FILL
+                isAntiAlias = true
+            }
+
+            // Test Name
+            canvas.drawText(order.testName ?: "N/A", col1X + 5f, y, valuePaint)
+
+            // Reason (wrap text if too long)
+            val reason = order.reason ?: "—"
+            val reasonWrapped = wrapText(reason, 180f, valuePaint)
+            var reasonY = y
+            reasonWrapped.split("\n").forEach { line ->
+                canvas.drawText(line, col2X + 5f, reasonY, valuePaint)
+                reasonY += 16f
+            }
+
+            // Status (using em dash for empty)
+            canvas.drawText("—", col3X + 5f, y, valuePaint)
+
+            // Date (using em dash for empty)
+            canvas.drawText("—", col4X + 5f, y, valuePaint)
+
+            // Update y to account for wrapped text
+            val maxY = maxOf(y, reasonY - 16f)
+            y = maxY + 20f
+
+            // Draw separator line
+            canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, dividerPaint)
+            y += 15f
+        }
+
+        return y
+    }
+
+    // Helper method to wrap text
+    private fun wrapText(text: String, maxWidth: Float, paint: Paint): String {
+        if (paint.measureText(text) <= maxWidth) {
+            return text
+        }
+
+        val words = text.split(" ")
+        val lines = mutableListOf<String>()
+        var currentLine = ""
+
+        words.forEach { word ->
+            val testLine = if (currentLine.isEmpty()) word else "$currentLine $word"
+            if (paint.measureText(testLine) <= maxWidth) {
+                currentLine = testLine
+            } else {
+                if (currentLine.isNotEmpty()) {
+                    lines.add(currentLine)
+                }
+                currentLine = word
+            }
+        }
+
+        if (currentLine.isNotEmpty()) {
+            lines.add(currentLine)
+        }
+
+        return lines.joinToString("\n")
+    }
     private fun drawMedicationItem(
         canvas: Canvas,
         startY: Float,
