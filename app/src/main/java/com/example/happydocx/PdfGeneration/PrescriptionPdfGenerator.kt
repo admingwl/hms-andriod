@@ -1,6 +1,7 @@
 package com.example.happydocx.PdfGeneration
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -19,6 +20,9 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.max
+import androidx.core.graphics.toColorInt
+import coil3.Bitmap
+import com.example.happydocx.R
 
 private const val TOP_MARGIN = 40f
 private const val BOTTOM_MARGIN = 60f
@@ -176,16 +180,23 @@ class PrescriptionPdfGenerator(private val context: Context) {
 
     private fun drawHeader(canvas: Canvas, startY: Float): Float {
         var y = startY
-        val logoSize = 40f
 
-        // Logo placeholder
-        val logoPaint = Paint().apply {
-            color = Color.parseColor("#2E3B55")
-            style = Paint.Style.FILL
-            isAntiAlias = true
-        }
-        canvas.drawCircle(PAGE_WIDTH / 2f, y + logoSize / 2, logoSize / 2, logoPaint)
-        y += logoSize + 10f
+        // load from drawable
+        val logoBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.applogofinal)
+        val desiredWidth = 120f   // ← change this
+        val desiredHeight = 80f
+        // know we scale the logo according to out own desired shape
+        val scaleLogo = Bitmap.createScaledBitmap(
+            logoBitmap,
+            desiredWidth.toInt(),
+            desiredHeight.toInt(),
+            true // filter --> true better quality.
+        )
+            // center horizontally
+        val logoLeft = (PAGE_WIDTH - desiredWidth) / 2f
+        val logoTop = y
+        canvas.drawBitmap(scaleLogo, logoLeft, logoTop, null)
+        y += desiredHeight + 16f  // space after logo
 
         // Clinic name
         val clinicNamePaint = Paint().apply {
@@ -201,7 +212,7 @@ class PrescriptionPdfGenerator(private val context: Context) {
         // Address
         val addressPaint = Paint().apply {
             color = Color.GRAY
-            textSize = 9f
+            textSize = 10f
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
