@@ -272,6 +272,7 @@ class PrescriptionPdfGenerator(private val context: Context) {
 
         drawVitalItem(canvas, cols[0], y, "WEIGHT", "${vital.weight ?: "N/A"} kg")
         drawVitalItem(canvas, cols[1], y, "HEIGHT", "${vital.height ?: "N/A"} cm")
+        drawVitalItem(canvas, cols[2], y, "Oxygen Saturation", vital.oxigenSaturation ?: "N/A")
 
         y += 30f
         canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, dividerPaint)
