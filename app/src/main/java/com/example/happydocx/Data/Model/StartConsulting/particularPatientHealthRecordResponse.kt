@@ -16,7 +16,7 @@ data class PrescriptionRecord(
     val encounterDate: String?,
     val patientVitalSigns: List<VitalSign>?,
     val medicationOrders: List<MedicationOrderOne>?,
-    val investigationOrders: List<Any>?, // Type unknown from empty array
+    val investigationOrders: List<InvestigationOrdersParticularPatientHealthRecordResponse>?, // Type unknown from empty array
     val createdAt: String?,
     val updatedAt: String?,
     val prescription: List<Any>? // Type unknown from empty array
@@ -184,4 +184,10 @@ data class MedicationOrderOne(
     val strength: String?,
     val duration: String?,
     @SerializedName("_id") val id: String
+)
+
+data class InvestigationOrdersParticularPatientHealthRecordResponse(
+    val testName:String,
+    val reason:String,
+    val _id:String
 )
