@@ -8,58 +8,72 @@ data class TestInvestigationResponse(
 )
 
 data class TestInvestigationRecord(
-    @SerializedName("_id") val id: String,
-    val patient: String,
-    val physician: String,
-    val appointment: String,
-    val status: String,
-    val investigation: MedicationInvestigation,
-    val notes: MedicationNotes,
-    val orders: LabOrders,
-    val patientVitalSigns: List<VitalSignThree>,
-    val encounterDate: String,
-    val medicationOrders: List<MedicationOrder>,
-    val investigationOrders: List<InvestigationOrder>, // Now has a specific type
-    val prescription: List<Any>, // Keep as Any if always empty, or create a class if data appears
-    val createdAt: String,
-    val updatedAt: String,
-    @SerializedName("__v") val version: Int
+   val investigation:InvestigationTestAndInvestigationResponse,
+    val notes:NotesTestAndInvestigationResponse,
+    val orders:OrdersTestAndInvestigationResponse,
+    val _id:String,
+    val patient:String,
+    val physician:String,
+    val appointment:String,
+    val status:String,
+    val encounterDate:String,
+    val patientVitalSigns:List<PatientVitalSignsTestAndInvestigationResponse>,
+    val medicalOrders:List<MedicationOrdersTestAndInvestigationResponse>,
+    val investigationOrders:List<InvestigationOrdersTestAndInvestigationResponse>,
+    val prescription:List<Any>,
+    val createdAt:String,
+    val updatedAt:String,
 )
 
-data class MedicationInvestigation(
-    val status: String,
-    val problemDiagnosis: List<String>,
-    val symptoms: List<String>
+data class InvestigationTestAndInvestigationResponse(
+    val problemDiagnosis:List<ProblemDiagnosisTestAndInvestigationResponse>,
+    val notes:String,
+    val symptoms:List<SymptomsTestAndInvestigationResponse>,
+    val status:String,
+
+)
+data class ProblemDiagnosisTestAndInvestigationResponse(
+    val diagnosis: String,
+    val severity:String,
+    val duration:String,
+    val _id:String
 )
 
-data class MedicationNotes(
-    val priority: String
+data class SymptomsTestAndInvestigationResponse(
+    val symptom:String,
+    val severity:String,
+    val duration:String,
+    val _id:String
 )
 
-data class LabOrders(
-    val labTests: List<String>
+data class NotesTestAndInvestigationResponse(
+    val priority:String,
 )
 
-data class VitalSignThree(
-    val bloodPressure: String,
-    val heartRate: String,
-    val temperature: String,
-    val oxigenSaturation: String,
-    val height: String,
-    val weight: String,
-    @SerializedName("_id") val id: String,
-    val recordedAt: String
+data class OrdersTestAndInvestigationResponse(
+    val labTests:List<Any>
 )
 
-data class MedicationOrder(
-    val genericName: String,
-    val strength: String,
-    val duration: String,
-    @SerializedName("_id") val id: String
+data class PatientVitalSignsTestAndInvestigationResponse(
+    val bloodPressure:String,
+    val heartRate:String,
+    val temperature:String,
+    val oxygenSaturation:String,
+    val height:String,
+    val weight:String,
+    val _id:String,
+    val recordedAt:String
+
+)
+data class MedicationOrdersTestAndInvestigationResponse(
+    val genericName:String,
+    val strength:String,
+    val duration:String,
+    val _id:String,
 )
 
-data class InvestigationOrder(
-    val testName: String,
-    val reason: String,
-    @SerializedName("_id") val id: String
+data class InvestigationOrdersTestAndInvestigationResponse(
+    val testName:String,
+    val reason:String,
+    val _id:String
 )
