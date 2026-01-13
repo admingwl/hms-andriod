@@ -52,6 +52,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
@@ -76,6 +77,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -93,6 +95,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -153,7 +156,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsultingMainScreen(
@@ -310,7 +313,7 @@ fun ConsultingMainScreen(
 
 
 // Image Card
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun ImageCard(
     modifier: Modifier = Modifier,
@@ -2334,7 +2337,7 @@ fun HorizontalStatusStepper(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
 fun PrescriptionPreviewDialog(
     prescriptionRecord: PrescriptionRecord?,
@@ -2345,6 +2348,11 @@ fun PrescriptionPreviewDialog(
     var isGenerating by remember { mutableStateOf(false) }
     var showPdfPreview by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    // state for the download progress
+    var downloadProgress by rememberSaveable { mutableFloatStateOf(0f) }
+    var isDownloadingPdf by rememberSaveable { mutableStateOf(false) }
+    var downloadSuccess by rememberSaveable { mutableStateOf(false) }
 
     // Auto-generate PDF when dialog opens
     LaunchedEffect(prescriptionRecord) {
@@ -2623,34 +2631,109 @@ fun PrescriptionPreviewDialog(
                             }
 
 //                            // Download PDF Button
-//                            Button(
-//                                onClick = {
-//                                    pdfFile?.let { file ->
-//                                        downloadPdfToDownloads(context, file, prescriptionRecord)
-//                                    }
-//                                },
-//                                enabled = pdfFile != null && !isGenerating,
-//                                modifier = Modifier.fillMaxWidth(),
-//                                colors = ButtonDefaults.buttonColors(
-//                                    containerColor = Color(0xff1d4ed8),
-//                                    contentColor = Color.White
-//                                ),
-//                                shape = RoundedCornerShape(8.dp),
-//                                contentPadding = PaddingValues(16.dp)
-//                            ) {
-//                                Icon(
-//                                    imageVector = Icons.Default.Done,
-//                                    contentDescription = null,
-//                                    modifier = Modifier.size(20.dp)
-//                                )
-//                                Spacer(Modifier.width(8.dp))
-//                                Text(
-//                                    text = "Download to Device",
-//                                    fontSize = 16.sp,
-//                                    fontWeight = FontWeight.Bold
-//                                )
-//                            }
+                            if (isDownloadingPdf) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Saving to Downloads... ${(downloadProgress * 100).toInt()}%",
+                                        fontSize = 14.sp,
+                                        color = Color(0xff1d4ed8)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    LinearProgressIndicator(
+                                        progress = { downloadProgress },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(10.dp),
+                                        color = Color(0xff1d4ed8),
+                                        trackColor = Color.LightGray
+                                    )
+                                }
+                            } else if (downloadSuccess) {
+                                Text(
+                                    text = "Saved to Downloads! ✓",
+                                    color = Color(0xff16a34a),
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
 
+                            Button(
+                                onClick = {
+                                    if (pdfFile != null && !isDownloadingPdf) {
+                                        isDownloadingPdf = true
+                                        downloadProgress = 0f
+                                        downloadSuccess = false
+
+                                        scope.launch(Dispatchers.IO) {
+                                            try {
+                                                // Fake smooth progress (looks good even if save is fast)
+                                                for (i in 1..10) {
+                                                    delay(120)           // total ~1.2 sec animation
+                                                    downloadProgress = i / 10f
+                                                }
+
+                                                // Real save to Downloads
+                                                val contentValues = ContentValues().apply {
+                                                    put(MediaStore.Downloads.DISPLAY_NAME, "Prescription_${System.currentTimeMillis()}.pdf")
+                                                    put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+                                                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                                                }
+
+                                                val uri = context.contentResolver.insert(
+                                                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                                                    contentValues
+                                                )
+
+                                                uri?.let {
+                                                    context.contentResolver.openOutputStream(it)?.use { output ->
+                                                        pdfFile!!.inputStream().use { input ->
+                                                            input.copyTo(output)
+                                                        }
+                                                    }
+                                                } ?: throw Exception("Failed to create file")
+
+                                                withContext(Dispatchers.Main) {
+                                                    isDownloadingPdf = false
+                                                    downloadSuccess = true
+                                                    Toast.makeText(context, "PDF saved to Downloads", Toast.LENGTH_SHORT).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                withContext(Dispatchers.Main) {
+                                                    isDownloadingPdf = false
+                                                    Toast.makeText(context, "Save failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                enabled = pdfFile != null && !isDownloadingPdf && !isGenerating,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xff059669),  // nice green color
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = if (isDownloadingPdf) "Saving..." else "Download PDF",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                             // Share PDF Button
                             OutlinedButton(
                                 onClick = {
@@ -2661,7 +2744,8 @@ fun PrescriptionPreviewDialog(
                                 enabled = pdfFile != null && !isGenerating,
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xff1d4ed8),
+                                    containerColor = Color(0xff1d4ed8),
+                                    contentColor = Color.White
                                 ),
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(16.dp)
@@ -2675,7 +2759,6 @@ fun PrescriptionPreviewDialog(
                                 Text(
                                     text = "Share PDF",
                                     fontSize = 16.sp,
-                                    color = Color.White,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
