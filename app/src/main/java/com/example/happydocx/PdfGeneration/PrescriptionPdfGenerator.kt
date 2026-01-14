@@ -111,8 +111,12 @@ class PrescriptionPdfGenerator(private val context: Context) {
             y += 20f
 
             // Vital Signs
-            y = ensureSpace(pdfDocument, page, y, 220f, ++pageNumber) { page = it; canvas = page.canvas }
-            y = drawVitalSigns(canvas, y, record)
+            // Vital Signs - Now returns updated page and canvas because it might span pages
+            val vitalResult = drawVitalSigns(pdfDocument, page, canvas, y, record, pageNumber)
+            page = vitalResult.first
+            canvas = vitalResult.second
+            y = vitalResult.third
+            pageNumber = pdfDocument.pages.size // Update current page count
             y += 20f
 
             // Investigation Details
@@ -129,14 +133,14 @@ class PrescriptionPdfGenerator(private val context: Context) {
             pageNumber = pdfDocument.pages.size
 
             // Medication Orders
-            y = ensureSpace(pdfDocument, page, y, 300f, ++pageNumber) { page = it; canvas = page.canvas }
-            y = drawMedicationOrders(canvas, y, record)
+            val medRes = drawMedicationOrders(pdfDocument, page, canvas, y, record, pageNumber)
+            page = medRes.first; canvas = medRes.second; y = medRes.third; pageNumber = pdfDocument.pages.size
             y += 20f
 
             // Investigation Orders (NEW SECTION)
-            val estimatedInvestigationHeight = 100f + (record.investigationOrders?.size ?: 0) * 50f
-            y = ensureSpace(pdfDocument, page, y, estimatedInvestigationHeight, ++pageNumber) { page = it; canvas = page.canvas }
-            y = drawInvestigationOrders(canvas, y, record)
+            val invRes = drawInvestigationOrders(pdfDocument, page, canvas, y, record, pageNumber)
+            page = invRes.first; canvas = invRes.second; y = invRes.third
+
             pdfDocument.finishPage(page)
 
             // Save file
@@ -280,25 +284,55 @@ class PrescriptionPdfGenerator(private val context: Context) {
         return max(y, y2) + 10f
     }
 
-    private fun drawVitalSigns(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
+    private fun drawVitalSigns(
+        pdfDocument: PdfDocument,
+        currentPage: PdfDocument.Page,
+        currentCanvas: Canvas,
+        startY: Float,
+        record: PrescriptionRecord,
+        pageNo: Int
+    ): Triple<PdfDocument.Page, Canvas, Float> {
+        var page = currentPage
+        var canvas = currentCanvas
         var y = startY
+        var currentPageNumber = pageNo
+
+        // 1. Initial check for the Section Title
+        if (y + 40f > PAGE_HEIGHT - BOTTOM_MARGIN) {
+            pdfDocument.finishPage(page)
+            currentPageNumber++
+            page = pdfDocument.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, currentPageNumber).create())
+            canvas = page.canvas
+            y = TOP_MARGIN
+        }
 
         canvas.drawText("PATIENT VITAL SIGNS", 40f, y, sectionTitlePaint)
         y += 32f
 
         if (record.patientVitalSigns.isNullOrEmpty()) {
             canvas.drawText("No vital signs recorded", 40f, y, valuePaint)
-            return y + 40f
+            return Triple(page, canvas, y + 40f)
         }
 
-        record.patientVitalSigns?.forEachIndexed { index,vital ->
+        record.patientVitalSigns?.forEachIndexed { index, vital ->
+            // 2. Check space before each record (estimated height of one vital block is ~100f)
+            val recordHeight = 105f
+            if (y + recordHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+                pdfDocument.finishPage(page)
+                currentPageNumber++
+                page = pdfDocument.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, currentPageNumber).create())
+                canvas = page.canvas
+                y = TOP_MARGIN
+            }
+
             y = drawVitalSignRecord(canvas, y, vital)
-            if(index < record.patientVitalSigns.size-1){
+
+            if (index < record.patientVitalSigns!!.size - 1) {
                 y += 4f
             }
         }
 
-        return y
+        return Triple(page, canvas, y)
     }
 
     private fun drawVitalSignRecord(canvas: Canvas, startY: Float, vital: VitalSign): Float {
@@ -422,179 +456,151 @@ class PrescriptionPdfGenerator(private val context: Context) {
         return page to y
     }
 
-    private fun drawMedicationOrders(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
+    private fun drawMedicationOrders(
+        pdfDocument: PdfDocument,
+        currentPage: PdfDocument.Page,
+        currentCanvas: Canvas,
+        startY: Float,
+        record: PrescriptionRecord,
+        pageNo: Int
+    ): Triple<PdfDocument.Page, Canvas, Float> {
+        var page = currentPage
+        var canvas = currentCanvas
         var y = startY
+        var currentPageNumber = pageNo
+
+        // Check space for Section Title
+        if (y + 60f > PAGE_HEIGHT - BOTTOM_MARGIN) {
+            pdfDocument.finishPage(page)
+            currentPageNumber++
+            page = pdfDocument.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, currentPageNumber).create())
+            canvas = page.canvas
+            y = TOP_MARGIN
+        }
 
         canvas.drawText("MEDICATION ORDERS", 40f, y, sectionTitlePaint)
         y += 25f
 
-        // Check if medication orders exist
         if (record.medicationOrders.isNullOrEmpty()) {
             canvas.drawText("No medication orders", 40f, y, valuePaint)
-            y += 30f
-            return y
+            return Triple(page, canvas, y + 30f)
         }
 
-        // Define columns
-        val col1X = 40f   // Generic Name
-        val col2X = 120f  // Brand
-        val col3X = 200f  // Frequency
-        val col4X = 290f  // Dosage
-        val col5X = 370f  // Duration
-        val col6X = 450f  // Route
-        val col7X = 510f  // Schedule
+        // Helper to draw the table header
+        fun drawMedHeader(c: Canvas, currentY: Float): Float {
+            val headerBgPaint = Paint().apply { color = Color.parseColor("#60A5FA"); style = Paint.Style.FILL; isAntiAlias = true }
+            c.drawRect(40f, currentY - 5f, PAGE_WIDTH - 40f, currentY + 20f, headerBgPaint)
+            val hText = Paint().apply { color = Color.WHITE; textSize = 11f; typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD); isAntiAlias = true }
 
-        // Draw header background (blue)
-        val headerBgPaint = Paint().apply {
-            color = Color.parseColor("#60A5FA")
-            style = Paint.Style.FILL
-            isAntiAlias = true
-        }
-        canvas.drawRect(40f, y - 5f, PAGE_WIDTH - 40f, y + 20f, headerBgPaint)
-
-        // Draw header text (white)
-        val headerTextPaint = Paint().apply {
-            color = Color.WHITE
-            textSize = 11f
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            isAntiAlias = true
+            val cols = listOf(43f, 123f, 203f, 293f, 373f, 453f, 513f)
+            val labels = listOf("Generic Name", "Brand", "Frequency", "Dosage", "Duration", "Route", "Schedule")
+            labels.forEachIndexed { i, label -> c.drawText(label, cols[i], currentY + 12f, hText) }
+            return currentY + 25f
         }
 
-        canvas.drawText("Generic Name", col1X + 3f, y + 12f, headerTextPaint)
-        canvas.drawText("Brand", col2X + 3f, y + 12f, headerTextPaint)
-        canvas.drawText("Frequency", col3X + 3f, y + 12f, headerTextPaint)
-        canvas.drawText("Dosage", col4X + 3f, y + 12f, headerTextPaint)
-        canvas.drawText("Duration", col5X + 3f, y + 12f, headerTextPaint)
-        canvas.drawText("Route", col6X + 3f, y + 12f, headerTextPaint)
-        canvas.drawText("Schedule", col7X + 3f, y + 12f, headerTextPaint)
+        y = drawMedHeader(canvas, y)
 
-        y += 25f
-
-        // Draw horizontal line after header
-        canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, linePaint)
-        y += 15f
-
-        // Draw each medication order row
         record.medicationOrders?.forEach { med ->
-            // Generic Name
-            canvas.drawText(med.genericName ?: "—", col1X + 3f, y, valuePaint)
+            val rowHeight = 35f // 20f text + 15f spacing
+            if (y + rowHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+                pdfDocument.finishPage(page)
+                currentPageNumber++
+                page = pdfDocument.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, currentPageNumber).create())
+                canvas = page.canvas
+                y = TOP_MARGIN
+                y = drawMedHeader(canvas, y) // Redraw header on new page
+            }
 
-            // Brand (empty in your data)
-            canvas.drawText("—", col2X + 3f, y, valuePaint)
-
-            // Frequency (empty in your data)
-            canvas.drawText("—", col3X + 3f, y, valuePaint)
-
-            // Dosage (using strength field)
-            canvas.drawText(med.strength ?: "—", col4X + 3f, y, valuePaint)
-
-            // Duration
-            canvas.drawText(med.duration ?: "—", col5X + 3f, y, valuePaint)
-
-            // Route (empty in your data)
-            canvas.drawText("—", col6X + 3f, y, valuePaint)
-
-            // Schedule (empty in your data)
-            canvas.drawText("—", col7X + 3f, y, valuePaint)
+            // Draw Row Data
+            canvas.drawText(med.genericName ?: "—", 43f, y + 15f, valuePaint)
+            canvas.drawText("—", 123f, y + 15f, valuePaint)
+            canvas.drawText("—", 203f, y + 15f, valuePaint)
+            canvas.drawText(med.strength ?: "—", 293f, y + 15f, valuePaint)
+            canvas.drawText(med.duration ?: "—", 373f, y + 15f, valuePaint)
+            canvas.drawText("—", 453f, y + 15f, valuePaint)
+            canvas.drawText("—", 513f, y + 15f, valuePaint)
 
             y += 20f
-
-            // Draw separator line
-            canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, dividerPaint)
+            canvas.drawLine(40f, y + 5f, PAGE_WIDTH - 40f, y + 5f, dividerPaint)
             y += 15f
         }
 
-        return y
+        return Triple(page, canvas, y)
     }
 
-
-    private fun drawInvestigationOrders(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
+    private fun drawInvestigationOrders(
+        pdfDocument: PdfDocument,
+        currentPage: PdfDocument.Page,
+        currentCanvas: Canvas,
+        startY: Float,
+        record: PrescriptionRecord,
+        pageNo: Int
+    ): Triple<PdfDocument.Page, Canvas, Float> {
+        var page = currentPage
+        var canvas = currentCanvas
         var y = startY
+        var currentPageNumber = pageNo
+
+        if (y + 60f > PAGE_HEIGHT - BOTTOM_MARGIN) {
+            pdfDocument.finishPage(page)
+            currentPageNumber++
+            page = pdfDocument.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, currentPageNumber).create())
+            canvas = page.canvas
+            y = TOP_MARGIN
+        }
 
         canvas.drawText("INVESTIGATION ORDERS", 40f, y, sectionTitlePaint)
         y += 25f
 
-        // Check if investigation orders exist
         if (record.investigationOrders.isNullOrEmpty()) {
             canvas.drawText("No investigation orders", 40f, y, valuePaint)
-            y += 30f
-            return y
+            return Triple(page, canvas, y + 30f)
         }
 
-        // Draw table header
-        val col1X = 40f  // Test Name column
-        val col2X = 240f // Reason column
-        val col3X = 440f // Status column
-        val col4X = 500f // Date column
-
-        val headerY = y
-
-        // Draw header background (light green)
-        val headerBgPaint = Paint().apply {
-            color = Color.parseColor("#4ADE80")
-            style = Paint.Style.FILL
-            isAntiAlias = true
-        }
-        canvas.drawRect(40f, y - 5f, PAGE_WIDTH - 40f, y + 20f, headerBgPaint)
-
-        // Draw header text (white)
-        val headerTextPaint = Paint().apply {
-            color = Color.WHITE
-            textSize = 13f
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            isAntiAlias = true
+        fun drawInvHeader(c: Canvas, currentY: Float): Float {
+            val headerBgPaint = Paint().apply { color = Color.parseColor("#4ADE80"); style = Paint.Style.FILL; isAntiAlias = true }
+            c.drawRect(40f, currentY - 5f, PAGE_WIDTH - 40f, currentY + 20f, headerBgPaint)
+            val hText = Paint().apply { color = Color.WHITE; textSize = 13f; typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD); isAntiAlias = true }
+            c.drawText("Test Name", 45f, currentY + 12f, hText)
+            c.drawText("Reason", 245f, currentY + 12f, hText)
+            c.drawText("Status", 445f, currentY + 12f, hText)
+            c.drawText("Date", 505f, currentY + 12f, hText)
+            return currentY + 25f
         }
 
-        canvas.drawText("Test Name", col1X + 5f, y + 12f, headerTextPaint)
-        canvas.drawText("Reason", col2X + 5f, y + 12f, headerTextPaint)
-        canvas.drawText("Status", col3X + 5f, y + 12f, headerTextPaint)
-        canvas.drawText("Date", col4X + 5f, y + 12f, headerTextPaint)
+        y = drawInvHeader(canvas, y)
 
-        y += 25f
-
-        // Draw horizontal line after header
-        canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, linePaint)
-        y += 15f
-
-        // Draw each investigation order row
         record.investigationOrders?.forEach { order ->
-            val rowStartY = y
+            val reasonWrapped = wrapText(order.reason ?: "—", 180f, valuePaint)
+            val lineCount = reasonWrapped.split("\n").size
+            val rowHeight = (lineCount * 16f) + 25f // text height + padding
 
-            // Draw alternating row background (very light gray for even rows)
-            val rowBgPaint = Paint().apply {
-                color = Color.parseColor("#F9FAFB")
-                style = Paint.Style.FILL
-                isAntiAlias = true
+            if (y + rowHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+                pdfDocument.finishPage(page)
+                currentPageNumber++
+                page = pdfDocument.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, currentPageNumber).create())
+                canvas = page.canvas
+                y = TOP_MARGIN
+                y = drawInvHeader(canvas, y)
             }
 
-            // Test Name
-            canvas.drawText(order.testName ?: "N/A", col1X + 5f, y, valuePaint)
+            canvas.drawText(order.testName ?: "N/A", 45f, y + 12f, valuePaint)
 
-            // Reason (wrap text if too long)
-            val reason = order.reason ?: "—"
-            val reasonWrapped = wrapText(reason, 180f, valuePaint)
-            var reasonY = y
+            var reasonY = y + 12f
             reasonWrapped.split("\n").forEach { line ->
-                canvas.drawText(line, col2X + 5f, reasonY, valuePaint)
+                canvas.drawText(line, 245f, reasonY, valuePaint)
                 reasonY += 16f
             }
 
-            // Status (using em dash for empty)
-            canvas.drawText("—", col3X + 5f, y, valuePaint)
+            canvas.drawText("—", 445f, y + 12f, valuePaint)
+            canvas.drawText("—", 505f, y + 12f, valuePaint)
 
-            // Date (using em dash for empty)
-            canvas.drawText("—", col4X + 5f, y, valuePaint)
-
-            // Update y to account for wrapped text
-            val maxY = maxOf(y, reasonY - 16f)
-            y = maxY + 20f
-
-            // Draw separator line
+            y = maxOf(y + 20f, reasonY)
             canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, dividerPaint)
             y += 15f
         }
 
-        return y
+        return Triple(page, canvas, y)
     }
 
     // Helper method to wrap text
