@@ -23,6 +23,7 @@ import kotlin.math.max
 import androidx.core.graphics.toColorInt
 import coil3.Bitmap
 import com.example.happydocx.R
+import com.example.happydocx.Utils.DateUtils
 
 private const val TOP_MARGIN = 40f
 private const val BOTTOM_MARGIN = 60f
@@ -81,6 +82,12 @@ class PrescriptionPdfGenerator(private val context: Context) {
         isAntiAlias = true
     }
 
+    private val sectionBackgroundPaint = Paint().apply {
+        color = Color.parseColor("#F8FAFC")
+        style = Paint.Style.FILL
+        isAntiAlias = true
+    }
+
     private val contentWidth = PAGE_WIDTH - (2 * 40f) // 40f margin both sides
 
     fun generatePdf(record: PrescriptionRecord): File? {
@@ -101,30 +108,30 @@ class PrescriptionPdfGenerator(private val context: Context) {
             // Patient Info
             y = ensureSpace(pdfDocument, page, y, 140f, ++pageNumber) { page = it; canvas = page.canvas }
             y = drawPatientInfo(canvas, y, record)
-            y += 30f
+            y += 20f
 
             // Vital Signs
             y = ensureSpace(pdfDocument, page, y, 220f, ++pageNumber) { page = it; canvas = page.canvas }
             y = drawVitalSigns(canvas, y, record)
-            y += 30f
+            y += 20f
 
             // Investigation Details
             y = ensureSpace(pdfDocument, page, y, 240f, ++pageNumber) { page = it; canvas = page.canvas }
             y = drawInvestigationDetails(canvas, y, record)
-            y += 30f
+            y += 20f
 
             // Physician Notes (multi-page capable)
             val (newPage, newY) = drawPhysicianNotes(pdfDocument, page, canvas, y, record, pageNumber)
             page = newPage
             canvas = page.canvas
             y = newY
-            y += 30f
+            y += 20f
             pageNumber = pdfDocument.pages.size
 
             // Medication Orders
             y = ensureSpace(pdfDocument, page, y, 300f, ++pageNumber) { page = it; canvas = page.canvas }
             y = drawMedicationOrders(canvas, y, record)
-            y += 30f
+            y += 20f
 
             // Investigation Orders (NEW SECTION)
             val estimatedInvestigationHeight = 100f + (record.investigationOrders?.size ?: 0) * 50f
@@ -180,55 +187,76 @@ class PrescriptionPdfGenerator(private val context: Context) {
 
     private fun drawHeader(canvas: Canvas, startY: Float): Float {
         var y = startY
+        val leftMargin = 40f           // ← page left margin (adjust if needed)
 
-        // load from drawable
+        // ── Logo (left side) ────────────────────────────────────────
         val logoBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.applogofinal)
-        val desiredWidth = 120f   // ← change this
-        val desiredHeight = 80f
-        // know we scale the logo according to out own desired shape
-        val scaleLogo = Bitmap.createScaledBitmap(
-            logoBitmap,
-            desiredWidth.toInt(),
-            desiredHeight.toInt(),
-            true // filter --> true better quality.
-        )
-            // center horizontally
-        val logoLeft = (PAGE_WIDTH - desiredWidth) / 2f
-        val logoTop = y
-        canvas.drawBitmap(scaleLogo, logoLeft, logoTop, null)
-        y += desiredHeight + 16f  // space after logo
 
-        // Clinic name
+        val logoWidth = 90f
+        val logoHeight = 70f
+
+        val scaledLogo = Bitmap.createScaledBitmap(
+            logoBitmap,
+            logoWidth.toInt(),
+            logoHeight.toInt(),
+            true
+        )
+
+        val logoLeft = leftMargin
+        val logoTop = y + 4f           // slight top padding
+
+        canvas.drawBitmap(scaledLogo, logoLeft, logoTop, null)
+
+
+        val textLeft = leftMargin + logoWidth + 18f
+        var textY = y + 32f
+
+        // Clinic Name - bold & bigger
         val clinicNamePaint = Paint().apply {
             color = Color.BLACK
-            textSize = 18f
+            textSize = 22f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             isAntiAlias = true
-            textAlign = Paint.Align.CENTER
+            textAlign = Paint.Align.LEFT
         }
-        canvas.drawText("ABC CLINIC", PAGE_WIDTH / 2f, y, clinicNamePaint)
-        y += 20f
 
-        // Address
+        canvas.drawText("ABC CLINIC", textLeft, textY, clinicNamePaint)
+        textY += 26f
+
+        // Address lines - smaller & lighter
         val addressPaint = Paint().apply {
-            color = Color.GRAY
-            textSize = 10f
+            color = Color.rgb(70, 70, 70)   //  dark gray
+            textSize = 11f
+            typeface = Typeface.DEFAULT
             isAntiAlias = true
-            textAlign = Paint.Align.CENTER
+            textAlign = Paint.Align.LEFT
         }
-        canvas.drawText("123 Medical Street, Healthcare District", PAGE_WIDTH / 2f, y, addressPaint)
-        y += 12f
-        canvas.drawText("Utako Idoko Greeny, 252650 • Tel: +234 700 000 000", PAGE_WIDTH / 2f, y, addressPaint)
-        y += 15f
 
-        // Line
-        canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, linePaint)
-        y += 20f
+        canvas.drawText("100 Doctor Hill, Eldoret, Langas,", textLeft, textY, addressPaint)
+        textY += 15f
+
+        canvas.drawText("Ward B, Building D, Uasin Gishu County-30100", textLeft, textY, addressPaint)
+        textY += 15f
+
+
+        // ── Final height calculation ────────────────────────────────
+        val bottomOfLogo = logoTop + logoHeight
+        val bottomOfText = textY
+
+        y = maxOf(bottomOfLogo, bottomOfText) + 28f   // breathing space after header
+
+        // Optional separator line
+        val linePaint = Paint().apply {
+            color = Color.rgb(120, 120, 120)
+            strokeWidth = 1.2f
+        }
+        canvas.drawLine(leftMargin, y - 12f, PAGE_WIDTH - leftMargin, y - 12f, linePaint)
 
         return y
     }
 
     private fun drawPatientInfo(canvas: Canvas, startY: Float, record: PrescriptionRecord): Float {
+
         var y = startY
         val patient = record.patient
         val appointment = record.appointment
@@ -256,11 +284,18 @@ class PrescriptionPdfGenerator(private val context: Context) {
         var y = startY
 
         canvas.drawText("PATIENT VITAL SIGNS", 40f, y, sectionTitlePaint)
-        y += 25f
+        y += 32f
 
-        record.patientVitalSigns?.forEach { vital ->
+        if (record.patientVitalSigns.isNullOrEmpty()) {
+            canvas.drawText("No vital signs recorded", 40f, y, valuePaint)
+            return y + 40f
+        }
+
+        record.patientVitalSigns?.forEachIndexed { index,vital ->
             y = drawVitalSignRecord(canvas, y, vital)
-            y += 20f
+            if(index < record.patientVitalSigns.size-1){
+                y += 4f
+            }
         }
 
         return y
@@ -269,25 +304,25 @@ class PrescriptionPdfGenerator(private val context: Context) {
     private fun drawVitalSignRecord(canvas: Canvas, startY: Float, vital: VitalSign): Float {
         var y = startY
 
-        canvas.drawText("RECORDED AT ${vital.recordedAt ?: "N/A"}", 40f, y, labelPaint)
-        y += 32f
+        canvas.drawText("RECORDED AT ${DateUtils.formatAppointmentDate(vital.recordedAt) ?: "N/A"}", 40f, y, labelPaint)
+        y += 24f
 
-        val colWidth = contentWidth / 4f
+        val colWidth = contentWidth / 3f
         val cols = listOf(40f, 40f + colWidth, 40f + 2 * colWidth, 40f + 3 * colWidth)
 
         drawVitalItem(canvas, cols[0], y, "BLOOD PRESSURE", vital.bloodPressure ?: "N/A")
         drawVitalItem(canvas, cols[1], y, "HEART RATE", "${vital.heartRate ?: "N/A"} bpm")
         drawVitalItem(canvas, cols[2], y, "TEMP", "${vital.temperature ?: "N/A"}°C")
 
-        y += 35f
+        y += 38f
 
         drawVitalItem(canvas, cols[0], y, "WEIGHT", "${vital.weight ?: "N/A"} kg")
         drawVitalItem(canvas, cols[1], y, "HEIGHT", "${vital.height ?: "N/A"} cm")
-        drawVitalItem(canvas, cols[2], y, "Oxygen Saturation", vital.oxigenSaturation ?: "N/A")
+        drawVitalItem(canvas, cols[2], y, "Oxygen Saturation", vital.oxygenSaturation ?: "N/A")
 
-        y += 30f
+        y += 25f
         canvas.drawLine(40f, y, PAGE_WIDTH - 40f, y, dividerPaint)
-        y += 10f
+        y += 9f
 
         return y
     }

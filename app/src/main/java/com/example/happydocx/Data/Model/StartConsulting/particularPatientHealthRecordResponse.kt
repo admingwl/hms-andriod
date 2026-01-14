@@ -171,7 +171,7 @@ data class VitalSign(
     val bloodPressure: String?,
     val heartRate: String?,
     val temperature: String?,
-    val oxigenSaturation: String?,
+    val oxygenSaturation: String?,
     val height: String?,
     val weight: String?,
     @SerializedName("_id")
