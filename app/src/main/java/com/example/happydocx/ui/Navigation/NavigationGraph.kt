@@ -35,6 +35,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.happydocx.R
+import com.example.happydocx.ui.Screens.CreatePatient.PatientListScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.Screens.LoginPage
@@ -189,6 +190,10 @@ fun NavigationGraph() {
 
             Log.d("DEBUG_NAV", "NewPage - PatientId: $patientId, Token: ${token.take(10)}...")
 
+        }
+
+        composable("patientScreen"){
+            PatientListScreen()
         }
     }
 }
