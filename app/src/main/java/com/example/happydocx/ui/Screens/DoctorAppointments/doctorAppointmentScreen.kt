@@ -1,5 +1,6 @@
 package com.example.happydocx.ui.Screens.DoctorAppointments
 
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -171,7 +172,7 @@ fun DoctorAppointmentScreen(
                 drawerContentColor = Color.Transparent,
                 modifier = Modifier.background(
                     color = Color(0xfff8fafc),
-                    shape = RoundedCornerShape(30.dp)
+                    shape = RoundedCornerShape(10.dp)
                 )
             ) {
                 Column(
@@ -191,72 +192,87 @@ fun DoctorAppointmentScreen(
 
                     HorizontalDivider()
 
-                    Text(
-                        "Section 1",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.Black
-                    )
+//                    Text(
+//                        "Appointments",
+//                        modifier = Modifier.padding(16.dp),
+//                        style = MaterialTheme.typography.titleMedium,
+//                        color = Color.Black
+//                    )
                     NavigationDrawerItem(
-                        label = { Text("Item 1") },
+                        label = { Text("Appointments") },
                         selected = false,
-                        colors = NavigationDrawerItemDefaults.colors(
-                            selectedTextColor = Color.Black,
-                            unselectedTextColor = Color.Black
-                        ),
-                        onClick = { /* Handle click */ }
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Item 2") },
-                        selected = false,
-                        colors = NavigationDrawerItemDefaults.colors(
-                            selectedTextColor = Color.Black,
-                            unselectedTextColor = Color.Black
-                        ),
-                        onClick = { /* Handle click */ }
-                    )
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                    Text(
-                        "Section 2",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.Black
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Settings") },
-                        selected = false,
-                        colors = NavigationDrawerItemDefaults.colors(
-                            selectedTextColor = Color.Black,
-                            unselectedTextColor = Color.Black
-                        ),
                         icon = {
                             Icon(
-                                Icons.Outlined.Settings,
+                                painter = painterResource(R.drawable.schedule),
                                 contentDescription = null,
+                                modifier = Modifier.size(25.dp)
+                            )
+                        },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedTextColor = Color.Black,
+                            unselectedTextColor = Color.Black
+                        ),
+                        onClick = { navController.navigate("") }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Patients") },
+                        selected = false,
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.user_avatar),
+                                contentDescription = null,
+                                modifier = Modifier.size(25.dp),
                                 tint = Color.Black
                             )
                         },
-                        badge = { Text("20") }, // Placeholder
-                        onClick = { /* Handle click */ }
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("List") },
-                        selected = false,
                         colors = NavigationDrawerItemDefaults.colors(
                             selectedTextColor = Color.Black,
                             unselectedTextColor = Color.Black
                         ),
-                        icon = {
-                            Icon(
-                                Icons.AutoMirrored.Outlined.List,
-                                tint = Color.Black,
-                                contentDescription = null
-                            )
-                        },
-                        onClick = { /* Handle click */ },
+                        onClick = { navController.navigate("patientScreen") }
                     )
+
+
+
+//                    Text(
+//                        "Section 2",
+//                        modifier = Modifier.padding(16.dp),
+//                        style = MaterialTheme.typography.titleMedium,
+//                        color = Color.Black
+//                    )
+//                    NavigationDrawerItem(
+//                        label = { Text("Settings") },
+//                        selected = false,
+//                        colors = NavigationDrawerItemDefaults.colors(
+//                            selectedTextColor = Color.Black,
+//                            unselectedTextColor = Color.Black
+//                        ),
+//                        icon = {
+//                            Icon(
+//                                Icons.Outlined.Settings,
+//                                contentDescription = null,
+//                                tint = Color.Black
+//                            )
+//                        },
+//                        badge = { Text("20") }, // Placeholder
+//                        onClick = { /* Handle click */ }
+//                    )
+//                    NavigationDrawerItem(
+//                        label = { Text("List") },
+//                        selected = false,
+//                        colors = NavigationDrawerItemDefaults.colors(
+//                            selectedTextColor = Color.Black,
+//                            unselectedTextColor = Color.Black
+//                        ),
+//                        icon = {
+//                            Icon(
+//                                Icons.AutoMirrored.Outlined.List,
+//                                tint = Color.Black,
+//                                contentDescription = null
+//                            )
+//                        },
+//                        onClick = { /* Handle click */ },
+//                    )
                     Spacer(Modifier.height(12.dp))
                 }
             }
