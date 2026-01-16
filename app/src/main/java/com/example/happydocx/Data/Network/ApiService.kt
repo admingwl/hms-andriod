@@ -5,6 +5,7 @@ import com.example.happydocx.Data.Model.DoctorAppointment.AppointmentResponse
 import com.example.happydocx.Data.Model.FormModel.DoctorProfileResponse
 import com.example.happydocx.Data.Model.LoginModel.LoginRequest
 import com.example.happydocx.Data.Model.LoginModel.LoginResponse
+import com.example.happydocx.Data.Model.PatientScreen.PatientListResponse
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
@@ -102,6 +103,14 @@ interface ApiService{
       @Query("limit") limit:Int = 10,
       @Query("showCompleted") showCompleted:Boolean = false
     ): Response<AppointmentResponse>
+
+    // Api integration for getting the  the list of all the patients.
+    @GET("api/v1/patient/get-all-patients")
+    suspend fun getAllPatients(
+        @Header("Authorization") token:String?,
+        @Query("page") page:Int =  1,
+        @Query("limit") limit : Int = 10
+    ): Response<PatientListResponse>
 
 
     // api for getting the all departments
