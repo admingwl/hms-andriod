@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
@@ -212,7 +213,14 @@ fun DoctorAppointmentScreen(
                             selectedTextColor = Color.Black,
                             unselectedTextColor = Color.Black
                         ),
-                        onClick = { navController.navigate("") }
+                        onClick = {
+                            scope.launch {
+                                navController.navigate("AppointmentsScreen/$token"){
+                                    popUpTo("patientScreen")
+                                }
+                                drawerState.close()
+                            }
+                        }
                     )
                     NavigationDrawerItem(
                         label = { Text("Patients") },
@@ -229,7 +237,15 @@ fun DoctorAppointmentScreen(
                             selectedTextColor = Color.Black,
                             unselectedTextColor = Color.Black
                         ),
-                        onClick = { navController.navigate("patientScreen/$token") }
+                        onClick = {
+                            scope.launch {
+                                navController.navigate("patientScreen/$token"){
+                                    popUpTo("AppointmentsScreen")
+
+                                }
+                                drawerState.close()
+                            }
+                        }
                     )
 
 

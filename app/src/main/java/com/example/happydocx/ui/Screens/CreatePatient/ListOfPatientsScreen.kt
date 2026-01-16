@@ -196,12 +196,12 @@ fun PatientListScreen(
                             }
                         }
                     } else {
-                        Box(
+                        Column(
                             modifier = modifier.fillMaxSize()
                         ) {
                             LazyColumn(
                                 modifier = modifier
-                                    .fillMaxSize()
+                                    .weight(1f)
                                     .background(Color(0xFFC6D9E8)),
                                 contentPadding = PaddingValues(8.dp)
                             ) {
@@ -220,8 +220,7 @@ fun PatientListScreen(
                             Column(
                                 modifier = modifier.
                                 fillMaxWidth().
-                                background(Color.White)
-                                    .align(Alignment.BottomCenter),
+                                background(Color.White),
                                 verticalArrangement = Arrangement.Center,
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
@@ -363,7 +362,7 @@ fun PatientCard(
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(10.dp)
                 .background(Color(0xffFFFFFF))
         ) {
             Row(
@@ -383,11 +382,15 @@ fun PatientCard(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                Icon(
-                    Icons.Default.MoreVert,
-                    contentDescription = null,
-                    tint = Color.Black
-                )
+                IconButton(
+                    onClick = {}
+                ) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = null,
+                        tint = Color.Black
+                    )
+                }
             }
             Spacer(Modifier.height(8.dp))
             HorizontalDivider(
@@ -403,7 +406,7 @@ fun PatientCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.Default.Info,
+                       painter = painterResource(R.drawable.time),
                         contentDescription = null,
                         tint = Color.Black,
                         modifier = modifier.size(18.dp)
@@ -437,7 +440,7 @@ fun PatientCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.Default.Info,
+                        painter = painterResource(R.drawable.map),
                         contentDescription = null,
                         tint = Color.Black,
                         modifier = modifier.size(18.dp)
