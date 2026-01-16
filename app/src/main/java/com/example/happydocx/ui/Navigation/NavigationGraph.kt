@@ -34,6 +34,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.CreatePatient.PatientListScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
@@ -53,6 +54,7 @@ import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.ParticularUserSignUpViewModel
+import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
@@ -66,7 +68,7 @@ fun NavigationGraph() {
     val userViewModel: ParticularUserSignInViewModel = viewModel()
     val particularUserSignUpViewModel: ParticularUserSignUpViewModel = viewModel()
     val BasicPatientInformationViewModel: BasicInformationViewModel = viewModel()
-    val DoctorDepartmentViewModel: GetAllDepartmentViewModel = viewModel()
+
 
     // Create viewModel at navigation graph level so it survives between screens
     val sharedViewModel: formViewModel = viewModel(
@@ -74,6 +76,7 @@ fun NavigationGraph() {
     )
     val doctorAppointmentViewModel : DoctorAppointmentsViewModel = viewModel()
     val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
+    val patientListViewModel: PatientListViewModel = viewModel()
 
     NavHost(
         startDestination = "Login",
@@ -112,6 +115,18 @@ fun NavigationGraph() {
             val token_one = backStackEntry.arguments?.getString("token")?:""
             Log.d("DEBUG_NAV", "Navigation: Token = $token_one")
             DoctorAppointmentScreen(token = token_one, navController = navController, viewModel = doctorAppointmentViewModel)
+        }
+        // patient list screen.
+        composable("patientScreen/{token}",
+            arguments = listOf(navArgument("token"){type = NavType.StringType
+                nullable = false
+            }
+            )){backStackEntry->
+            val tokenOne = backStackEntry.arguments?.getString("token")?:""
+            PatientListScreen(
+                viewModel = patientListViewModel,
+                token = tokenOne
+            )
         }
         composable("ParticularPatientScreen/{patientId}/{token}/{appointmentId}",
             arguments = listOf(
@@ -192,9 +207,7 @@ fun NavigationGraph() {
 
         }
 
-        composable("patientScreen"){
-            PatientListScreen()
-        }
+
     }
 }
 

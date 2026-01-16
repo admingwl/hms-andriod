@@ -229,7 +229,7 @@ fun DoctorAppointmentScreen(
                             selectedTextColor = Color.Black,
                             unselectedTextColor = Color.Black
                         ),
-                        onClick = { navController.navigate("patientScreen") }
+                        onClick = { navController.navigate("patientScreen/$token") }
                     )
 
 

@@ -4,7 +4,6 @@ import android.util.Log
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
 import com.example.happydocx.Data.Model.StartConsulting.MedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.MedicationResponse
-import com.example.happydocx.Data.Model.StartConsulting.ParticularPatient
 import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
@@ -17,7 +16,6 @@ import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusR
 import com.example.happydocx.Data.Model.StartConsulting.vitalSignList
 import com.example.happydocx.Data.Network.ApiService
 import com.example.happydocx.Utils.RetrofitInstance
-import okhttp3.Request
 
 class BasicInformationRepository {
 
