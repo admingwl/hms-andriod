@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,6 +60,7 @@ import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
+import kotlin.math.exp
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -217,83 +220,90 @@ fun NavigationGraph() {
 // custom top bar in Appointment screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppointmentTopBar(
+fun AppointmentSearchBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onMenuClick: () -> Unit,
-    onLogoutClick: () -> Unit,
-    scrollBehavior: TopAppBarScrollBehavior
+    modifier : Modifier = Modifier
 ) {
-    TopAppBar(
 
-        title = {
-            // Integrated Search Bar in Title
 
-            SearchBar(
-                tonalElevation = 9.dp,
+//            SearchBar(
+//                tonalElevation = 9.dp,
+//                query = searchQuery,
+//                onQueryChange = onSearchQueryChange,
+//                onSearch = { /* Handle search */ },
+//                active = false, // Always collapsed in topbar
+//                onActiveChange = { },
+//                placeholder = {
+//                    Text(
+//                        "Search appointments...",
+//                        color = Color.White.copy(alpha = 0.7f),
+//                        fontSize = 18.sp
+//                    )
+//                },
+//                leadingIcon = {
+//                    Icon(
+//                        Icons.Default.Search,
+//                        contentDescription = "Search",
+//                        tint = Color.White
+//                    )
+//                },
+//                trailingIcon = {
+//                    if (searchQuery.isNotEmpty()) {
+//                        IconButton(onClick = { onSearchQueryChange("") }) {
+//                            Icon(
+//                                Icons.Default.Close,
+//                                contentDescription = "Clear",
+//                                tint = Color.White
+//                            )
+//                        }
+//                    }
+//                },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(80.dp),
+//                colors = SearchBarDefaults.colors(
+//                    containerColor = Color.White.copy(alpha = 0.15f),
+//                    dividerColor = Color.Transparent
+//                ),
+//                shape = RoundedCornerShape(10.dp),
+//                    ) {}
+
+    SearchBar(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        inputField = {
+            SearchBarDefaults.InputField(
                 query = searchQuery,
                 onQueryChange = onSearchQueryChange,
-                onSearch = { /* Handle search */ },
-                active = false, // Always collapsed in topbar
-                onActiveChange = { },
+                onSearch = {},
+                expanded = false,
+                onExpandedChange = {},
                 placeholder = {
                     Text(
-                        "Search appointments...",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 18.sp
+                        text = "Search Appointments",
+                        color = Color(0xFF9CA3AF),
+                        fontSize = 16.sp,
                     )
                 },
                 leadingIcon = {
                     Icon(
                         Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = Color.White
+                        tint = Color(0xFF9CA3AF),
+                        modifier = Modifier.size(20.dp)
                     )
                 },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { onSearchQueryChange("") }) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Clear",
-                                tint = Color.White
-                            )
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
-                colors = SearchBarDefaults.colors(
-                    containerColor = Color.White.copy(alpha = 0.15f),
-                    dividerColor = Color.Transparent
-                ),
-                shape = RoundedCornerShape(10.dp),
-            ) { }
+            )
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            scrolledContainerColor = Color.Transparent
+        expanded = false,
+        onExpandedChange = {},
+        shape = RoundedCornerShape(8.dp),
+        colors = SearchBarDefaults.colors(
+            containerColor = Color(0xFFF3F4F6),
         ),
-        modifier = Modifier.background(brush = gradient_colors).padding(vertical = 10.dp),
-        scrollBehavior = scrollBehavior,
-        navigationIcon = {
-            IconButton(onClick = onMenuClick) {
-                Icon(
-                    Icons.Default.Menu,
-                    contentDescription = "Menu",
-                    tint = Color.White
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = onLogoutClick) {
-                Icon(
-                    painter = painterResource(R.drawable.outline_logout_24),
-                    contentDescription = "Logout",
-                    tint = Color.White
-                )
-            }
-        }
-    )
+        tonalElevation = 0.dp
+    ){}
 }
+
