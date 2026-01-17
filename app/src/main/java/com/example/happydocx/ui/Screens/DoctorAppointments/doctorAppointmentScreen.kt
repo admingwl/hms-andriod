@@ -4,6 +4,7 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -42,10 +45,12 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -65,15 +70,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.example.happydocx.Data.Model.DoctorAppointment.Appointment
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
-import com.example.happydocx.ui.Navigation.AppointmentTopBar
+import com.example.happydocx.ui.Navigation.AppointmentSearchBar
+import com.example.happydocx.ui.Screens.CreatePatient.MySearchBar
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import kotlinx.coroutines.launch
@@ -94,14 +103,15 @@ fun DoctorAppointmentScreen(
     viewModel: DoctorAppointmentsViewModel,
     token: String,  // Non-nullable, as per your NavGraph
     navController: NavController,
+    modifier: Modifier = Modifier
 ) {
 
     val uiState =
         viewModel._uiState.collectAsStateWithLifecycle()  // State<AppointmentUiState> — keep this!
 
 
-    val scrollBehaviour =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior() // for large top app bar use exitUntilCollapsedScrollBehaviour()
+//    val scrollBehaviour =
+//        TopAppBarDefaults.exitUntilCollapsedScrollBehavior() // for large top app bar use exitUntilCollapsedScrollBehaviour()
 
     // get drawer state
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -215,7 +225,7 @@ fun DoctorAppointmentScreen(
                         ),
                         onClick = {
                             scope.launch {
-                                navController.navigate("AppointmentsScreen/$token"){
+                                navController.navigate("AppointmentsScreen/$token") {
                                     popUpTo("patientScreen")
                                 }
                                 drawerState.close()
@@ -239,15 +249,14 @@ fun DoctorAppointmentScreen(
                         ),
                         onClick = {
                             scope.launch {
-                                navController.navigate("patientScreen/$token"){
-                                    popUpTo("AppointmentsScreen")
+                                navController.navigate("patientScreen/$token") {
+                                    popUpTo("AppointmentsScree")
 
                                 }
                                 drawerState.close()
                             }
                         }
                     )
-
 
 
 //                    Text(
@@ -297,45 +306,59 @@ fun DoctorAppointmentScreen(
     ) {
         Scaffold(
             modifier = Modifier
-                .fillMaxSize()
-                /*In Compose, when you use a collapsing or moving TopAppBar (like enterAlwaysScrollBehavior()),
-              you must attach the scroll behavior to the scrollable content using this modifier:*/
-                .nestedScroll(scrollBehaviour.nestedScrollConnection),
+                .fillMaxSize(),
             topBar = {
-                AppointmentTopBar(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
-                    onMenuClick = {
-                        coroutineScope.launch {
-                            drawerState.open()
-                        }
+                TopAppBar(
+                    modifier = modifier.background(brush = gradient_colors),
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent
+                    ),
+                    title = {
+                        Text(
+                            "Appointments",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     },
-
-                    onLogoutClick = { showDialog.value = true },
-                    scrollBehavior = scrollBehaviour
-                )
-            },
-            floatingActionButton = {
-                if(uiState.value is AppointmentUiState.Success){
-                    val SuccessState = uiState.value as AppointmentUiState.Success
-                    if(SuccessState.appointments.isNotEmpty()){
-                        // Only show FAB when there are appointments (not empty state)
-                        FloatingActionButton(
-                            onClick = {},
-                            modifier = Modifier.padding(bottom = 80.dp, end = 10.dp),
-                            containerColor = Color(0xff5a6de6)
+                    actions = {
+                        IconButton(
+                            onClick = { showDialog.value = true },
+                            modifier = modifier.padding(end = 20.dp)
                         ) {
-                            IconButton(onClick = {}) {
-                                Icon(
-                                    painter = painterResource(R.drawable.addappointments),
-                                    contentDescription = null,
-                                    modifier = Modifier.padding(8.dp)
-                                )
-                            }
+                            Icon(
+                                painter = painterResource(R.drawable.outline_logout_24),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = modifier.size(25.dp)
+                            )
                         }
                     }
-                }
-            }
+                )
+
+            },
+//            floatingActionButton = {
+//                if(uiState.value is AppointmentUiState.Success){
+//                    val SuccessState = uiState.value as AppointmentUiState.Success
+//                    if(SuccessState.appointments.isNotEmpty()){
+//                        // Only show FAB when there are appointments (not empty state)
+//                        FloatingActionButton(
+//                            onClick = {},
+//                            modifier = Modifier.padding(bottom = 80.dp, end = 10.dp),
+//                            containerColor = Color(0xff5a6de6)
+//                        ) {
+//                            IconButton(onClick = {}) {
+//                                Icon(
+//                                    painter = painterResource(R.drawable.addappointments),
+//                                    contentDescription = null,
+//                                    modifier = Modifier.padding(8.dp)
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -345,6 +368,17 @@ fun DoctorAppointmentScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // add search bar
+                Column(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .background(brush = gradient_colors)
+                ) {
+                    // add doctor Appointments Search bar here.
+                    AppointmentSearchBar(
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = { searchQuery = it }
+                    )
+                }
 
                 when (uiState.value) {  // .value gives the actual AppointmentUiState
                     is AppointmentUiState.Loading -> {
@@ -372,7 +406,8 @@ fun DoctorAppointmentScreen(
                             successState.appointments
                         } else {
                             successState.appointments.filter { appointment ->
-                                val fullName = "${appointment.patient.first_name} ${appointment.patient.last_name}"
+                                val fullName =
+                                    "${appointment.patient.first_name} ${appointment.patient.last_name}"
                                 fullName.contains(searchQuery, ignoreCase = true)
                             }
                         }
@@ -466,59 +501,93 @@ fun DoctorAppointmentScreen(
                                     }
                                 } else {
                                     // Appointments List
-                                    LazyColumn(
-                                        modifier = Modifier
-                                            .weight(0.5f)
-                                            .background(color = Color(0xFFFFFFFF)),
-                                        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
-                                    ) {
-                                        items(
-                                            items = filteredAppointments,
-                                            // Providing a unique key for each item is a crucial performance optimization.
-                                            // It allows Compose to uniquely identify each item across recompositions.
-                                            // When the list changes (e.g., an item is added, removed, or moved),
-                                            // Compose uses these keys to understand which items are new and which have just moved,
-                                            // preventing it from recreating every item and preserving the state of existing ones.
-                                            // Here, `it.id` is a perfect candidate for a key as it's a unique identifier
-                                            // for each appointment.
-                                            key = {it->
-                                                it.id
-                                            }
-                                        ) { appointment ->
-                                            CardComponent(
-                                                name = "${appointment.patient.first_name} ${appointment.patient.last_name}"
-                                                    ?: "No Name",
-                                                lastVisit = "last visit: ${
-                                                    DateUtils.formatAppointmentDate(
-                                                        appointment.patient.createdAt
-                                                    )
-                                                }",
-                                                patientId = appointment.patient._id,
-                                                navController = navController,
-                                                token = token,
-                                                appointmentId = appointment.id,
+                                    Column(
+                                        modifier = modifier
+                                            .fillMaxSize()
 
+                                    ) {
+                                        LazyColumn(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .background(color = Color(0xFFC6D9E8)),
+                                            contentPadding = PaddingValues(
+                                                horizontal = 2.dp,
+                                                vertical = 6.dp
                                             )
-                                            HorizontalDivider(color = Color(0xffdbdbd9))
+                                        ) {
+                                            items(
+                                                items = filteredAppointments,
+                                                // Providing a unique key for each item is a crucial performance optimization.
+                                                // It allows Compose to uniquely identify each item across recompositions.
+                                                // When the list changes (e.g., an item is added, removed, or moved),
+                                                // Compose uses these keys to understand which items are new and which have just moved,
+                                                // preventing it from recreating every item and preserving the state of existing ones.
+                                                // Here, `it.id` is a perfect candidate for a key as it's a unique identifier
+                                                // for each appointment.
+                                                key = { it ->
+                                                    it.id
+                                                }
+                                            ) { appointment ->
+                                                DoctorAppointmentCard(
+                                                    appointment = appointment,
+                                                    token = token,
+                                                    navController = navController,
+                                                    patientId = appointment.patient._id,
+                                                    appointmentId = appointment.id
+                                                )
+
+                                            }
+                                        }
+                                        // column for the page controls .
+                                        Column(
+                                            modifier = modifier
+                                                .fillMaxWidth()
+                                                .background(Color.White),
+                                            verticalArrangement = Arrangement.Center,
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Row(
+                                                modifier = modifier
+                                                    .fillMaxWidth()
+                                                    .padding(10.dp)
+                                                    .background(Color(0xffFEFEFF)),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceAround
+                                            ) {
+                                                OutlinedButton(
+                                                    onClick = { viewModel.loadPreviousPage(token) },
+                                                    border = BorderStroke(
+                                                        width = 1.dp,
+                                                        color = Color.Black
+                                                    ),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    modifier = modifier
+                                                        .padding(6.dp)
+                                                        .weight(1f)
+                                                ) {
+                                                    Text("Previous", color = Color.Black)
+                                                }
+                                                Text(
+                                                    "$currentPage / $totalPages",
+                                                    color = Color.Black,
+                                                    modifier = modifier.padding(horizontal = 10.dp)
+                                                )
+                                                OutlinedButton(
+                                                    onClick = { viewModel.loadNextPage(token = token) },
+                                                    border = BorderStroke(
+                                                        width = 1.dp,
+                                                        color = Color.Black
+                                                    ),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    modifier = modifier
+                                                        .padding(6.dp)
+                                                        .weight(1f)
+                                                ) {
+                                                    Text("Next", color = Color.Black)
+                                                }
+                                            }
                                         }
                                     }
-                                }
-
-                                // Pagination Controls (hide during search, show only for full list)
-                                if (totalPages > 1 && searchQuery.isBlank()) {
-                                    PaginationControls(
-                                        currentPage = currentPage,
-                                        totalPages = totalPages,
-                                        onPreviousClick = {
-                                            viewModel.loadPreviousPage(token)
-                                        },
-                                        onNextClick = {
-                                            viewModel.loadNextPage(token)
-                                        },
-                                        onPageClick = { page ->
-                                            viewModel.loadSpecificPage(token, page)
-                                        }
-                                    )
                                 }
                             }
                         }
@@ -567,112 +636,166 @@ fun DoctorAppointmentScreen(
     }
 }
 
-@Composable
-fun PaginationControls(
-    currentPage: Int,
-    totalPages: Int,
-    onPreviousClick: () -> Unit,
-    onNextClick: () -> Unit,
-    onPageClick: (Int) -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color.Transparent,
-        shadowElevation = 8.dp,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(gradient_colors)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Previous Button
-            TextButton(
-                onClick = onPreviousClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent
-                ),
-                modifier = Modifier
-                    .weight(0.5f)
-                    .padding(end = 8.dp)
-                    .padding(paddingValues = PaddingValues(0.dp)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.arrow_left_long_line),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(" Previous", color = Color.White)
-            }
-
-            // Page Info
-            Text(
-                text = "$currentPage / $totalPages",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-
-            // Next Button
-            TextButton(
-                onClick = onNextClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent
-                ),
-                modifier = Modifier
-                    .weight(0.5f)
-                    .padding(start = 8.dp)
-                    .padding(paddingValues = PaddingValues(0.dp)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(" Next", color = Color.White)
-                Icon(
-                    painter = painterResource(R.drawable.arrow_right_long_line),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    }
-}
 
 
 @Composable
-fun CardComponent(
-    name: String,
-    patientId: String,
-    appointmentId:String,
-    lastVisit: String,
-    token:String,
+fun DoctorAppointmentCard(
+    modifier: Modifier = Modifier,
+    appointment: Appointment,
+    token: String,
     navController: NavController,
-
-) {
-    Card(
-        modifier = Modifier
-            .clickable { navController.navigate("ParticularPatientScreen/$patientId/$token/$appointmentId") }
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFFFFFF),
-            contentColor = Color.White
-        ),
-        shape = RoundedCornerShape(1.dp)
+    patientId:String,
+    appointmentId:String,
     ) {
+  val scope = rememberCoroutineScope()
+   val surfaceBackgroundColor = when(appointment.status){
+       "In Consultation" ->
+           Color(0xffDCFCE7)
+       "Waiting" ->
+           Color(0xffF3E8FF)
+       "Confirmed" ->
+           Color(0xffDFF1FD)
+       else ->  Color(0xffF5F5F5)
+   }
+
+    val surfaceContentColor = when(appointment.status){
+        "In Consultation" ->
+            Color(0xff15805C)
+        "Waiting" ->
+            Color(0xff7E22CE)
+        "Confirmed" ->
+            Color(0xff0369A1)
+        else ->
+            Color(0xff616161)
+    }
+    Card(
+        modifier = modifier
+            .clickable{
+                scope.launch {
+                    navController.navigate("SartConsultationScreen/$patientId/$token/$appointmentId")
+                }
+            }
+            .fillMaxWidth()
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xffFFFFFF)
+        )
+    ) {
+        // parent column
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
-                .padding(horizontal = 15.dp, vertical = 15.dp)
+                .padding(10.dp)
+                .background(Color(0xffFFFFFF))
         ) {
-            Text(name, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Color.Black)
+
+            // row 1
+            Row(
+                modifier = modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = modifier) {
+                    Text(
+                        text = "${ appointment.patient.first_name } ${appointment.patient.last_name}",
+                        fontSize = 20.sp,
+                        color = Color(0xff1F7BF6)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = appointment.patient.gender,
+                        fontSize = 15.sp,
+                        color = Color(0xff8E9AA9)
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(
+                    onClick = {}
+                ) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = null,
+                        tint = Color.Black
+                    )
+                }
+            }
             Spacer(Modifier.height(8.dp))
-            Text(lastVisit, color = Color.Black)
+            // row 2
+            Row(
+                modifier = modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = modifier.weight(1f)
+                ) {
+                    Text("CONTACT", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xff93A3B8))
+                    Spacer(Modifier.height(3.dp))
+                    Text(appointment.patient.contactNumber, fontWeight = FontWeight.Bold,color = Color.Black)
+                }
+                Column(modifier = modifier.weight(1f)) {
+                    Text("VISIT TYPE", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,color = Color(0xff93A3B8))
+                    Spacer(Modifier.height(3.dp))
+                    Text(appointment.visitType, fontWeight = FontWeight.Bold,color = Color.Black)
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            HorizontalDivider(
+                color = Color(0xffF1F4F8),
+                modifier = modifier.padding(end = 20.dp)
+            )
+            Spacer(Modifier.height(10.dp))
+            // 3 row
+            Row(
+                modifier = modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = modifier.weight(1f)
+                ) {
+                    Text("SLOT", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,color = Color(0xff93A3B8))
+                    Text("02:30 pm", fontWeight = FontWeight.Bold, color = Color.Black) // slot is not in response.
+                }
+                Column(modifier = modifier.weight(1f)) {
+                    Surface(
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        shape = RoundedCornerShape(30.dp),
+                        color = surfaceBackgroundColor ,
+                        contentColor = surfaceContentColor ,
+                    ) {
+                        Text(
+                            appointment.status,
+                            fontWeight = FontWeight.Bold,
+                            modifier = modifier.padding(6.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            // row 4
+            Row(
+                modifier = modifier,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.time),
+                    contentDescription = null,
+                    tint = Color.Black,
+                    modifier = modifier.size(15.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                DateUtils.formatAppointmentDate(appointment.patient.createdAt)?.let {
+                    Text(
+                        text = "Last Visit: $it",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = Color(0xff93A3B8)
+                    )
+                }
+            }
         }
     }
 }
+
+
