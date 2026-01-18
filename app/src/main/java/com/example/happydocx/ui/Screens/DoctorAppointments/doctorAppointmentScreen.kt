@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
@@ -225,9 +226,6 @@ fun DoctorAppointmentScreen(
                         ),
                         onClick = {
                             scope.launch {
-                                navController.navigate("AppointmentsScreen/$token") {
-                                    popUpTo("patientScreen")
-                                }
                                 drawerState.close()
                             }
                         }
@@ -250,8 +248,7 @@ fun DoctorAppointmentScreen(
                         onClick = {
                             scope.launch {
                                 navController.navigate("patientScreen/$token") {
-                                    popUpTo("AppointmentsScree")
-
+                                 launchSingleTop = true
                                 }
                                 drawerState.close()
                             }
@@ -301,8 +298,7 @@ fun DoctorAppointmentScreen(
                     Spacer(Modifier.height(12.dp))
                 }
             }
-        },
-        gesturesEnabled = true // enable gesture to enable drawer
+        }
     ) {
         Scaffold(
             modifier = Modifier
@@ -325,10 +321,27 @@ fun DoctorAppointmentScreen(
                     actions = {
                         IconButton(
                             onClick = { showDialog.value = true },
-                            modifier = modifier.padding(end = 20.dp)
+                            modifier = modifier
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.outline_logout_24),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = modifier.size(25.dp)
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    drawerState.open()
+                                }
+                            },
+                            modifier = modifier.padding(end = 20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
                                 contentDescription = null,
                                 tint = Color.White,
                                 modifier = modifier.size(25.dp)
@@ -392,8 +405,6 @@ fun DoctorAppointmentScreen(
                                 color = Color(0xff4f61e3),
                                 modifier = Modifier.size(48.dp)
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Loading appointments...", color = Color(0xff4f61e3))
                         }
                     }
 
@@ -638,6 +649,7 @@ fun DoctorAppointmentScreen(
 
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DoctorAppointmentCard(
     modifier: Modifier = Modifier,
