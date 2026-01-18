@@ -128,7 +128,8 @@ fun NavigationGraph() {
             val tokenOne = backStackEntry.arguments?.getString("token")?:""
             PatientListScreen(
                 viewModel = patientListViewModel,
-                token = tokenOne
+                token = tokenOne,
+                navController = navController
             )
         }
         composable("ParticularPatientScreen/{patientId}/{token}/{appointmentId}",

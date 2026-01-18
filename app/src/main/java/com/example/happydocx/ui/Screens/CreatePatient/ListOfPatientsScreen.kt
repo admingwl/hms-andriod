@@ -20,10 +20,13 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -32,10 +35,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DockedSearchBar
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
@@ -44,11 +52,14 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCompositionContext
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,10 +74,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListUiState
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
+import kotlinx.coroutines.launch
 import kotlin.math.exp
 
 
@@ -75,216 +88,330 @@ import kotlin.math.exp
 fun PatientListScreen(
     modifier: Modifier = Modifier,
     viewModel: PatientListViewModel,
-    token: String?
+    token: String?,
+    navController: NavController
 ) {
 
     val listState = viewModel._listState.collectAsStateWithLifecycle().value
+    // get drawer state
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     // launch every time the user open the screen and triggering the patient fetching form api
     LaunchedEffect(key1 = token) {
         viewModel.getPatientList(token)
     }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier = modifier.background(brush = gradient_colors),
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent
-                ),
-                title = {
+    // add navigation drawer
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerContainerColor = Color.Transparent,
+                drawerContentColor = Color.Transparent,
+                modifier = Modifier.background(
+                    color = Color(0xfff8fafc),
+                    shape = RoundedCornerShape(10.dp)
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Spacer(Modifier.height(12.dp))
+
                     Text(
-                        "Patients",
-                        fontSize = 28.sp,
+                        "HappyDocx",
+                        modifier = Modifier.padding(16.dp),
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color.Black,
+                        fontSize = 40.sp
                     )
-                },
-                actions = {
-                    IconButton(
-                        onClick = {},
-                        modifier = modifier.padding(end = 20.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.add),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = modifier.size(25.dp)
-                        )
-                    }
+
+                    HorizontalDivider()
+
+//                    Text(
+//                        "Appointments",
+//                        modifier = Modifier.padding(16.dp),
+//                        style = MaterialTheme.typography.titleMedium,
+//                        color = Color.Black
+//                    )
+                    NavigationDrawerItem(
+                        label = { Text("Appointments") },
+                        selected = false,
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.schedule),
+                                contentDescription = null,
+                                modifier = Modifier.size(25.dp)
+                            )
+                        },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedTextColor = Color.Black,
+                            unselectedTextColor = Color.Black
+                        ),
+                        onClick = {
+                            scope.launch {
+                                navController.popBackStack()
+                                drawerState.close()
+                            }
+                        }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Patients") },
+                        selected = false,
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.user_avatar),
+                                contentDescription = null,
+                                modifier = Modifier.size(25.dp),
+                                tint = Color.Black
+                            )
+                        },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedTextColor = Color.Black,
+                            unselectedTextColor = Color.Black
+                        ),
+                        onClick = {
+                            scope.launch {
+                                drawerState.close()
+                            }
+                        }
+                    )
+                    Spacer(Modifier.height(12.dp))
                 }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .background(Color(0xffF8FAFC))
-        ) {
+            }
+        },
+
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    modifier = modifier.background(brush = gradient_colors),
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent
+                    ),
+                    title = {
+                        Text(
+                            "Patients",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = {},
+                            modifier = modifier.padding(end = 20.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.add),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = modifier.size(25.dp)
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    drawerState.open()
+                                }
+                            },
+                            modifier = modifier.padding(end = 20.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = modifier.size(25.dp)
+                            )
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
             Column(
-                modifier = modifier.fillMaxWidth().background(brush = gradient_colors)
-            ){ MySearchBar() }
+                modifier = modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+                    .background(Color(0xffF8FAFC))
+            ) {
+                Column(
+                    modifier = modifier.fillMaxWidth().background(brush = gradient_colors)
+                ) { MySearchBar() }
 
-            when (listState) {
-                is PatientListUiState.Loading -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = Color(0xff4f61e3),
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-                }
-
-                is PatientListUiState.Success -> {
-                    val successState =
-                        listState as PatientListUiState.Success
-
-                    if (successState.patientList.isEmpty()) {
+                when (listState) {
+                    is PatientListUiState.Loading -> {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = Color(0xfff8fafc)),
+                            modifier = Modifier.fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Image(
-                                painter = painterResource(R.drawable.to_do_list),
-                                contentDescription = null,
-                                modifier = Modifier.size(120.dp),
-                                colorFilter = ColorFilter.tint(Color(0xff4f61e3))
+                            CircularProgressIndicator(
+                                color = Color(0xff4f61e3),
+                                modifier = Modifier.size(48.dp)
                             )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text(
-                                "No Patient",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 24.sp,
-                                color = Color.Black
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "adding patients first",
-                                fontSize = 16.sp,
-                                color = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Button(
-                                onClick = { /* Navigate to add patient screen */ },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xff4f61e3)
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.padding(horizontal = 32.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.add),
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.size(8.dp))
-                                Text(
-                                    "Create Patient",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                )
-                            }
                         }
-                    } else {
-                        Column(
-                            modifier = modifier.fillMaxSize()
-                        ) {
-                            LazyColumn(
-                                modifier = modifier
-                                    .weight(1f)
-                                    .background(Color(0xFFC6D9E8)),
-                                contentPadding = PaddingValues(8.dp)
+                    }
+
+                    is PatientListUiState.Success -> {
+                        val successState =
+                            listState as PatientListUiState.Success
+
+                        if (successState.patientList.isEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(color = Color(0xfff8fafc)),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
                             ) {
-                                items(
-                                    items = successState.patientList,
-                                    key = { id -> id._id }) { patient ->
-                                    PatientCard(
-                                        name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}",
-                                        gender = patient.gender,
-                                        phoneNumber = patient.contactNumber,
-                                        address = patient.address?.addressLine1
-                                            ?: "No address provided"
+                                Image(
+                                    painter = painterResource(R.drawable.to_do_list),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(120.dp),
+                                    colorFilter = ColorFilter.tint(Color(0xff4f61e3))
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Text(
+                                    "No Patient",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 24.sp,
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "adding patients first",
+                                    fontSize = 16.sp,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Button(
+                                    onClick = { /* Navigate to add patient screen */ },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xff4f61e3)
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.padding(horizontal = 32.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.add),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.size(8.dp))
+                                    Text(
+                                        "Create Patient",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
                                     )
                                 }
                             }
+                        } else {
                             Column(
-                                modifier = modifier.
-                                fillMaxWidth().
-                                background(Color.White),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                modifier = modifier.fillMaxSize()
                             ) {
-                               Row(
-                                   modifier = modifier.fillMaxWidth().padding(10.dp).background(Color(0xffFEFEFF)),
-                                   verticalAlignment = Alignment.CenterVertically,
-                                   horizontalArrangement = Arrangement.SpaceAround
-                               ) {
-                                   OutlinedButton(
-                                       onClick = {},
-                                       border = BorderStroke(width = 1.dp, color = Color.Black),
-                                       shape = RoundedCornerShape(8.dp),
-                                       modifier = modifier.padding(6.dp).weight(1f)
-                                       ){
-                                       Text("Previous",color = Color.Black)
-                                   }
-                                   Text("PAGE 1 OF 8",color = Color.Black,modifier = modifier.padding(horizontal = 10.dp))
-                                   OutlinedButton(
-                                       onClick = {},
-                                       border = BorderStroke(width = 1.dp, color = Color.Black),
-                                       shape = RoundedCornerShape(8.dp),
-                                       modifier = modifier.padding(6.dp).weight(1f)
-                                   ){
-                                       Text("Next",color = Color.Black)
-                                   }
-                               }
+                                LazyColumn(
+                                    modifier = modifier
+                                        .weight(1f)
+                                        .background(Color(0xFFC6D9E8)),
+                                    contentPadding = PaddingValues(8.dp)
+                                ) {
+                                    items(
+                                        items = successState.patientList,
+                                        key = { id -> id._id }) { patient ->
+                                        PatientCard(
+                                            name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}",
+                                            gender = patient.gender,
+                                            phoneNumber = patient.contactNumber,
+                                            address = patient.address?.addressLine1
+                                                ?: "No address provided"
+                                        )
+                                    }
+                                }
+                                Column(
+                                    modifier = modifier.fillMaxWidth().background(Color.White),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Row(
+                                        modifier = modifier.fillMaxWidth().padding(10.dp)
+                                            .background(Color(0xffFEFEFF)),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceAround
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = {},
+                                            border = BorderStroke(
+                                                width = 1.dp,
+                                                color = Color.Black
+                                            ),
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = modifier.padding(6.dp).weight(1f)
+                                        ) {
+                                            Text("Previous", color = Color.Black)
+                                        }
+                                        Text(
+                                            "PAGE 1 OF 8",
+                                            color = Color.Black,
+                                            modifier = modifier.padding(horizontal = 10.dp)
+                                        )
+                                        OutlinedButton(
+                                            onClick = {},
+                                            border = BorderStroke(
+                                                width = 1.dp,
+                                                color = Color.Black
+                                            ),
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = modifier.padding(6.dp).weight(1f)
+                                        ) {
+                                            Text("Next", color = Color.Black)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                }
 
-                is PatientListUiState.Error -> {
+                    is PatientListUiState.Error -> {
 
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White)
-                    ) {
-
-                        Image(
-                            painter = painterResource(R.drawable.wifi),
-                            contentScale = ContentScale.Crop,
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp),
-                            colorFilter = ColorFilter.tint(Color.Gray)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            contentPadding = PaddingValues(0.dp),
-                            onClick = {
-                                viewModel.getPatientList(token = token)  // Retry
-                            },
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 30.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xff4f61e3),
-                                contentColor = Color.Black
-                            ),
-                            shape = RoundedCornerShape(8.dp),
+                                .fillMaxSize()
+                                .background(Color.White)
                         ) {
-                            Text("Retry", fontWeight = FontWeight.Bold, color = Color.White)
+
+                            Image(
+                                painter = painterResource(R.drawable.wifi),
+                                contentScale = ContentScale.Crop,
+                                contentDescription = null,
+                                modifier = Modifier.size(100.dp),
+                                colorFilter = ColorFilter.tint(Color.Gray)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                contentPadding = PaddingValues(0.dp),
+                                onClick = {
+                                    viewModel.getPatientList(token = token)  // Retry
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 30.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xff4f61e3),
+                                    contentColor = Color.Black
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text("Retry", fontWeight = FontWeight.Bold, color = Color.White)
+                            }
                         }
                     }
                 }
