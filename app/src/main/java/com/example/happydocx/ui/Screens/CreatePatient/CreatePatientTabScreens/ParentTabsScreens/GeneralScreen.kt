@@ -96,7 +96,8 @@ fun GeneralScreen(modifier: Modifier = Modifier) {
                 .padding(18.dp)
                 .align(Alignment.Start),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xff359EFF)
+                containerColor = Color(0xff16a34a),
+                contentColor = Color.White
             ),
             shape = RoundedCornerShape(4.dp)
         ) {

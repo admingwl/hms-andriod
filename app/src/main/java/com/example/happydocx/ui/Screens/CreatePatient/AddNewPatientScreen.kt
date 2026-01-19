@@ -1,5 +1,6 @@
 package com.example.happydocx.ui.Screens.CreatePatient
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
+import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 
 @OptIn(ExperimentalMaterial3Api::class)
 
@@ -30,8 +32,9 @@ fun AddNewPatientScreen(navController: NavController, modifier: Modifier = Modif
             TopAppBar(
                 title = {Text("Add Patients",color = Color.White)},
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xff359EFF)
+                    containerColor = Color.Transparent
                 ),
+                modifier = modifier.background(brush = gradient_colors),
                 navigationIcon = {
                     IconButton(
                         onClick = {

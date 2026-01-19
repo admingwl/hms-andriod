@@ -1,5 +1,6 @@
 package com.example.happydocx.ui.Screens.CreatePatient
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Tab
@@ -19,6 +20,7 @@ import com.example.happydocx.ui.Screens.CreatePatient.CreatePatientTabScreens.Pa
 import com.example.happydocx.ui.Screens.CreatePatient.CreatePatientTabScreens.ParentTabsScreens.GeneralScreen
 import com.example.happydocx.ui.Screens.CreatePatient.CreatePatientTabScreens.ParentTabsScreens.InvoicesScreen
 import com.example.happydocx.ui.Screens.CreatePatient.CreatePatientTabScreens.ParentTabsScreens.PatientDocumentScreen
+import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 
 @Preview
 @Composable
@@ -36,7 +38,8 @@ fun ParentTabLayoutAddPatientInfo(modifier: Modifier = Modifier) {
 
     TabRow(
         selectedTabIndex = initialSelectedTab,
-        containerColor = Color(0xff359EFF)
+        containerColor = Color.Transparent,
+        modifier = modifier.background(brush = gradient_colors)
     ) {
         tabs.forEachIndexed { index, label ->
             Tab(
