@@ -98,6 +98,7 @@ fun PatientListScreen(
     // get drawer state
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var searchQuery by remember { mutableStateOf("") }
 
     // launch every time the user open the screen and triggering the patient fetching form api
     LaunchedEffect(key1 = token) {
@@ -245,7 +246,12 @@ fun PatientListScreen(
             ) {
                 Column(
                     modifier = modifier.fillMaxWidth().background(brush = gradient_colors)
-                ) { MySearchBar() }
+                ) { MySearchBar(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = {query->
+                        searchQuery = query
+                    }
+                ) }
 
                 when (listState) {
                     is PatientListUiState.Loading -> {
@@ -264,6 +270,17 @@ fun PatientListScreen(
                     is PatientListUiState.Success -> {
                         val successState =
                             listState as PatientListUiState.Success
+
+                        // filter the list according to the search
+
+                        val filterNames = if(searchQuery.isBlank()){
+                            successState.patientList
+                        }else{
+                            successState.patientList.filter { it->
+                                val fullName =   "${it.first_name} ${it.last_name}"
+                                fullName.contains(searchQuery, ignoreCase = true)
+                            }
+                        }
 
                         if (successState.patientList.isEmpty()) {
                             Column(
@@ -320,24 +337,53 @@ fun PatientListScreen(
                             Column(
                                 modifier = modifier.fillMaxSize()
                             ) {
-                                LazyColumn(
-                                    modifier = modifier
-                                        .weight(1f)
-                                        .background(Color(0xFFC6D9E8)),
-                                    contentPadding = PaddingValues(8.dp)
-                                ) {
-                                    items(
-                                        items = successState.patientList,
-                                        key = { id -> id._id }) { patient ->
-                                        PatientCard(
-                                            name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}",
-                                            gender = patient.gender,
-                                            phoneNumber = patient.contactNumber,
-                                            address = patient.address?.addressLine1
-                                                ?: "No address provided"
+                                if(filterNames.isEmpty() && searchQuery.isNotEmpty()){
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(0.5f)
+                                            .fillMaxWidth()
+                                            .background(color = Color(0xfff8fafc)),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Image(
+                                            painter = painterResource(R.drawable.usernotfound),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(80.dp),
+                                            colorFilter = ColorFilter.tint(Color.Gray)
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            "No patients found matching \"$searchQuery\"",
+                                            color = Color.Gray,
+                                            fontSize = 16.sp
                                         )
                                     }
+                                }else{
+                                    Column(
+                                        modifier = modifier.fillMaxSize()
+                                    ) {
+                                        LazyColumn(
+                                            modifier = modifier
+                                                .weight(1f)
+                                                .background(Color(0xFFC6D9E8)),
+                                            contentPadding = PaddingValues(8.dp)
+                                        ) {
+                                            items(
+                                                items = filterNames,
+                                                key = { id -> id._id }) { patient ->
+                                                PatientCard(
+                                                    name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}",
+                                                    gender = patient.gender,
+                                                    phoneNumber = patient.contactNumber,
+                                                    address = patient.address?.addressLine1
+                                                        ?: "No address provided"
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
+
                                 Column(
                                     modifier = modifier.fillMaxWidth().background(Color.White),
                                     verticalArrangement = Arrangement.Center,
@@ -428,10 +474,12 @@ fun PatientListScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MySearchBar(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    searchQuery:String,
+    onSearchQueryChange:(String)->Unit,
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-    var isSearchActive by remember { mutableStateOf(false) }
+//    var searchQuery by remember { mutableStateOf("") }
+//    var isSearchActive by remember { mutableStateOf(false) }
 
     SearchBar(
         modifier = modifier
@@ -440,9 +488,9 @@ fun MySearchBar(
         inputField = {
             SearchBarDefaults.InputField(
                 query = searchQuery,
-                onQueryChange = { searchQuery = it },
-                onSearch = { isSearchActive = false },
-                expanded = isSearchActive,
+                onQueryChange = onSearchQueryChange,
+                onSearch ={} ,
+                expanded = false,
                 onExpandedChange = {  },
                 placeholder = {
                     Text(
@@ -461,7 +509,7 @@ fun MySearchBar(
                 },
             )
         },
-        expanded = isSearchActive,
+        expanded = false,
         onExpandedChange = { },
         shape = RoundedCornerShape(8.dp),
         colors = SearchBarDefaults.colors(
