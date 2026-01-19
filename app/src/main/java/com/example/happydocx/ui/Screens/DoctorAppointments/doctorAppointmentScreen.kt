@@ -505,7 +505,7 @@ fun DoctorAppointmentScreen(
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Text(
-                                            "No patients found matching \"$searchQuery\"",
+                                            "No Appointment found matching \"$searchQuery\"",
                                             color = Color.Gray,
                                             fontSize = 16.sp
                                         )

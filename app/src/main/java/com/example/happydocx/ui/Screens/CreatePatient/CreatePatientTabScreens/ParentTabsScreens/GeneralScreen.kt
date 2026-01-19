@@ -128,6 +128,7 @@ fun CustomTextField(
         placeholder = {
             Text(
                 text = placeHolderValue,
+                color = Color.Black
             )
         },
         colors = TextFieldDefaults.colors(
