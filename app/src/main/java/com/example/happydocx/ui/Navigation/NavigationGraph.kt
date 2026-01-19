@@ -38,11 +38,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
+import com.example.happydocx.ui.Screens.CreatePatient.AddNewPatientScreen
 import com.example.happydocx.ui.Screens.CreatePatient.PatientListScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.Screens.LoginPage
-import com.example.happydocx.ui.Screens.Patient.ParticularPatientScreen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.SignUpPage
@@ -132,25 +132,6 @@ fun NavigationGraph() {
                 navController = navController
             )
         }
-        composable("ParticularPatientScreen/{patientId}/{token}/{appointmentId}",
-            arguments = listOf(
-                navArgument("patientId"){type = NavType.StringType},
-                navArgument("token") { type = NavType.StringType },
-                navArgument("appointmentId") { type = NavType.StringType },
-            )
-        ) {backStack->
-            val patientId = backStack.arguments?.getString("patientId")?:""
-            val token = backStack.arguments?.getString("token") ?: ""
-            val appointmentId = backStack.arguments?.getString("appointmentId")?:""
-            ParticularPatientScreen(
-                patientId = patientId,
-                viewModel = doctorAppointmentViewModel,
-                navController = navController,
-                token = token,
-                appointmentId = appointmentId,
-            )
-        }
-
         composable(
             route = "addSymptoms/{token}/{patientId}/{appointmentId}",
             arguments = listOf(
@@ -209,6 +190,12 @@ fun NavigationGraph() {
 
             Log.d("DEBUG_NAV", "NewPage - PatientId: $patientId, Token: ${token.take(10)}...")
 
+        }
+
+        composable(
+            route = "AddNewPatientScreen"
+        ) {
+            AddNewPatientScreen(navController = navController)
         }
 
 
