@@ -82,6 +82,7 @@ import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListUiState
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 import kotlin.math.exp
 
 
@@ -90,7 +91,7 @@ import kotlin.math.exp
 fun PatientListScreen(
     modifier: Modifier = Modifier,
     viewModel: PatientListViewModel,
-    token: String?,
+    token: String,
     navController: NavController
 ) {
 
@@ -186,7 +187,7 @@ fun PatientListScreen(
             }
         },
 
-    ) {
+        ) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -245,13 +246,17 @@ fun PatientListScreen(
                     .background(Color(0xffF8FAFC))
             ) {
                 Column(
-                    modifier = modifier.fillMaxWidth().background(brush = gradient_colors)
-                ) { MySearchBar(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = {query->
-                        searchQuery = query
-                    }
-                ) }
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .background(brush = gradient_colors)
+                ) {
+                    MySearchBar(
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = { query ->
+                            searchQuery = query
+                        }
+                    )
+                }
 
                 when (listState) {
                     is PatientListUiState.Loading -> {
@@ -273,15 +278,19 @@ fun PatientListScreen(
 
                         // filter the list according to the search
 
-                        val filterNames = if(searchQuery.isBlank()){
+                        val filterNames = if (searchQuery.isBlank()) {
                             successState.patientList
-                        }else{
-                            successState.patientList.filter { it->
-                                val fullName =   "${it.first_name} ${it.last_name}"
+                        } else {
+                            successState.patientList.filter { it ->
+                                val fullName = "${it.first_name} ${it.last_name}"
                                 fullName.contains(searchQuery, ignoreCase = true)
                             }
                         }
 
+                        val totalPages = ceil(
+                            successState.totalRecords.toDouble() / (successState.limit)
+                        ).toInt()
+                        val currentPage = successState.page
                         if (successState.patientList.isEmpty()) {
                             Column(
                                 modifier = Modifier
@@ -337,7 +346,7 @@ fun PatientListScreen(
                             Column(
                                 modifier = modifier.fillMaxSize()
                             ) {
-                                if(filterNames.isEmpty() && searchQuery.isNotEmpty()){
+                                if (filterNames.isEmpty() && searchQuery.isNotEmpty()) {
                                     Column(
                                         modifier = Modifier
                                             .weight(0.5f)
@@ -359,31 +368,26 @@ fun PatientListScreen(
                                             fontSize = 16.sp
                                         )
                                     }
-                                }else{
-                                    Column(
-                                        modifier = modifier.fillMaxSize()
+                                } else {
+                                    LazyColumn(
+                                        modifier = modifier
+                                            .weight(1f)
+                                            .background(Color(0xFFC6D9E8)),
+                                        contentPadding = PaddingValues(8.dp)
                                     ) {
-                                        LazyColumn(
-                                            modifier = modifier
-                                                .weight(1f)
-                                                .background(Color(0xFFC6D9E8)),
-                                            contentPadding = PaddingValues(8.dp)
-                                        ) {
-                                            items(
-                                                items = filterNames,
-                                                key = { id -> id._id }) { patient ->
-                                                PatientCard(
-                                                    name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}",
-                                                    gender = patient.gender,
-                                                    phoneNumber = patient.contactNumber,
-                                                    address = patient.address?.addressLine1
-                                                        ?: "No address provided"
-                                                )
-                                            }
+                                        items(
+                                            items = filterNames,
+                                            key = { id -> id._id }) { patient ->
+                                            PatientCard(
+                                                name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}",
+                                                gender = patient.gender,
+                                                phoneNumber = patient.contactNumber,
+                                                address = patient.address?.addressLine1
+                                                    ?: "No address provided"
+                                            )
                                         }
                                     }
                                 }
-
                                 Column(
                                     modifier = modifier.fillMaxWidth().background(Color.White),
                                     verticalArrangement = Arrangement.Center,
@@ -396,7 +400,7 @@ fun PatientListScreen(
                                         horizontalArrangement = Arrangement.SpaceAround
                                     ) {
                                         OutlinedButton(
-                                            onClick = {},
+                                            onClick = {viewModel.loadPreviousPage(token = token)},
                                             border = BorderStroke(
                                                 width = 1.dp,
                                                 color = Color.Black
@@ -407,12 +411,12 @@ fun PatientListScreen(
                                             Text("Previous", color = Color.Black)
                                         }
                                         Text(
-                                            "PAGE 1 OF 8",
+                                            "PAGE $currentPage OF $totalPages",
                                             color = Color.Black,
                                             modifier = modifier.padding(horizontal = 10.dp)
                                         )
                                         OutlinedButton(
-                                            onClick = {},
+                                            onClick = {viewModel.loadNextPage(token = token)},
                                             border = BorderStroke(
                                                 width = 1.dp,
                                                 color = Color.Black
@@ -475,8 +479,8 @@ fun PatientListScreen(
 @Composable
 fun MySearchBar(
     modifier: Modifier = Modifier,
-    searchQuery:String,
-    onSearchQueryChange:(String)->Unit,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
 ) {
 //    var searchQuery by remember { mutableStateOf("") }
 //    var isSearchActive by remember { mutableStateOf(false) }
@@ -489,9 +493,9 @@ fun MySearchBar(
             SearchBarDefaults.InputField(
                 query = searchQuery,
                 onQueryChange = onSearchQueryChange,
-                onSearch ={} ,
+                onSearch = {},
                 expanded = false,
-                onExpandedChange = {  },
+                onExpandedChange = { },
                 placeholder = {
                     Text(
                         text = "Search patient",
@@ -516,18 +520,18 @@ fun MySearchBar(
             containerColor = Color(0xFFF3F4F6),
         ),
         tonalElevation = 0.dp
-    ){}
+    ) {}
 }
 
 
 @Composable
 fun PatientCard(
     modifier: Modifier = Modifier,
-    name: String = "Deepak",
-    gender: String = "Male",
-    lastVisit: String = "15 jan 2026",
-    phoneNumber: String = "1234567890",
-    address: String = "abc address is mine"
+    name: String? = "Deepak",
+    gender: String? = "Male",
+    lastVisit: String? = "15 jan 2026",
+    phoneNumber: String? = "1234567890",
+    address: String? = "abc address is mine"
 ) {
     Card(
         modifier = modifier
@@ -549,16 +553,20 @@ fun PatientCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = modifier) {
-                    Text(
-                        text = name,
-                        fontSize = 20.sp,
-                        color = Color(0xff1F7BF6)
-                    )
-                    Text(
-                        text = gender,
-                        fontSize = 15.sp,
-                        color = Color(0xff8E9AA9)
-                    )
+                    if (name != null) {
+                        Text(
+                            text = name,
+                            fontSize = 20.sp,
+                            color = Color(0xff1F7BF6)
+                        )
+                    }
+                    if (gender != null) {
+                        Text(
+                            text = gender,
+                            fontSize = 15.sp,
+                            color = Color(0xff8E9AA9)
+                        )
+                    }
                 }
                 Spacer(Modifier.weight(1f))
                 IconButton(
@@ -585,7 +593,7 @@ fun PatientCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                       painter = painterResource(R.drawable.time),
+                        painter = painterResource(R.drawable.time),
                         contentDescription = null,
                         tint = Color.Black,
                         modifier = modifier.size(18.dp)
@@ -608,11 +616,13 @@ fun PatientCard(
                         modifier = modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(3.dp))
-                    Text(
-                        text = phoneNumber,
-                        fontSize = 15.sp,
-                        color = Color.Black
-                    )
+                    if (phoneNumber != null) {
+                        Text(
+                            text = phoneNumber,
+                            fontSize = 15.sp,
+                            color = Color.Black
+                        )
+                    }
                 }
                 Row(
                     modifier = modifier.fillMaxWidth(),
@@ -625,11 +635,13 @@ fun PatientCard(
                         modifier = modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(3.dp))
-                    Text(
-                        text = address,
-                        fontSize = 15.sp,
-                        color = Color.Black
-                    )
+                    if (address != null) {
+                        Text(
+                            text = address,
+                            fontSize = 15.sp,
+                            color = Color.Black
+                        )
+                    }
                 }
             }
         }
