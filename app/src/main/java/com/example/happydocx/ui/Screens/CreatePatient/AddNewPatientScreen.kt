@@ -22,11 +22,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
+import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 
 @Composable
-fun AddNewPatientScreen(navController: NavController, modifier: Modifier = Modifier,) {
+fun AddNewPatientScreen(navController: NavController, modifier: Modifier = Modifier,viewModel: SavePatientViewModel,token:String) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -54,7 +55,7 @@ fun AddNewPatientScreen(navController: NavController, modifier: Modifier = Modif
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ParentTabLayoutAddPatientInfo()
+            ParentTabLayoutAddPatientInfo(viewModel = viewModel, token = token)
         }
     }
 }

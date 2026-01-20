@@ -1,4 +1,4 @@
-package com.example.happydocx.Data.Repository.PatientList
+package com.example.happydocx.Data.Repository.Patient
 
 import android.util.Log
 import com.example.happydocx.Data.Model.PatientScreen.PatientListResponse
@@ -6,7 +6,6 @@ import com.example.happydocx.Data.Network.ApiService
 import com.example.happydocx.Utils.RetrofitInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.Dispatcher
 
 class PatientListRepo {
 
@@ -20,20 +19,21 @@ class PatientListRepo {
         limit:Int = 10
     ):Result<PatientListResponse>{
 
-        return withContext(Dispatchers.IO){
-            try{
+        return withContext(Dispatchers.IO) {
+            try {
                 val authHeader = token?.let { "Bearer $it" }
                 val response = patientListApiResponse.getAllPatients(
                     token = authHeader,
                     page = page,
-                    limit = limit)
-                if(response.isSuccessful && response.body()!=null){
+                    limit = limit
+                )
+                if (response.isSuccessful && response.body() != null) {
                     Log.d("DEBUG_REPO", "Returning success")
                     Result.success(response.body()!!)
-                }else{
+                } else {
                     Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
                 }
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 Result.failure(e)
             }
         }

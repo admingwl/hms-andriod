@@ -182,7 +182,7 @@ interface ApiService{
 
     // save patient
     @POST("api/v1/patient/add-patient")
-    suspend fun savePatient(
+    suspend fun savePatientGeneral(
         @Header("Authorization") token:String,
         @Body requestBody: SavePatientRequestBody
     ): Response<SavePatientResponseBody>

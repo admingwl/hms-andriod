@@ -207,7 +207,7 @@ fun PatientListScreen(
                     actions = {
                         IconButton(
                             onClick = {
-                                navController.navigate("AddNewPatientScreen")
+                                navController.navigate("AddNewPatientScreen/$token")
                             },
                             modifier = modifier.padding(end = 20.dp)
                         ) {
