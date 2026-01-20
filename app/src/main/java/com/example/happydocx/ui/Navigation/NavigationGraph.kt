@@ -57,6 +57,7 @@ import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.ParticularUserSignUpViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
+import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
@@ -80,6 +81,7 @@ fun NavigationGraph() {
     val doctorAppointmentViewModel : DoctorAppointmentsViewModel = viewModel()
     val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
     val patientListViewModel: PatientListViewModel = viewModel()
+    val SavePatientGeneralViewModel : SavePatientViewModel = viewModel()
 
     NavHost(
         startDestination = "Login",
@@ -193,12 +195,14 @@ fun NavigationGraph() {
         }
 
         composable(
-            route = "AddNewPatientScreen"
-        ) {
-            AddNewPatientScreen(navController = navController)
+            route = "AddNewPatientScreen/{token}",
+            arguments = listOf(
+                navArgument("token") {type = NavType.StringType}
+            )
+        ) {backStackEntry->
+            val token = backStackEntry.arguments?.getString("token")?:""
+            AddNewPatientScreen(navController = navController,viewModel = SavePatientGeneralViewModel,token = token)
         }
-
-
     }
 }
 

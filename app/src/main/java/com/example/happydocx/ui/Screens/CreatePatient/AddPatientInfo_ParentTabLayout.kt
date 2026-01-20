@@ -21,10 +21,11 @@ import com.example.happydocx.ui.Screens.CreatePatient.CreatePatientTabScreens.Pa
 import com.example.happydocx.ui.Screens.CreatePatient.CreatePatientTabScreens.ParentTabsScreens.InvoicesScreen
 import com.example.happydocx.ui.Screens.CreatePatient.CreatePatientTabScreens.ParentTabsScreens.PatientDocumentScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
+import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientViewModel
 
-@Preview
+
 @Composable
-fun ParentTabLayoutAddPatientInfo(modifier: Modifier = Modifier) {
+fun ParentTabLayoutAddPatientInfo(modifier: Modifier = Modifier,viewModel: SavePatientViewModel,token:String) {
 
     // first create the tab list.
     val tabs = listOf<String>(
@@ -63,7 +64,7 @@ fun ParentTabLayoutAddPatientInfo(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize()
     ){
         when(initialSelectedTab){
-            0 -> GeneralScreen()
+            0 -> GeneralScreen(viewModel = viewModel, token = token)
             1 -> AppointmentScreen()
             2 -> InvoicesScreen()
             3 -> PatientDocumentScreen()

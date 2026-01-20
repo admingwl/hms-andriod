@@ -5,7 +5,7 @@ import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.PatientScreen.Patients
-import com.example.happydocx.Data.Repository.PatientList.PatientListRepo
+import com.example.happydocx.Data.Repository.Patient.PatientListRepo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch

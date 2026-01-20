@@ -33,10 +33,7 @@ data class Patients(
     val landlineNumber:String?,
     val email:String?,
     val isDialysisPatient:Boolean?,
-    // Marks the backing field of the annotated property with the transient modifier on
-    // the JVM platform, meaning that it is not a part of the serialized form of the object when serialized with java.io.Serializable machinery.
-    @Transient
-    val allergies:List<AllergiesPatientListResponse>? = emptyList(),
+    val allergies:List<Any>? = emptyList(),
     val conditions:List<ConditionsPatientListResponse>? = emptyList(),
     val createdBy:String?,
     val companyId:String?,
