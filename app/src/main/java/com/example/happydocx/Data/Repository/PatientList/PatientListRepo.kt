@@ -22,20 +22,11 @@ class PatientListRepo {
 
         return withContext(Dispatchers.IO){
             try{
-                Log.d("DEBUG_REPO", "Making API call...")
-                Log.d("DEBUG_REPO", "Token: $token")
                 val authHeader = token?.let { "Bearer $it" }
-                Log.d("DEBUG_REPO", "Auth Header: $authHeader")
-
                 val response = patientListApiResponse.getAllPatients(
                     token = authHeader,
                     page = page,
                     limit = limit)
-
-                Log.d("DEBUG_REPO", "Response Code: ${response.code()}")
-                Log.d("DEBUG_REPO", "Response Success: ${response.isSuccessful}")
-                Log.d("DEBUG_REPO", "Response Body: ${response.body()}")
-
                 if(response.isSuccessful && response.body()!=null){
                     Log.d("DEBUG_REPO", "Returning success")
                     Result.success(response.body()!!)

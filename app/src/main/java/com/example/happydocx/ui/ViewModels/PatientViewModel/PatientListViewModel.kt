@@ -4,11 +4,12 @@ import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.happydocx.Data.Model.PatientScreen.PatientsList
+import com.example.happydocx.Data.Model.PatientScreen.Patients
 import com.example.happydocx.Data.Repository.PatientList.PatientListRepo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 
 class PatientListViewModel : ViewModel(){
 
@@ -28,11 +29,10 @@ class PatientListViewModel : ViewModel(){
         page:Int = 1,
         limit:Int = 10
     ){
+
+
         viewModelScope.launch {
-            Log.d("DEBUG_VIEWMODEL", "getPatientList called")
-            Log.d("DEBUG_VIEWMODEL", "Token: $token")
             listState.value = PatientListUiState.Loading
-            Log.d("DEBUG_VIEWMODEL", "State set to Loading")
             val result = repo.getPatientList(
                 token = token,
                 page = page,
@@ -40,13 +40,45 @@ class PatientListViewModel : ViewModel(){
             )
 
             result.onSuccess { response ->
-                Log.d("DEBUG_VIEWMODEL", "API Success! Total: ${response.total}")
                 listState.value = PatientListUiState.Success(
-                    patientList = response.patients
+                    patientList = response.data.patients,
+                    page = response.data.page,
+                    limit = response.data.limit,
+                    totalPages = response.data.totalPages,
+                    totalRecords = response.data.totalRecords
                 )
             }.onFailure {
                 listState.value = PatientListUiState.Error(
                     message = it.message ?: "Unknown error Occurred"
+                )
+            }
+        }
+    }
+
+   // function to load next page
+   fun loadNextPage(token:String) {
+       val currentState = listState.value
+       if (currentState is PatientListUiState.Success) {
+           val totalPage = ceil(currentState.totalRecords.toDouble() / currentState.limit).toInt()
+           val nextPage = (currentState.page) + 1
+           if (nextPage <= totalPage) {
+               getPatientList(
+                   token = token,
+                   page = nextPage
+               )
+           }
+       }
+   }
+
+    // load previous page
+    fun loadPreviousPage(token:String) {
+     val currentState = listState.value
+        if(currentState is PatientListUiState.Success){
+            val previousPage = (currentState.page)-1
+            if(previousPage>=1){
+                getPatientList(
+                    token = token,
+                    page = previousPage
                 )
             }
         }
@@ -57,7 +89,11 @@ class PatientListViewModel : ViewModel(){
 sealed class PatientListUiState{
     object Loading: PatientListUiState()
     data class Success(
-        val patientList:List<PatientsList>,
+        val patientList:List<Patients>,
+        val page:Int,
+        val limit:Int,
+        val totalPages:Int,
+        val totalRecords:Int,
     ): PatientListUiState()
     data class Error(
         val message:String

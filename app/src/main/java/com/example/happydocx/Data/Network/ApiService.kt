@@ -6,6 +6,8 @@ import com.example.happydocx.Data.Model.FormModel.DoctorProfileResponse
 import com.example.happydocx.Data.Model.LoginModel.LoginRequest
 import com.example.happydocx.Data.Model.LoginModel.LoginResponse
 import com.example.happydocx.Data.Model.PatientScreen.PatientListResponse
+import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientRequestBody
+import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientResponseBody
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
@@ -177,4 +179,11 @@ interface ApiService{
         @Header("Authorization") token:String,
         @Path("appointmentId") appointmentId: String
     ): Response<List<PrescriptionRecord>>
+
+    // save patient
+    @POST("api/v1/patient/add-patient")
+    suspend fun savePatient(
+        @Header("Authorization") token:String,
+        @Body requestBody: SavePatientRequestBody
+    ): Response<SavePatientResponseBody>
 }
