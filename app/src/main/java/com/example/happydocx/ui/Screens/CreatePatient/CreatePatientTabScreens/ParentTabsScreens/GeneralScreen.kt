@@ -370,6 +370,8 @@ fun GeneralScreen(
 //                        ).show()
 //                    }else{
                         viewModel.savePatientGeneralInfo(token = token)
+                        viewModel.clearTextFiled()
+                        viewModel.resetState()
                 }
             },
             modifier = modifier

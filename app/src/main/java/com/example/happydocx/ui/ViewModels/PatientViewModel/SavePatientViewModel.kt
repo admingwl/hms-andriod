@@ -7,6 +7,7 @@ import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePat
 import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientRequestBody
 import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientResponseBody
 import com.example.happydocx.Data.Repository.Patient.SavePatientInfo
+import com.example.happydocx.ui.ViewModels.StartConsulting.TestAndInvestigation
 import com.example.happydocx.ui.uiStates.SavePatientsState.SavePatientGeneralUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -198,6 +199,35 @@ class SavePatientViewModel : ViewModel() {
                 apiState.value = SavePatientGeneralUi.Error(message = message.message?:"Unknown Error occurred")
             }
         }
+    }
+
+    fun clearTextFiled(){
+
+        saveGeneralState.update { it->
+            it.copy(
+                age = "",
+                bloodGroup = "",
+                contactNumber = "",
+                dateOfBirth = "",
+                email ="",
+                firstName = "",
+                genderState = "",
+                landLineNumber = "",
+                lastName ="",
+                maritalState ="",
+                middleName = "",
+                previousLastName = "",
+                race = "",
+                religion ="",
+                prefix =""
+            )
+        }
+
+
+    }
+
+    fun resetState() {
+        apiState.value = SavePatientGeneralUi.Idle
     }
 
 }
