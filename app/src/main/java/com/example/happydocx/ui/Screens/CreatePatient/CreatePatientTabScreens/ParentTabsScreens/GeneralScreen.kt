@@ -34,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.savedstate.savedState
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.CreatePatient.ChildTabLayoutPatientInfo
 import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientGeneralUi
@@ -77,6 +79,28 @@ fun GeneralScreen(
     val datePickerState_DateOfBirth = rememberDatePickerState()
     val context = LocalContext.current
 
+    LaunchedEffect(networkSaveGeneralState) {
+        when(networkSaveGeneralState){
+            is SavePatientGeneralUi.Success ->{
+                Toast.makeText(
+                    context,
+                    "General Information Saved Successfully",
+                    Toast.LENGTH_LONG
+                ).show()
+                viewModel.clearTextFiled()
+                viewModel.resetState()
+            }
+            is SavePatientGeneralUi.Error ->{
+                Toast.makeText(
+                    context,
+                    networkSaveGeneralState.message,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            else -> {}
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -370,8 +394,6 @@ fun GeneralScreen(
 //                        ).show()
 //                    }else{
                         viewModel.savePatientGeneralInfo(token = token)
-                        viewModel.clearTextFiled()
-                        viewModel.resetState()
                 }
             },
             modifier = modifier
