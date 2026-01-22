@@ -1,5 +1,6 @@
 package com.example.happydocx.ui.Screens.CreatePatient
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
@@ -34,26 +36,38 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFloatingActionButton
+import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,6 +83,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.computeHorizontalBounds
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -79,9 +94,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
+import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppointmentViewModel
+import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsUiState
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListUiState
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.exp
 
@@ -383,30 +404,38 @@ fun PatientListScreen(
                                                 gender = patient.gender,
                                                 phoneNumber = patient.contactNumber,
                                                 address = patient.address?.addressLine1
-                                                    ?: "No address provided"
+                                                    ?: "No address provided",
+                                                navController = navController,
+                                                token = token
                                             )
                                         }
                                     }
                                 }
                                 Column(
-                                    modifier = modifier.fillMaxWidth().background(Color.White),
+                                    modifier = modifier
+                                        .fillMaxWidth()
+                                        .background(Color.White),
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Row(
-                                        modifier = modifier.fillMaxWidth().padding(10.dp)
+                                        modifier = modifier
+                                            .fillMaxWidth()
+                                            .padding(10.dp)
                                             .background(Color(0xffFEFEFF)),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceAround
                                     ) {
                                         OutlinedButton(
-                                            onClick = {viewModel.loadPreviousPage(token = token)},
+                                            onClick = { viewModel.loadPreviousPage(token = token) },
                                             border = BorderStroke(
                                                 width = 1.dp,
                                                 color = Color.Black
                                             ),
                                             shape = RoundedCornerShape(8.dp),
-                                            modifier = modifier.padding(6.dp).weight(1f)
+                                            modifier = modifier
+                                                .padding(6.dp)
+                                                .weight(1f)
                                         ) {
                                             Text("Previous", color = Color.Black)
                                         }
@@ -416,13 +445,15 @@ fun PatientListScreen(
                                             modifier = modifier.padding(horizontal = 10.dp)
                                         )
                                         OutlinedButton(
-                                            onClick = {viewModel.loadNextPage(token = token)},
+                                            onClick = { viewModel.loadNextPage(token = token) },
                                             border = BorderStroke(
                                                 width = 1.dp,
                                                 color = Color.Black
                                             ),
                                             shape = RoundedCornerShape(8.dp),
-                                            modifier = modifier.padding(6.dp).weight(1f)
+                                            modifier = modifier
+                                                .padding(6.dp)
+                                                .weight(1f)
                                         ) {
                                             Text("Next", color = Color.Black)
                                         }
@@ -531,8 +562,11 @@ fun PatientCard(
     gender: String? = "Male",
     lastVisit: String? = "15 jan 2026",
     phoneNumber: String? = "1234567890",
-    address: String? = "abc address is mine"
+    address: String? = "abc address is mine",
+    navController: NavController,
+    token: String
 ) {
+    var isMenuOpen by remember { mutableStateOf(false) }
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -569,14 +603,38 @@ fun PatientCard(
                     }
                 }
                 Spacer(Modifier.weight(1f))
-                IconButton(
-                    onClick = {}
-                ) {
-                    Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = null,
-                        tint = Color.Black
-                    )
+                Column {
+                    IconButton(
+                        onClick = { isMenuOpen = !isMenuOpen }
+                    ) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = null,
+                            tint = Color.Black
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = isMenuOpen,
+                        onDismissRequest = { isMenuOpen = false },
+                        containerColor = Color(0xffFFFFFF)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Schedule", color = Color.Black) },
+                            onClick = {
+                                // here i navigate to schedule patient page.
+                                navController.navigate("scheduleAppointmentScreen/$token")
+                                isMenuOpen = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.schedule),
+                                    contentDescription = null,
+                                    tint = Color(0xff42A5F5),
+                                    modifier = modifier.size(18.dp)
+                                )
+                            }
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -596,9 +654,9 @@ fun PatientCard(
                         painter = painterResource(R.drawable.time),
                         contentDescription = null,
                         tint = Color.Black,
-                        modifier = modifier.size(18.dp)
+                        modifier = modifier.size(16.dp)
                     )
-                    Spacer(Modifier.width(3.dp))
+                    Spacer(Modifier.width(5.dp))
                     Text(
                         text = "Last Visit: $lastVisit",
                         fontSize = 15.sp,
@@ -613,9 +671,9 @@ fun PatientCard(
                         painter = painterResource(R.drawable.phone_24),
                         contentDescription = null,
                         tint = Color.Black,
-                        modifier = modifier.size(18.dp)
+                        modifier = modifier.size(16.dp)
                     )
-                    Spacer(Modifier.width(3.dp))
+                    Spacer(Modifier.width(5.dp))
                     if (phoneNumber != null) {
                         Text(
                             text = phoneNumber,
@@ -632,9 +690,9 @@ fun PatientCard(
                         painter = painterResource(R.drawable.map),
                         contentDescription = null,
                         tint = Color.Black,
-                        modifier = modifier.size(18.dp)
+                        modifier = modifier.size(16.dp)
                     )
-                    Spacer(Modifier.width(3.dp))
+                    Spacer(Modifier.width(5.dp))
                     if (address != null) {
                         Text(
                             text = address,
@@ -642,6 +700,372 @@ fun PatientCard(
                             color = Color.Black
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+
+
+@Composable
+fun ScheduleAppointmentScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    token: String,
+    viewModel: GetTimeSlotsForAppointmentViewModel
+) {
+
+    var openDatePicker_ScheduleAppointment = remember { mutableStateOf(false) }
+    val datePickerState_ScheduleAppointment = rememberDatePickerState()
+    val context = LocalContext.current
+    //get ui state
+    val uiState = viewModel._uiState.collectAsStateWithLifecycle().value
+    // get network state
+    val networkState = viewModel._networkState.collectAsStateWithLifecycle().value
+    val scope = rememberCoroutineScope()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Schedule Appointment", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                ),
+                modifier = modifier.background(gradient_colors),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() }
+                    ) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(color = Color(0xffFFFFFF))
+        ) {
+
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+                    .background(color = Color(0xffFFFFFF))
+            ) {
+                Text(
+                    text = "Patient Name",
+                    fontSize = 24.sp,
+                    color = Color(0xff1F7BF6),
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "PAT0-1201343",
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+            }
+
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "Date",
+                    color = Color.Black,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                Spacer(Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = uiState.dateState,
+                    onValueChange = { viewModel.onDateChanged(it) },
+                    modifier = modifier.fillMaxWidth(),
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    openDatePicker_ScheduleAppointment.value = !openDatePicker_ScheduleAppointment.value
+                                    // not call api here because the date is still not selected
+//                                    viewModel.getAllTimeSlots(
+//                                        token = token,
+//                                        date = uiState.dateState
+//                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.calendar_days),
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = modifier.size(20.dp)
+                            )
+                        }
+                    },
+                    placeholder = {
+                        Text(
+                            text = "mm/dd/yyyy",
+                            color = Color.Black
+                        )
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedIndicatorColor = Color.Black,
+                        unfocusedIndicatorColor = Color.Black,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedLabelColor = Color.Black,
+                        unfocusedLabelColor = Color.Black
+                    )
+                )
+                if (openDatePicker_ScheduleAppointment.value) {
+                    DatePickerDialog(
+                        shape = RoundedCornerShape(30.dp),
+                        colors = DatePickerDefaults.colors(
+                            // add color to date picker dialog
+                            containerColor = Color(0xffebedfc)
+                        ),
+                        onDismissRequest = { openDatePicker_ScheduleAppointment.value = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                openDatePicker_ScheduleAppointment.value = false
+                                datePickerState_ScheduleAppointment.selectedDateMillis?.let { millis ->
+                                    val formatted =
+                                        SimpleDateFormat("MM-dd-yyyy", Locale.getDefault())
+                                            .format(Date(millis))
+                                    viewModel.onDateChanged(formatted)
+
+                                    // after the date is selected then call the api .
+                                    scope.launch{
+                                        viewModel.getAllTimeSlots(
+                                            token = token,
+                                            date = formatted
+                                        )
+                                    }
+                                }
+                            }) { Text("OK", color = Color.Black) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                openDatePicker_ScheduleAppointment.value = false
+                            }) {
+                                Text("Cancel", color = Color.Black)
+                            }
+                        }
+                    ) {
+                        DatePicker(
+                            state = datePickerState_ScheduleAppointment,
+                            colors = DatePickerDefaults.colors(
+                                containerColor = Color(0xffebedfc),
+                                dayContentColor = Color.Black,
+                                titleContentColor = Color.Black,
+                                weekdayContentColor = Color.Black,
+                                headlineContentColor = Color.Black,
+                                navigationContentColor = Color.Black,
+                                subheadContentColor = Color.Black,
+                                dateTextFieldColors = TextFieldDefaults.colors(
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedContainerColor = Color.White
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "Time",
+                    color = Color.Black,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                Spacer(Modifier.height(4.dp))
+                ExposedDropdownMenuBox(
+                    expanded = uiState.isTimeExpanded,
+                    onExpandedChange = {
+                        //  Only allow opening if we have slots loaded
+                        if (networkState is GetTimeSlotsUiState.Success) {
+                            viewModel.onTimeExpandStateChanged(!uiState.isTimeExpanded)
+                        }
+                    },
+                ) {
+                    OutlinedTextField(
+                        value = uiState.timeState,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = {
+                          when(networkState){
+                              is GetTimeSlotsUiState.Loading ->{
+                                  Row (verticalAlignment = Alignment.CenterVertically){
+                                      CircularProgressIndicator(
+                                          modifier = Modifier.size(20.dp),
+                                          color = Color.Gray,
+                                          strokeWidth = 2.dp
+                                      )
+                                      Spacer(Modifier.width(4.dp
+                                      ))
+                                      Text("Loading Slots...", color = Color.Gray)
+                                  }
+                              }
+                              is GetTimeSlotsUiState.Success ->{
+                                  Text("Select a time Slot")
+                              }
+                              is GetTimeSlotsUiState.Idle->{
+                                  Text("Select a time Slot")
+                              }
+                              else -> {}
+                          }
+
+                                      },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = false)
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedIndicatorColor = Color.Black,
+                            unfocusedIndicatorColor = Color.Black,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedLabelColor = Color.Black,
+                            unfocusedLabelColor = Color.Black
+                        ),
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = uiState.isTimeExpanded,
+                        onDismissRequest = { viewModel.onTimeExpandStateChanged(!uiState.isTimeExpanded) },
+                        containerColor = Color(0xffebedfc),
+                        matchTextFieldWidth = true,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                        shape = RoundedCornerShape(30.dp)
+                    ) {
+                        // here comes the list of the suggestions
+                        when (networkState) {
+                            is GetTimeSlotsUiState.Loading -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                            is GetTimeSlotsUiState.Success ->{
+                                val successState = networkState as GetTimeSlotsUiState.Success
+                                if(successState.data.isEmpty()){
+                                    DropdownMenuItem(
+                                        text = { Text("No Slot Available for Selected Date.", color = Color.Black) },
+                                        onClick = {
+                                            viewModel.onTimeExpandStateChanged(false)
+                                        }
+                                    )
+                                }else {
+                                    successState.data.forEach { it ->
+                                        DropdownMenuItem(
+                                            text = { Text(it.slotTime, color = Color.Black, fontSize = 18.sp
+                                            ) },
+                                            onClick = {
+                                                viewModel.onTimeStateChanged(it.slotTime)
+                                                viewModel.onTimeExpandStateChanged(false)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+            }
+
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "Reason for Visit",
+                    color = Color.Black,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp
+                )
+                Spacer(Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = uiState.reasonForVisitState,
+                    onValueChange = { viewModel.onReasonForVisitChanged(it) },
+                    modifier = modifier.fillMaxWidth(),
+                    placeholder = {
+                        Text(
+                            text = "eg. Annual Checkup, Fever, Consultation",
+                            color = Color.Gray
+                        )
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedIndicatorColor = Color.Black,
+                        unfocusedIndicatorColor = Color.Black,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedLabelColor = Color.Black,
+                        unfocusedLabelColor = Color.Black
+                    )
+                )
+            }
+
+            Row(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { Log.d("Cancel", "Cancel Button Clicked") },
+                    modifier = modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xffFFFFFF)
+                    )
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = Color.Black
+                    )
+                }
+                Spacer(Modifier.width(16.dp))
+                Button(
+                    onClick = { Log.d("Schedule", "Schedule Button Clicked") },
+                    modifier = modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff2563EB)
+                    )
+                ) {
+                    Text(
+                        text = "Schedule",
+                        color = Color.White
+                    )
                 }
             }
         }

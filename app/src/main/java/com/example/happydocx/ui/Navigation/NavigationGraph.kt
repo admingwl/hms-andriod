@@ -40,6 +40,7 @@ import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.CreatePatient.AddNewPatientScreen
 import com.example.happydocx.ui.Screens.CreatePatient.PatientListScreen
+import com.example.happydocx.ui.Screens.CreatePatient.ScheduleAppointmentScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.Screens.LoginPage
@@ -56,6 +57,7 @@ import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.ParticularUserSignUpViewModel
+import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppointmentViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
@@ -82,6 +84,7 @@ fun NavigationGraph() {
     val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
     val patientListViewModel: PatientListViewModel = viewModel()
     val SavePatientGeneralViewModel : SavePatientViewModel = viewModel()
+    val getTimeSlotsViewModel : GetTimeSlotsForAppointmentViewModel = viewModel()
 
     NavHost(
         startDestination = "Login",
@@ -202,6 +205,15 @@ fun NavigationGraph() {
         ) {backStackEntry->
             val token = backStackEntry.arguments?.getString("token")?:""
             AddNewPatientScreen(navController = navController,viewModel = SavePatientGeneralViewModel,token = token)
+        }
+
+        composable (route = "scheduleAppointmentScreen/{token}",
+            arguments = listOf(
+                navArgument(name = "token"){type = NavType.StringType}
+            )
+        ){backStackEntry->
+            val token = backStackEntry.arguments?.getString("token")?:""
+            ScheduleAppointmentScreen(navController = navController,token = token, viewModel = getTimeSlotsViewModel)
         }
     }
 }
