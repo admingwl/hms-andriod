@@ -8,6 +8,7 @@ import com.example.happydocx.Data.Model.LoginModel.LoginResponse
 import com.example.happydocx.Data.Model.PatientScreen.PatientListResponse
 import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientRequestBody
 import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientResponseBody
+import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.scheduleAppointmentTimeResponse
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
@@ -186,4 +187,11 @@ interface ApiService{
         @Header("Authorization") token:String,
         @Body requestBody: SavePatientRequestBody
     ): Response<SavePatientResponseBody>
+
+    // function for getting all the slots for the particular date of appointment
+    @GET("api/v1/doctor/slots")
+   suspend fun getTimeSlotsForParticularAppointmentDate(
+        @Header(value = "Authorization") token:String,
+        @Query(value = "date") date:String
+    ): Response<scheduleAppointmentTimeResponse>
 }
