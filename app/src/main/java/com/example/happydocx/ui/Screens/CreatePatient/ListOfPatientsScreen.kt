@@ -1,6 +1,7 @@
 package com.example.happydocx.ui.Screens.CreatePatient
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -94,6 +95,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
+import com.example.happydocx.ui.ViewModels.PatientViewModel.CreatePatientAppointmentUiState
 import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppointmentViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsUiState
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListUiState
@@ -406,7 +408,12 @@ fun PatientListScreen(
                                                 address = patient.address?.addressLine1
                                                     ?: "No address provided",
                                                 navController = navController,
-                                                token = token
+                                                token = token,
+                                                patientId = patient._id,
+                                                perfectPatientId =patient.patientId,
+                                                firstName = patient.first_name,
+                                                middleName = patient.middle_name,
+                                                lastName = patient.last_name
                                             )
                                         }
                                     }
@@ -564,7 +571,12 @@ fun PatientCard(
     phoneNumber: String? = "1234567890",
     address: String? = "abc address is mine",
     navController: NavController,
-    token: String
+    token: String,
+    patientId:String,
+    perfectPatientId:String?,
+    firstName:String?,
+    middleName:String?,
+    lastName:String?
 ) {
     var isMenuOpen by remember { mutableStateOf(false) }
     Card(
@@ -622,7 +634,7 @@ fun PatientCard(
                             text = { Text("Schedule", color = Color.Black) },
                             onClick = {
                                 // here i navigate to schedule patient page.
-                                navController.navigate("scheduleAppointmentScreen/$token")
+                                navController.navigate("scheduleAppointmentScreen/$token/$patientId/$perfectPatientId/$firstName/$middleName/$lastName")
                                 isMenuOpen = false
                             },
                             leadingIcon = {
@@ -715,9 +727,15 @@ fun ScheduleAppointmentScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     token: String,
-    viewModel: GetTimeSlotsForAppointmentViewModel
+    viewModel: GetTimeSlotsForAppointmentViewModel,
+    patientId:String,
+    perfectPatientId:String,
+    patientFirstName:String,
+    patientMiddleName:String,
+    patientLastName:String
 ) {
 
+    Log.d("patientId:",patientId)
     var openDatePicker_ScheduleAppointment = remember { mutableStateOf(false) }
     val datePickerState_ScheduleAppointment = rememberDatePickerState()
     val context = LocalContext.current
@@ -725,8 +743,40 @@ fun ScheduleAppointmentScreen(
     val uiState = viewModel._uiState.collectAsStateWithLifecycle().value
     // get network state
     val networkState = viewModel._networkState.collectAsStateWithLifecycle().value
+    val createAppointmentNetworkState = viewModel._createAppointmentNetorkState.collectAsStateWithLifecycle().value
     val scope = rememberCoroutineScope()
 
+
+    // reset the state when entering the screen
+    LaunchedEffect(Unit) {
+        viewModel.resetAppointmentState()
+        viewModel.resetFormFields()
+    }
+    // Handle appointment creation state
+    LaunchedEffect(createAppointmentNetworkState) {
+        when (createAppointmentNetworkState) {
+            is CreatePatientAppointmentUiState.Success -> {
+                Toast.makeText(
+                    context,
+                    "Appointment scheduled successfully!",
+                    Toast.LENGTH_LONG
+                ).show()
+                // reset state before navigating
+                viewModel.resetAppointmentState()
+                // Navigate back or to appointments list
+                navController.popBackStack()
+            }
+            is CreatePatientAppointmentUiState.Error -> {
+                Toast.makeText(
+                    context,
+                    createAppointmentNetworkState.message ?: "Failed to schedule appointment",
+                    Toast.LENGTH_LONG
+                ).show()
+                viewModel.resetAppointmentState()
+            }
+            else -> {}
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -764,13 +814,13 @@ fun ScheduleAppointmentScreen(
                     .background(color = Color(0xffFFFFFF))
             ) {
                 Text(
-                    text = "Patient Name",
+                    text = "$patientFirstName $patientMiddleName $patientLastName".trim(),
                     fontSize = 24.sp,
                     color = Color(0xff1F7BF6),
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "PAT0-1201343",
+                    text = perfectPatientId,
                     fontSize = 16.sp,
                     color = Color.Gray
                 )
@@ -960,7 +1010,9 @@ fun ScheduleAppointmentScreen(
                         onDismissRequest = { viewModel.onTimeExpandStateChanged(!uiState.isTimeExpanded) },
                         containerColor = Color(0xffebedfc),
                         matchTextFieldWidth = true,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
                         shape = RoundedCornerShape(30.dp)
                     ) {
                         // here comes the list of the suggestions
@@ -1041,7 +1093,7 @@ fun ScheduleAppointmentScreen(
                     .padding(12.dp)
             ) {
                 OutlinedButton(
-                    onClick = { Log.d("Cancel", "Cancel Button Clicked") },
+                    onClick = {  },
                     modifier = modifier.weight(1f),
                     shape = RoundedCornerShape(4.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -1053,19 +1105,62 @@ fun ScheduleAppointmentScreen(
                         color = Color.Black
                     )
                 }
+
                 Spacer(Modifier.width(16.dp))
+
                 Button(
-                    onClick = { Log.d("Schedule", "Schedule Button Clicked") },
+                    onClick = {
+                        when{
+                            uiState.dateState.isEmpty() -> {
+                                Toast.makeText(
+                                    context,
+                                    "Please select a date",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            uiState.timeState.isEmpty() -> {
+                                Toast.makeText(
+                                    context,
+                                    "Please select a time",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                                uiState.reasonForVisitState.isEmpty() -> {
+                                    Toast.makeText(
+                                        context,
+                                        "Please enter reason for visit",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            else ->{
+                                scope.launch {
+                                    viewModel.scheduleAppointment(
+                                        token = token,
+                                        patientId = patientId
+                                    )
+                                }
+                            }
+                        }
+
+                    },
                     modifier = modifier.weight(1f),
                     shape = RoundedCornerShape(4.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff2563EB)
                     )
                 ) {
-                    Text(
-                        text = "Schedule",
-                        color = Color.White
-                    )
+                    if(createAppointmentNetworkState is CreatePatientAppointmentUiState.Loading){
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    }else {
+                        Text(
+                            text = "Schedule",
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }

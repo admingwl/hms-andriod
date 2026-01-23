@@ -544,7 +544,7 @@ fun DoctorAppointmentScreen(
                                                     token = token,
                                                     navController = navController,
                                                     patientId = appointment.patient._id,
-                                                    appointmentId = appointment.id
+                                                    appointmentId = appointment.id,
                                                 )
 
                                             }
@@ -708,7 +708,7 @@ fun DoctorAppointmentCard(
             ) {
                 Column(modifier = modifier) {
                     Text(
-                        text = "${ appointment.patient.first_name } ${appointment.patient.last_name}",
+                        text = "${ appointment.patient.first_name } ${appointment.patient.middle_name} ${appointment.patient.last_name}".trim(),
                         fontSize = 20.sp,
                         color = Color(0xff1F7BF6)
                     )
@@ -764,7 +764,7 @@ fun DoctorAppointmentCard(
                     modifier = modifier.weight(1f)
                 ) {
                     Text("SLOT", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,color = Color(0xff93A3B8))
-                    Text("02:30 pm", fontWeight = FontWeight.Bold, color = Color.Black) // slot is not in response.
+                    Text(appointment.appointmentTime, fontWeight = FontWeight.Bold, color = Color.Black)
                 }
                 Column(modifier = modifier.weight(1f)) {
                     Surface(
@@ -797,7 +797,7 @@ fun DoctorAppointmentCard(
                     modifier = modifier.size(15.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                DateUtils.formatAppointmentDate(appointment.patient.createdAt)?.let {
+                DateUtils.formatAppointmentDate(appointment.patient.updatedAt)?.let {
                     Text(
                         text = "Last Visit: $it",
                         fontWeight = FontWeight.SemiBold,
