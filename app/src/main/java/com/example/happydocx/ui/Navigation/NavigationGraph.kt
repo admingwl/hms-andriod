@@ -207,13 +207,33 @@ fun NavigationGraph() {
             AddNewPatientScreen(navController = navController,viewModel = SavePatientGeneralViewModel,token = token)
         }
 
-        composable (route = "scheduleAppointmentScreen/{token}",
+        composable (route = "scheduleAppointmentScreen/{token}/{patientId}/{perfectPatientId}/{firstName}/{middleName}/{lastName}",
             arguments = listOf(
-                navArgument(name = "token"){type = NavType.StringType}
+                navArgument(name = "token"){type = NavType.StringType},
+                navArgument(name = "patientId"){type = NavType.StringType},
+                navArgument(name = "perfectPatientId"){type = NavType.StringType},
+                navArgument(name = "firstName"){type = NavType.StringType},
+                navArgument(name = "middleName"){type = NavType.StringType},
+                navArgument(name = "lastName"){type = NavType.StringType}
             )
         ){backStackEntry->
             val token = backStackEntry.arguments?.getString("token")?:""
-            ScheduleAppointmentScreen(navController = navController,token = token, viewModel = getTimeSlotsViewModel)
+            val patientId  = backStackEntry.arguments?.getString("patientId")?:""
+            val perfectPatientId = backStackEntry.arguments?.getString("perfectPatientId")?:""
+            val firstName  = backStackEntry.arguments?.getString("firstName")?:""
+            val middleName  = backStackEntry.arguments?.getString("middleName")?:""
+            val lastName  = backStackEntry.arguments?.getString("lastName")?:""
+
+            ScheduleAppointmentScreen(
+                navController = navController,
+                token = token,
+                viewModel = getTimeSlotsViewModel,
+                patientId = patientId,
+                perfectPatientId = perfectPatientId,
+                patientFirstName = firstName,
+                patientMiddleName = middleName,
+                patientLastName = lastName
+                )
         }
     }
 }

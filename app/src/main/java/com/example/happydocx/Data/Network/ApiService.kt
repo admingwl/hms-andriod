@@ -8,6 +8,8 @@ import com.example.happydocx.Data.Model.LoginModel.LoginResponse
 import com.example.happydocx.Data.Model.PatientScreen.PatientListResponse
 import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientRequestBody
 import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientResponseBody
+import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.ScheduleAppointmentRequest
+import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.ScheduleAppointmentResponse
 import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.scheduleAppointmentTimeResponse
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
@@ -194,4 +196,11 @@ interface ApiService{
         @Header(value = "Authorization") token:String,
         @Query(value = "date") date:String
     ): Response<scheduleAppointmentTimeResponse>
+
+   // schedule the appointment of the particular patient
+   @POST("api/v1/appointment/create/v2")
+   suspend fun scheduleAppointment(
+       @Header("Authorization") token:String,
+       @Body requestBody: ScheduleAppointmentRequest
+   ): Response<ScheduleAppointmentResponse>
 }
