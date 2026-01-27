@@ -3,31 +3,21 @@ package com.example.happydocx.ui.Navigation
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,34 +26,28 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.happydocx.Data.TokenManager
-import com.example.happydocx.R
+import com.example.happydocx.ui.Screens.Authentication.ForgotPasswordScreen
+import com.example.happydocx.ui.Screens.Authentication.LoginPage
+import com.example.happydocx.ui.Screens.Authentication.SignUpPage
+import com.example.happydocx.ui.Screens.Authentication.UpdatePasswordScreen
 import com.example.happydocx.ui.Screens.CreatePatient.AddNewPatientScreen
 import com.example.happydocx.ui.Screens.CreatePatient.PatientListScreen
 import com.example.happydocx.ui.Screens.CreatePatient.ScheduleAppointmentScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
-import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
-import com.example.happydocx.ui.Screens.LoginPage
 import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
-import com.example.happydocx.ui.Screens.SignUpPage
-import com.example.happydocx.ui.Screens.SignUpResponse
 import com.example.happydocx.ui.Screens.StartConsulting.AddSymptomScreen
-import com.example.happydocx.ui.Screens.StartConsulting.ConsultingMainScreen
 import com.example.happydocx.ui.Screens.StartConsulting.InvoicesScreen
 import com.example.happydocx.ui.Screens.StartConsulting.StartConsultingScreen
-import com.example.happydocx.ui.ViewModels.Departments.GetAllDepartmentViewModel
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
-import com.example.happydocx.ui.ViewModels.ParticularUserSignUpViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppointmentViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
-import kotlin.math.exp
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -72,7 +56,6 @@ fun NavigationGraph() {
     val context = LocalContext.current
     val navController = rememberNavController()
     val userViewModel: ParticularUserSignInViewModel = viewModel()
-    val particularUserSignUpViewModel: ParticularUserSignUpViewModel = viewModel()
     val BasicPatientInformationViewModel: BasicInformationViewModel = viewModel()
 
 
@@ -96,9 +79,6 @@ fun NavigationGraph() {
         }
         composable(route = "SignUp") {
             SignUpPage(navController = navController)
-        }
-        composable("SignUpResponse") {
-            SignUpResponse(particularUserSignUpViewModel = particularUserSignUpViewModel)
         }
         composable(
             route = "first_form/{doctorId}",
@@ -235,6 +215,16 @@ fun NavigationGraph() {
                 patientLastName = lastName
                 )
         }
+
+        // forgot password screen enter email.
+        composable(route = "forgotPasswordScreen"){
+            ForgotPasswordScreen(navController = navController)
+        }
+
+        composable(route = "updatePasswordScreen"){
+            UpdatePasswordScreen(navController = navController)
+        }
+
     }
 }
 

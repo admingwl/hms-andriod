@@ -1,4 +1,4 @@
-package com.example.happydocx.ui.Screens
+package com.example.happydocx.ui.Screens.Authentication
 
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -40,7 +40,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -202,7 +201,7 @@ fun LoginPage(
               visualTransformation = if(eyeToggleState.isEnable) VisualTransformation.None else PasswordVisualTransformation()
         )
         Row(modifier = Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.End) {
-            Text("Forgot Password ?",modifier = Modifier.clickable{})
+            Text("Forgot Password ?",modifier = Modifier.clickable{navController.navigate("forgotPasswordScreen")})
         }
         Spacer(Modifier.height(20.dp))
 
@@ -301,21 +300,4 @@ fun SocialMediaAccounts(socialMediaImage: Int) {
             }
         }
     }
-}
-
-
-@Preview
-@Composable
-fun MyPreview(){
-    val viewModel1 : LoginScreenViewModel = viewModel(
-        factory = LoginViewModelFactory(LocalContext.current)
-    )
-    val viewModel2 : ParticularUserSignInViewModel = viewModel()
-    val navController = rememberNavController()
-
-    LoginPage(
-        viewModel = viewModel1,
-        userViewModel = viewModel2,
-        navController = navController
-    )
 }
