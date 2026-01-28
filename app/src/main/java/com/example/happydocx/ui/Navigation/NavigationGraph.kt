@@ -262,7 +262,7 @@ fun AppointmentSearchBar(
                 placeholder = {
                     Text(
                         text = "Search Appointments",
-                        color = Color(0xFF9CA3AF),
+                        color = Color.Black,
                         fontSize = 16.sp,
                     )
                 },
@@ -270,10 +270,14 @@ fun AppointmentSearchBar(
                     Icon(
                         Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = Color(0xFF9CA3AF),
+                        tint = Color.Black,
                         modifier = Modifier.size(20.dp)
                     )
                 },
+                colors = SearchBarDefaults.inputFieldColors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                )
             )
         },
         expanded = false,

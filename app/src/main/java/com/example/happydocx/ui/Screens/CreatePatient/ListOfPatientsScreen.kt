@@ -584,11 +584,11 @@ fun MySearchBar(
                 onQueryChange = onSearchQueryChange,
                 onSearch = {},
                 expanded = false,
-                onExpandedChange = { },
+                onExpandedChange = {},
                 placeholder = {
                     Text(
                         text = "Search patient",
-                        color = Color(0xFF9CA3AF),
+                        color = Color.Black,
                         fontSize = 16.sp,
                     )
                 },
@@ -596,10 +596,14 @@ fun MySearchBar(
                     Icon(
                         Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = Color(0xFF9CA3AF),
+                        tint = Color.Black,
                         modifier = Modifier.size(20.dp)
                     )
                 },
+                colors = SearchBarDefaults.inputFieldColors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                )
             )
         },
         expanded = false,
