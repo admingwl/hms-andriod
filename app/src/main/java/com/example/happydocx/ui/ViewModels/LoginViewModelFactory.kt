@@ -5,15 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.happydocx.Data.TokenManager
 
-class LoginViewModelFactory(
-    private val context: Context
-) : ViewModelProvider.Factory{
+class LoginViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if(modelClass.isAssignableFrom(LoginScreenViewModel::class.java)) {
-            val tokenManager = TokenManager(context)
-            @Suppress("Unchecked_Cast")
-            return LoginScreenViewModel(tokenManager = tokenManager) as T
+        if (modelClass.isAssignableFrom(LoginScreenViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return LoginScreenViewModel(TokenManager(context)) as T
         }
-        throw IllegalArgumentException("Unknown view Model class")
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

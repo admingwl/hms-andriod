@@ -240,49 +240,6 @@ fun AppointmentSearchBar(
     modifier : Modifier = Modifier
 ) {
 
-
-//            SearchBar(
-//                tonalElevation = 9.dp,
-//                query = searchQuery,
-//                onQueryChange = onSearchQueryChange,
-//                onSearch = { /* Handle search */ },
-//                active = false, // Always collapsed in topbar
-//                onActiveChange = { },
-//                placeholder = {
-//                    Text(
-//                        "Search appointments...",
-//                        color = Color.White.copy(alpha = 0.7f),
-//                        fontSize = 18.sp
-//                    )
-//                },
-//                leadingIcon = {
-//                    Icon(
-//                        Icons.Default.Search,
-//                        contentDescription = "Search",
-//                        tint = Color.White
-//                    )
-//                },
-//                trailingIcon = {
-//                    if (searchQuery.isNotEmpty()) {
-//                        IconButton(onClick = { onSearchQueryChange("") }) {
-//                            Icon(
-//                                Icons.Default.Close,
-//                                contentDescription = "Clear",
-//                                tint = Color.White
-//                            )
-//                        }
-//                    }
-//                },
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(80.dp),
-//                colors = SearchBarDefaults.colors(
-//                    containerColor = Color.White.copy(alpha = 0.15f),
-//                    dividerColor = Color.Transparent
-//                ),
-//                shape = RoundedCornerShape(10.dp),
-//                    ) {}
-
     SearchBar(
         modifier = modifier
             .fillMaxWidth()
