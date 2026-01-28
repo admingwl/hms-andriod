@@ -99,7 +99,7 @@ val gradient_colors = Brush.linearGradient(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorAppointmentScreen(
-    token: String,  // Non-nullable, as per your NavGraph
+    token: String,
     navController: NavController,
     modifier: Modifier = Modifier,
     viewModel: DoctorAppointmentsViewModel,
@@ -129,8 +129,8 @@ fun DoctorAppointmentScreen(
     var searchQuery by remember { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
 
-// Track previous network status to detect changes
-    var previousNetworkStatus by remember { mutableStateOf<ConnectivityObserver.Status?>(null) }
+      // Track previous network status to detect changes
+      var previousNetworkStatus by remember { mutableStateOf<ConnectivityObserver.Status?>(null) }
 
     // Show Snackbar when network status changes
     LaunchedEffect(networkStatus) {
@@ -156,9 +156,8 @@ fun DoctorAppointmentScreen(
                     )
                 }
             }
-        }else {
-            previousNetworkStatus = networkStatus
         }
+        previousNetworkStatus = networkStatus
     }
 
     // Fetch on compose (same as before)
