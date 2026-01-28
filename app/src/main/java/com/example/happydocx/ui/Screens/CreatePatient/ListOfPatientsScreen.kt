@@ -63,6 +63,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
@@ -93,6 +96,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.happydocx.Data.Network.ConnectivityObserver
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.DoctorAppointments.gradient_colors
 import com.example.happydocx.ui.ViewModels.PatientViewModel.CreatePatientAppointmentUiState
@@ -119,10 +123,43 @@ fun PatientListScreen(
 ) {
 
     val listState = viewModel._listState.collectAsStateWithLifecycle().value
+    val snackBarHostState = remember { SnackbarHostState() }
     // get drawer state
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
+
+    val networkStatus = viewModel.status.collectAsStateWithLifecycle().value
+    // previous network state
+    var previousNetworkState by remember { mutableStateOf<ConnectivityObserver.Status?>(null) }
+
+    // Show Snackbar when network status changes
+    LaunchedEffect(networkStatus) {
+        if (previousNetworkState != null && previousNetworkState != networkStatus) {
+            when (networkStatus) {
+                ConnectivityObserver.Status.Available -> {
+                    snackBarHostState.showSnackbar(
+                        message = "✓ Internet Connected",
+                        duration = androidx.compose.material3.SnackbarDuration.Short
+                    )
+                }
+                ConnectivityObserver.Status.Lost,
+                ConnectivityObserver.Status.Unavailable -> {
+                    snackBarHostState.showSnackbar(
+                        message = "⚠ No Internet Connection",
+                        duration = androidx.compose.material3.SnackbarDuration.Short
+                    )
+                }
+                ConnectivityObserver.Status.Losing -> {
+                    snackBarHostState.showSnackbar(
+                        message = "⚠ Connection Unstable",
+                        duration = androidx.compose.material3.SnackbarDuration.Short
+                    )
+                }
+            }
+        }
+        previousNetworkState = networkStatus
+    }
 
     // launch every time the user open the screen and triggering the patient fetching form api
     LaunchedEffect(key1 = token) {
@@ -212,6 +249,20 @@ fun PatientListScreen(
 
         ) {
         Scaffold(
+            snackbarHost = {
+                SnackbarHost(hostState = snackBarHostState) { data ->
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = when {
+                            data.visuals.message.contains("Connected") -> Color(0xFF4CAF50)
+                            else -> Color(0xFFF44336)
+                        },
+                        contentColor = Color.White,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            },
             topBar = {
                 TopAppBar(
                     modifier = modifier.background(brush = gradient_colors),

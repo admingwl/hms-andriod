@@ -5,13 +5,18 @@ import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.PatientScreen.Patients
+import com.example.happydocx.Data.Network.ConnectivityObserver
 import com.example.happydocx.Data.Repository.Patient.PatientListRepo
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
-class PatientListViewModel : ViewModel(){
+class PatientListViewModel(
+    private val connectivityObserver: ConnectivityObserver
+) : ViewModel(){
 
     // get the repo object
     private val repo = PatientListRepo()
@@ -22,6 +27,12 @@ class PatientListViewModel : ViewModel(){
     // current page state
     private val _currentPage = MutableStateFlow(1)
     val currentPage = _currentPage.asStateFlow()
+
+    val status = connectivityObserver.observe().stateIn(
+        viewModelScope, // scope in which sharing is started
+        SharingStarted.WhileSubscribed(5000), // stop sharing if there are no subscribers for 5 seconds
+        initialValue = ConnectivityObserver.Status.Unavailable // The starting value of the flow
+    )
 
     // function to get list of all the patient from the repo
     fun getPatientList(

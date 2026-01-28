@@ -43,6 +43,7 @@ import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
+import com.example.happydocx.ui.ViewModels.PatientListViewModelFactory
 import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppointmentViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientViewModel
@@ -68,7 +69,7 @@ fun NavigationGraph() {
         factory = DoctorAppointmentsViewModelFactory(context)
     )
     val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
-    val patientListViewModel: PatientListViewModel = viewModel()
+
     val SavePatientGeneralViewModel : SavePatientViewModel = viewModel()
     val getTimeSlotsViewModel : GetTimeSlotsForAppointmentViewModel = viewModel()
 
@@ -114,6 +115,10 @@ fun NavigationGraph() {
             }
             )){backStackEntry->
             val tokenOne = backStackEntry.arguments?.getString("token")?:""
+
+            val patientListViewModel: PatientListViewModel = viewModel(
+                factory = PatientListViewModelFactory(context)
+            )
             PatientListScreen(
                 viewModel = patientListViewModel,
                 token = tokenOne,
