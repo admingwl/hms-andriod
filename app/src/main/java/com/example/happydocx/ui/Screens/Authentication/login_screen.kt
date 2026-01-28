@@ -39,13 +39,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.ui.ViewModels.LoginScreenViewModel
@@ -53,37 +51,24 @@ import com.example.happydocx.ui.ViewModels.LoginViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 
 
-/**
- * This code flow
- * User clicks Sign In → onLoginClicked() is called in ViewModel
- * ViewModel validates → Checks if email and password are not empty
- * ViewModel calls Repository → Repository uses Retrofit to make API call
- * API responds → Repository returns success or failure
- * ViewModel updates UI state → LoginPage shows loading, success, or error
- * On success → Navigate to Home screen
- */
-
 @Composable
 fun LoginPage(
     viewModel: LoginScreenViewModel = viewModel(
-        factory = LoginViewModelFactory(LocalContext.current)
-    ),
+        factory = LoginViewModelFactory(LocalContext.current)),
     userViewModel: ParticularUserSignInViewModel,
     navController: NavController
 ) {
-
 
     val context = LocalContext.current
     val emailState = viewModel._emailState.collectAsStateWithLifecycle().value
     val passwordState = viewModel._passwordState.collectAsStateWithLifecycle().value
     val eyeToggleState = viewModel._eyeToggleState.collectAsStateWithLifecycle().value
     val loginUiState = viewModel._loginUiState.collectAsStateWithLifecycle().value
-    val savedToken = TokenManager(context).getToken()
-
 
     // Check if user is already logged in on first launch
     LaunchedEffect(Unit) {
         if (viewModel.isUserLoggedIn()) {
+            val savedToken = TokenManager(context).getToken()
             navController.navigate("AppointmentsScreen/${savedToken}") {
                 popUpTo("Login") { inclusive = true }
                 launchSingleTop = true
@@ -93,6 +78,7 @@ fun LoginPage(
     // handle the login success
     LaunchedEffect(loginUiState.isSuccess) {
         if(loginUiState.isSuccess){
+            val savedToken = TokenManager(context).getToken()
             Log.d("LOGIN_DEBUG", "Login successful, token: $savedToken")
             if (savedToken != null) {
                 // Navigate with token as argument
@@ -200,20 +186,12 @@ fun LoginPage(
             },
               visualTransformation = if(eyeToggleState.isEnable) VisualTransformation.None else PasswordVisualTransformation()
         )
-        Row(modifier = Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.End) {
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = 8.dp), horizontalArrangement = Arrangement.End) {
             Text("Forgot Password ?",modifier = Modifier.clickable{navController.navigate("forgotPasswordScreen")})
         }
         Spacer(Modifier.height(20.dp))
-
-        // for showing the error ........
-//        if (loginUiState.errorMessage != null) {
-//            Text(
-//                text = loginUiState.errorMessage,
-//                color = Color.Red,
-//                fontSize = 12.sp,
-//                modifier = Modifier.padding(horizontal = 10.dp)
-//            )
-//            Spacer(Modifier.height(8.dp))
 
         FilledTonalButton(
             onClick = {viewModel.loginClicked(userViewModel = userViewModel)},

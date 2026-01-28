@@ -1,5 +1,6 @@
 package com.example.happydocx.ui.ViewModels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Repository.AuthRepository.LoginRepository.loginRepository
@@ -14,108 +15,70 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LoginScreenViewModel(
- private val tokenManager: TokenManager
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
-
-    // get repository object
     private val repository = loginRepository()
-    // write email state
+
     private var emailState = MutableStateFlow(EmailState())
     val _emailState = emailState.asStateFlow()
 
-    // write password state
     private var passwordState = MutableStateFlow(PasswordState())
     val _passwordState = passwordState.asStateFlow()
 
-    // eyeToggle state
     private var eyeToggleState = MutableStateFlow(EyeToggleState())
     val _eyeToggleState = eyeToggleState.asStateFlow()
 
-
-    // Login Ui state
     private var loginUiState = MutableStateFlow(LoginUiState())
     val _loginUiState = loginUiState.asStateFlow()
 
-    // check if user is already logged in or not
-    fun isUserLoggedIn(): Boolean{
-        return tokenManager.isLoggedIn()
+    fun isUserLoggedIn(): Boolean {
+        return tokenManager.getToken() != null
     }
 
-    // on Email state change
     fun onEmailChanged(newEmail: String) {
-        emailState.update { emailState ->
-            emailState.copy(
-                enterEmail = newEmail
-            )
-        }
+        emailState.update { it.copy(enterEmail = newEmail) }
     }
 
-    // on Password state change
     fun onPasswordChange(newPassword: String) {
-        passwordState.update { passwordState ->
-            passwordState.copy(
-                enterPassword = newPassword
-            )
-        }
+        passwordState.update { it.copy(enterPassword = newPassword) }
     }
 
-    // on eye toggle pressed
     fun onEyeTogglePressed(state: Boolean) {
-        eyeToggleState.update { eyeToggleState ->
-            eyeToggleState.copy(
-                isEnable = state
-            )
-        }
+        eyeToggleState.update { it.copy(isEnable = state) }
     }
 
+    fun loginClicked(userViewModel: ParticularUserSignInViewModel) {
+        val email = _emailState.value.enterEmail
+        val password = _passwordState.value.enterPassword
 
-    // function to handle loginUI
-    fun loginClicked(userViewModel: ParticularUserSignInViewModel){
-        // take email and password state to get both
-        val emailState = _emailState.value.enterEmail
-        val passwordState = _passwordState.value.enterPassword
-
-        // basic validation
-        if(emailState.isBlank() || passwordState.isBlank()){
-            loginUiState.value = LoginUiState(
-                errorMessage = "Please enter both email and password"
-            )
+        if (email.isBlank() || password.isBlank()) {
+            loginUiState.value = LoginUiState(errorMessage = "Please enter both email and password")
             return
         }
 
-        // start login process
-        viewModelScope.launch { // create a coroutine scope
+        viewModelScope.launch {
             loginUiState.value = LoginUiState(isLoading = true)
-            val result = repository.login(email = emailState, password = passwordState)
+            val result = repository.login(email = email, password = password)
 
-            result.onSuccess { response->
-
-              // fetch token from response and save in sharePref
-                response.token?.let {token->
-                    tokenManager.saveToken(token = token)
+            result.onSuccess { response ->
+                response.token?.let {
+                    tokenManager.saveToken(it)
+                    userViewModel.saveLoginData(response = response)
+                    loginUiState.value = LoginUiState(isLoading = false, isSuccess = true)
                 }
-                //save response here
-                // userViewModel.saveLoginData(response) saves the data
-                //Now HomeScreen can access this data!
-                userViewModel.saveLoginData(response = response)
-
-                loginUiState.value = LoginUiState(
-                    isLoading = false,
-                    isSuccess = true
-                )
             }
 
-            result.onFailure { exception->
+            result.onFailure { exception ->
                 loginUiState.value = LoginUiState(
                     isLoading = false,
-                    errorMessage = exception.message ?: "login failed"
+                    errorMessage = exception.message ?: "Login failed"
                 )
             }
         }
     }
 
-    fun logOut(){
+    fun logOut() {
         tokenManager.clearToken()
     }
 }
