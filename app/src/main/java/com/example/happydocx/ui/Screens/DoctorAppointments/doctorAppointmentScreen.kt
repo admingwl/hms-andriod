@@ -1,6 +1,6 @@
 package com.example.happydocx.ui.Screens.DoctorAppointments
 
-import android.graphics.drawable.Icon
+import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -25,10 +25,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,17 +35,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -66,26 +65,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.happydocx.Data.Model.DoctorAppointment.Appointment
+import com.example.happydocx.Data.Network.ConnectivityObserver
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Navigation.AppointmentSearchBar
-import com.example.happydocx.ui.Screens.CreatePatient.MySearchBar
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
+import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
@@ -101,18 +99,20 @@ val gradient_colors = Brush.linearGradient(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorAppointmentScreen(
-    viewModel: DoctorAppointmentsViewModel,
     token: String,  // Non-nullable, as per your NavGraph
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: DoctorAppointmentsViewModel,
 ) {
 
-    val uiState =
-        viewModel._uiState.collectAsStateWithLifecycle()  // State<AppointmentUiState> — keep this!
+    val context = LocalContext.current
+     val uiState = viewModel._uiState.collectAsStateWithLifecycle()  // State<AppointmentUiState> — keep this!
 
+    // get the network state
+    val networkStatus = viewModel.status.collectAsStateWithLifecycle().value
 
-//    val scrollBehaviour =
-//        TopAppBarDefaults.exitUntilCollapsedScrollBehavior() // for large top app bar use exitUntilCollapsedScrollBehaviour()
+    // Snackbar host state
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // get drawer state
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -121,7 +121,6 @@ fun DoctorAppointmentScreen(
     val showDialog = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    val context = LocalContext.current
     val tokenManger = TokenManager(context = context)
 
     val scope = rememberCoroutineScope()
@@ -130,6 +129,37 @@ fun DoctorAppointmentScreen(
     var searchQuery by remember { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
 
+// Track previous network status to detect changes
+    var previousNetworkStatus by remember { mutableStateOf<ConnectivityObserver.Status?>(null) }
+
+    // Show Snackbar when network status changes
+    LaunchedEffect(networkStatus) {
+        if (previousNetworkStatus != null && previousNetworkStatus != networkStatus) {
+            when (networkStatus) {
+                ConnectivityObserver.Status.Available -> {
+                    snackbarHostState.showSnackbar(
+                        message = "✓ Internet Connected",
+                        duration = androidx.compose.material3.SnackbarDuration.Short
+                    )
+                }
+                ConnectivityObserver.Status.Lost,
+                ConnectivityObserver.Status.Unavailable -> {
+                    snackbarHostState.showSnackbar(
+                        message = "⚠ No Internet Connection",
+                        duration = androidx.compose.material3.SnackbarDuration.Short
+                    )
+                }
+                ConnectivityObserver.Status.Losing -> {
+                    snackbarHostState.showSnackbar(
+                        message = "⚠ Connection Unstable",
+                        duration = androidx.compose.material3.SnackbarDuration.Short
+                    )
+                }
+            }
+        }else {
+            previousNetworkStatus = networkStatus
+        }
+    }
 
     // Fetch on compose (same as before)
     LaunchedEffect(Unit) {
@@ -303,6 +333,20 @@ fun DoctorAppointmentScreen(
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(),
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState){data->
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = when {
+                            data.visuals.message.contains("Connected") -> Color(0xFF4CAF50)
+                            else -> Color(0xFFF44336)
+                        },
+                        contentColor = Color.White,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            },
             topBar = {
                 TopAppBar(
                     modifier = modifier.background(brush = gradient_colors),
@@ -310,6 +354,7 @@ fun DoctorAppointmentScreen(
                         containerColor = Color.Transparent,
                         scrolledContainerColor = Color.Transparent
                     ),
+
                     title = {
                         Text(
                             "Appointments",

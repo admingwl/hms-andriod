@@ -1,17 +1,22 @@
 package com.example.happydocx.ui.ViewModels
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.DoctorAppointment.Appointment
+import com.example.happydocx.Data.Network.ConnectivityObserver
 import com.example.happydocx.Data.Repository.DoctorAppointments.DoctorAppointmentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
-class DoctorAppointmentsViewModel() : ViewModel() {
+@RequiresApi(Build.VERSION_CODES.O)
+class DoctorAppointmentsViewModel(private val connectivityObserver: ConnectivityObserver) : ViewModel() {
 
     // get repo object
     private val repository = DoctorAppointmentRepository()
@@ -19,7 +24,11 @@ class DoctorAppointmentsViewModel() : ViewModel() {
     private val uiState: MutableStateFlow<AppointmentUiState> = MutableStateFlow(AppointmentUiState.Loading)
     val _uiState = uiState.asStateFlow()
 
-
+    val status = connectivityObserver.observe().stateIn(
+        viewModelScope, // scope in which sharing is started
+        SharingStarted.WhileSubscribed(5000), // stop sharing if there are no subscribers for 5 seconds
+        initialValue = ConnectivityObserver.Status.Unavailable // The starting value of the flow
+    )
     // add current page state
     private val _currentPage = MutableStateFlow(1)
     val currentPage = _currentPage.asStateFlow()
