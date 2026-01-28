@@ -40,6 +40,7 @@ import com.example.happydocx.ui.Screens.StartConsulting.AddSymptomScreen
 import com.example.happydocx.ui.Screens.StartConsulting.InvoicesScreen
 import com.example.happydocx.ui.Screens.StartConsulting.StartConsultingScreen
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
+import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppointmentViewModel
@@ -63,7 +64,9 @@ fun NavigationGraph() {
     val sharedViewModel: formViewModel = viewModel(
         factory = FormViewModelFactory(context)
     )
-    val doctorAppointmentViewModel : DoctorAppointmentsViewModel = viewModel()
+    val doctorAppointmentViewModel: DoctorAppointmentsViewModel = viewModel(
+        factory = DoctorAppointmentsViewModelFactory(context)
+    )
     val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
     val patientListViewModel: PatientListViewModel = viewModel()
     val SavePatientGeneralViewModel : SavePatientViewModel = viewModel()
@@ -102,7 +105,7 @@ fun NavigationGraph() {
             )) {backStackEntry->
             val token_one = backStackEntry.arguments?.getString("token")?:""
             Log.d("DEBUG_NAV", "Navigation: Token = $token_one")
-            DoctorAppointmentScreen(token = token_one, navController = navController, viewModel = doctorAppointmentViewModel)
+            DoctorAppointmentScreen(token = token_one, navController = navController,viewModel = doctorAppointmentViewModel)
         }
         // patient list screen.
         composable("patientScreen/{token}",
