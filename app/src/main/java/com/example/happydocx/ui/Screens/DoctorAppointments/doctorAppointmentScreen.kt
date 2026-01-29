@@ -34,6 +34,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -106,7 +108,8 @@ fun DoctorAppointmentScreen(
 ) {
 
     val context = LocalContext.current
-     val uiState = viewModel._uiState.collectAsStateWithLifecycle()  // State<AppointmentUiState> — keep this!
+    val uiState =
+        viewModel._uiState.collectAsStateWithLifecycle()  // State<AppointmentUiState> — keep this!
 
     // get the network state
     val networkStatus = viewModel.status.collectAsStateWithLifecycle().value
@@ -129,8 +132,8 @@ fun DoctorAppointmentScreen(
     var searchQuery by remember { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
 
-      // Track previous network status to detect changes
-      var previousNetworkStatus by remember { mutableStateOf<ConnectivityObserver.Status?>(null) }
+    // Track previous network status to detect changes
+    var previousNetworkStatus by remember { mutableStateOf<ConnectivityObserver.Status?>(null) }
 
     // Show Snackbar when network status changes
     LaunchedEffect(networkStatus) {
@@ -142,6 +145,7 @@ fun DoctorAppointmentScreen(
                         duration = androidx.compose.material3.SnackbarDuration.Short
                     )
                 }
+
                 ConnectivityObserver.Status.Lost,
                 ConnectivityObserver.Status.Unavailable -> {
                     snackbarHostState.showSnackbar(
@@ -149,6 +153,7 @@ fun DoctorAppointmentScreen(
                         duration = androidx.compose.material3.SnackbarDuration.Short
                     )
                 }
+
                 ConnectivityObserver.Status.Losing -> {
                     snackbarHostState.showSnackbar(
                         message = "⚠ Connection Unstable",
@@ -277,7 +282,7 @@ fun DoctorAppointmentScreen(
                         onClick = {
                             scope.launch {
                                 navController.navigate("patientScreen/$token") {
-                                 launchSingleTop = true
+                                    launchSingleTop = true
                                 }
                                 drawerState.close()
                             }
@@ -333,7 +338,7 @@ fun DoctorAppointmentScreen(
             modifier = Modifier
                 .fillMaxSize(),
             snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState){data->
+                SnackbarHost(hostState = snackbarHostState) { data ->
                     Snackbar(
                         snackbarData = data,
                         containerColor = when {
@@ -692,7 +697,6 @@ fun DoctorAppointmentScreen(
 }
 
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DoctorAppointmentCard(
@@ -700,33 +704,40 @@ fun DoctorAppointmentCard(
     appointment: Appointment,
     token: String,
     navController: NavController,
-    patientId:String,
-    appointmentId:String,
-    ) {
-  val scope = rememberCoroutineScope()
-   val surfaceBackgroundColor = when(appointment.status){
-       "In Consultation" ->
-           Color(0xffDCFCE7)
-       "Waiting" ->
-           Color(0xffF3E8FF)
-       "Confirmed" ->
-           Color(0xffDFF1FD)
-       else ->  Color(0xffF5F5F5)
-   }
+    patientId: String,
+    appointmentId: String,
+) {
+    val scope = rememberCoroutineScope()
+    var isExpanded by remember { mutableStateOf(false) }
+    val surfaceBackgroundColor = when (appointment.status) {
+        "In Consultation" ->
+            Color(0xffDCFCE7)
 
-    val surfaceContentColor = when(appointment.status){
+        "Waiting" ->
+            Color(0xffF3E8FF)
+
+        "Confirmed" ->
+            Color(0xffDFF1FD)
+
+        else -> Color(0xffF5F5F5)
+    }
+
+    val surfaceContentColor = when (appointment.status) {
         "In Consultation" ->
             Color(0xff15805C)
+
         "Waiting" ->
             Color(0xff7E22CE)
+
         "Confirmed" ->
             Color(0xff0369A1)
+
         else ->
             Color(0xff616161)
     }
     Card(
         modifier = modifier
-            .clickable{
+            .clickable {
                 scope.launch {
                     navController.navigate("SartConsultationScreen/$patientId/$token/$appointmentId")
                 }
@@ -752,7 +763,7 @@ fun DoctorAppointmentCard(
             ) {
                 Column(modifier = modifier) {
                     Text(
-                        text = "${ appointment.patient.first_name } ${appointment.patient.middle_name} ${appointment.patient.last_name}".trim(),
+                        text = "${appointment.patient.first_name} ${appointment.patient.middle_name} ${appointment.patient.last_name}".trim(),
                         fontSize = 20.sp,
                         color = Color(0xff1F7BF6)
                     )
@@ -764,15 +775,118 @@ fun DoctorAppointmentCard(
                     )
                 }
                 Spacer(Modifier.weight(1f))
-                IconButton(
-                    onClick = {}
-                ) {
-                    Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = null,
-                        tint = Color.Black
-                    )
+                Column {
+                    IconButton(
+                        onClick = { isExpanded = !isExpanded }
+                    ) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = null,
+                            tint = Color.Black
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = isExpanded,
+                        onDismissRequest = { isExpanded = false },
+                        containerColor = Color(0xffFFFFFF)
+                    ) {
+                        when (appointment.status) {
+                            "In Consultation" -> {
+                                DropdownMenuItem(
+                                    text = { Text("Rescheduled", color = Color.Black) },
+                                    onClick = { isExpanded = false },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.schedule),
+                                            contentDescription = null,
+                                            modifier = modifier.size(18.dp),
+                                            tint = Color.Black
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Continue", color = Color.Black) },
+                                    onClick = { isExpanded = false },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.arrow_right_long_line),
+                                            contentDescription = null,
+                                            modifier = modifier.size(18.dp),
+                                            tint = Color.Black
+                                        )
+                                    }
+                                )
+                            }
+
+                            "Waiting" -> {
+                                DropdownMenuItem(
+                                    text = { Text("Reschedule", color = Color.Black) },
+                                    onClick = { isExpanded = false },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.schedule),
+                                            contentDescription = null,
+                                            modifier = modifier.size(18.dp),
+                                            tint = Color.Black
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("prepare", color = Color.Black) },
+                                    onClick = { isExpanded = false },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.to_do_list),
+                                            contentDescription = null,
+                                            modifier = modifier.size(18.dp),
+                                            tint = Color.Black
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Start Consultation", color = Color.Black) },
+                                    onClick = { isExpanded = false },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.stethoscope_medical_tool),
+                                            contentDescription = null,
+                                            modifier = modifier.size(18.dp),
+                                            tint = Color.Black
+                                        )
+                                    }
+                                )
+                            }
+                            "Confirmed" -> {
+                                DropdownMenuItem(
+                                    text = { Text("Reschedule", color = Color.Black) },
+                                    onClick = { isExpanded = false },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.schedule),
+                                            contentDescription = null,
+                                            modifier = modifier.size(18.dp),
+                                            tint = Color.Black
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Check In", color = Color.Black) },
+                                    onClick = { isExpanded = false },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.user_avatar),
+                                            contentDescription = null,
+                                            modifier = modifier.size(18.dp),
+                                            tint = Color.Black
+                                        )
+                                    }
+                                )
+                            }
+                            else -> { }
+                        }
+                    }
                 }
+
             }
             Spacer(Modifier.height(8.dp))
             // row 2
@@ -783,14 +897,28 @@ fun DoctorAppointmentCard(
                 Column(
                     modifier = modifier.weight(1f)
                 ) {
-                    Text("CONTACT", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xff93A3B8))
+                    Text(
+                        "CONTACT",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xff93A3B8)
+                    )
                     Spacer(Modifier.height(3.dp))
-                    Text(appointment.patient.contactNumber, fontWeight = FontWeight.Bold,color = Color.Black)
+                    Text(
+                        appointment.patient.contactNumber,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
                 }
                 Column(modifier = modifier.weight(1f)) {
-                    Text("VISIT TYPE", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,color = Color(0xff93A3B8))
+                    Text(
+                        "VISIT TYPE",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xff93A3B8)
+                    )
                     Spacer(Modifier.height(3.dp))
-                    Text(appointment.visitType, fontWeight = FontWeight.Bold,color = Color.Black)
+                    Text(appointment.visitType, fontWeight = FontWeight.Bold, color = Color.Black)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -807,8 +935,17 @@ fun DoctorAppointmentCard(
                 Column(
                     modifier = modifier.weight(1f)
                 ) {
-                    Text("SLOT", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,color = Color(0xff93A3B8))
-                    Text(appointment.appointmentTime, fontWeight = FontWeight.Bold, color = Color.Black)
+                    Text(
+                        "SLOT",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xff93A3B8)
+                    )
+                    Text(
+                        appointment.appointmentTime,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
                 }
                 Column(modifier = modifier.weight(1f)) {
                     Surface(
@@ -816,8 +953,8 @@ fun DoctorAppointmentCard(
                             .fillMaxWidth()
                             .padding(8.dp),
                         shape = RoundedCornerShape(30.dp),
-                        color = surfaceBackgroundColor ,
-                        contentColor = surfaceContentColor ,
+                        color = surfaceBackgroundColor,
+                        contentColor = surfaceContentColor,
                     ) {
                         Text(
                             appointment.status,
