@@ -709,32 +709,42 @@ fun DoctorAppointmentCard(
 ) {
     val scope = rememberCoroutineScope()
     var isExpanded by remember { mutableStateOf(false) }
-    val surfaceBackgroundColor = when (appointment.status) {
+
+    val surfaceText = when (appointment.status) {
+        "Confirmed" -> "Scheduled"
+        "Waiting" -> "Checked In"
+        "In Consultation" -> "In Consultation"
+        else -> {}
+    }
+
+    val surfaceBackgroundColor = when (surfaceText) {
         "In Consultation" ->
             Color(0xffDCFCE7)
 
-        "Waiting" ->
-            Color(0xffF3E8FF)
-
-        "Confirmed" ->
+        "Scheduled" ->
             Color(0xffDFF1FD)
+
+        "Checked In" ->
+            Color(0xffF3E8FF)
 
         else -> Color(0xffF5F5F5)
     }
 
-    val surfaceContentColor = when (appointment.status) {
+    val surfaceContentColor = when (surfaceText) {
         "In Consultation" ->
             Color(0xff15805C)
 
-        "Waiting" ->
-            Color(0xff7E22CE)
-
-        "Confirmed" ->
+        "Scheduled" ->
             Color(0xff0369A1)
+
+        "Checked In" ->
+            Color(0xff7E22CE)
 
         else ->
             Color(0xff616161)
     }
+
+
     Card(
         modifier = modifier
             .clickable {
@@ -790,7 +800,7 @@ fun DoctorAppointmentCard(
                         onDismissRequest = { isExpanded = false },
                         containerColor = Color(0xffFFFFFF)
                     ) {
-                        when (appointment.status) {
+                        when (surfaceText) {
                             "In Consultation" -> {
                                 DropdownMenuItem(
                                     text = { Text("Rescheduled", color = Color.Black) },
@@ -806,7 +816,11 @@ fun DoctorAppointmentCard(
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Continue", color = Color.Black) },
-                                    onClick = { isExpanded = false },
+                                    onClick = {
+                                        scope.launch {
+                                            navController.navigate("SartConsultationScreen/$patientId/$token/$appointmentId")
+                                        }
+                                    },
                                     leadingIcon = {
                                         Icon(
                                             painter = painterResource(R.drawable.arrow_right_long_line),
@@ -818,7 +832,7 @@ fun DoctorAppointmentCard(
                                 )
                             }
 
-                            "Waiting" -> {
+                            "Checked In" -> {
                                 DropdownMenuItem(
                                     text = { Text("Reschedule", color = Color.Black) },
                                     onClick = { isExpanded = false },
@@ -856,7 +870,8 @@ fun DoctorAppointmentCard(
                                     }
                                 )
                             }
-                            "Confirmed" -> {
+
+                            "Scheduled" -> {
                                 DropdownMenuItem(
                                     text = { Text("Reschedule", color = Color.Black) },
                                     onClick = { isExpanded = false },
@@ -882,7 +897,8 @@ fun DoctorAppointmentCard(
                                     }
                                 )
                             }
-                            else -> { }
+
+                            else -> {}
                         }
                     }
                 }
@@ -957,7 +973,7 @@ fun DoctorAppointmentCard(
                         contentColor = surfaceContentColor,
                     ) {
                         Text(
-                            appointment.status,
+                            surfaceText.toString(),
                             fontWeight = FontWeight.Bold,
                             modifier = modifier.padding(6.dp),
                             textAlign = TextAlign.Center
