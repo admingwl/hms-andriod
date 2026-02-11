@@ -26,4 +26,5 @@ class TokenManager(context: Context) {
         editor.remove(KEY_TOKEN)
         editor.apply()
     }
+
 }

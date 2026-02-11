@@ -100,7 +100,8 @@ fun NavigationGraph() {
         }
         composable("AppointmentsScreen/{token}",
             arguments = listOf(
-                navArgument("token"){ type = NavType.StringType
+                navArgument("token"){
+                    type = NavType.StringType
                     nullable = false
                 }
             )) {backStackEntry->

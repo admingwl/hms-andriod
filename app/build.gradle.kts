@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -11,10 +13,11 @@ android {
 
     defaultConfig {
         applicationId = "com.example.happydocx"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -30,11 +33,18 @@ android {
 
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            pickFirsts += "lib/arm64-v8a/libc++_shared.so"
+            pickFirsts += "lib/armeabi-v7a/libc++_shared.so"
+        }
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -60,6 +70,8 @@ dependencies {
     implementation(libs.androidx.viewModel)
     implementation(libs.androidx.navigation)
 
+    implementation("androidx.compose.material:material-icons-core")
+
     // kotlin serialization dependency
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     // adding the retrofit Dependency for networking
@@ -77,6 +89,15 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.3.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 
-//      // PDF Viewer
+      // PDF Viewer
     implementation("io.github.grizzi91:bouquet:1.1.3")
+
+    // Permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
+
+
+    implementation("us.zoom.videosdk:zoomvideosdk-core:2.4.12")
+
+
+
 }
