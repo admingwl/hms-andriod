@@ -9,7 +9,7 @@ import javax.crypto.spec.SecretKeySpec
 object ZoomJWTGenerator {
 
     // for Demo only. generate token from backend in production time.
-    private const val SDK_KEY = "53ES4eQ6T6SfygAdBTy7A"
+    private const val SDK_KEY = "53ES4eQ6T6SfygAdBTy7A" //A
     private const val SDK_SECRET = "lyqj1cxiQPXFUACqpiJucUoGYAmKBAas"
 
     fun generateTokenZoom(): String {

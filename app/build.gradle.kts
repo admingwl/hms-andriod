@@ -45,6 +45,9 @@ android {
             pickFirsts += "lib/armeabi-v7a/libc++_shared.so"
             pickFirsts += "lib/arm64-v8a/libZoomTask.so"   // ← ADD THIS
             pickFirsts += "lib/armeabi-v7a/libZoomTask.so" // ← ADD THIS
+            excludes += "**/*.txt"           // ← ADD THIS
+            excludes += "**/*.readme"        // ← ADD THIS
+            excludes += "**/*.md"            // ← ADD THIS
         }
     }
     kotlinOptions {
@@ -52,6 +55,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding  = true
     }
 }
 
@@ -99,6 +103,5 @@ dependencies {
 
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
-
 
 }
