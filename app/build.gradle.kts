@@ -48,7 +48,6 @@ android {
     }
     buildFeatures {
         compose = true
-        viewBinding = true
     }
 }
 
@@ -97,7 +96,9 @@ dependencies {
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
 
-    // adding view Binding dependency
-    implementation("androidx.databinding:viewbinding:8.0.2")
+
+    implementation("us.zoom.videosdk:zoomvideosdk-core:2.4.12")
+
+
 
 }
