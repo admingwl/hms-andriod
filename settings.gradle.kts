@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "HappyDocx"
 include(":app")
+include(":mobilertc")

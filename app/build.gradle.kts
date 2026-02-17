@@ -48,6 +48,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 }
 
@@ -60,6 +61,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(project(":mobilertc"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -95,9 +97,7 @@ dependencies {
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
 
-
-    implementation("us.zoom.videosdk:zoomvideosdk-core:2.4.12")
-
-
+    // adding view Binding dependency
+    implementation("androidx.databinding:viewbinding:8.0.2")
 
 }
