@@ -38,9 +38,13 @@ android {
     }
     packaging {
         resources {
+            excludes += "**/*.aidl"                        // ← ADD THIS
+            excludes += "com/zipow/videobox/**"            // ← ADD THIS
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             pickFirsts += "lib/arm64-v8a/libc++_shared.so"
             pickFirsts += "lib/armeabi-v7a/libc++_shared.so"
+            pickFirsts += "lib/arm64-v8a/libZoomTask.so"   // ← ADD THIS
+            pickFirsts += "lib/armeabi-v7a/libZoomTask.so" // ← ADD THIS
         }
     }
     kotlinOptions {
@@ -95,10 +99,6 @@ dependencies {
 
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.33.2-alpha")
-
-
-    implementation("us.zoom.videosdk:zoomvideosdk-core:2.4.12")
-
 
 
 }

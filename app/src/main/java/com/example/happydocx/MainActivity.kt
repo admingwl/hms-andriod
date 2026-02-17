@@ -1,5 +1,6 @@
 package com.example.happydocx
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -8,11 +9,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import com.example.happydocx.Data.ZoomMeetingManager.ZoomJWTGenerator
 import com.example.happydocx.ui.Navigation.NavigationGraph
 import com.example.happydocx.ui.theme.HappyDocxTheme
-import us.zoom.sdk.ZoomVideoSDK
-import us.zoom.sdk.ZoomVideoSDKErrors
-import us.zoom.sdk.ZoomVideoSDKInitParams
+import us.zoom.sdk.ZoomError
+import us.zoom.sdk.ZoomSDK
+import us.zoom.sdk.ZoomSDKInitParams
+import us.zoom.sdk.ZoomSDKInitializeListener
 
 
 class MainActivity : ComponentActivity(){
@@ -20,7 +23,7 @@ class MainActivity : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // initialize the zoom Video Sdk here.
-        initZoomVideoSdk()
+        initZoomVideoSdk(this)
         enableEdgeToEdge()
         setContent {
             HappyDocxTheme {
@@ -29,21 +32,54 @@ class MainActivity : ComponentActivity(){
         }
     }
 
-    fun initZoomVideoSdk(){
-        val zoomVideoSdk = ZoomVideoSDK.getInstance()
+    fun initZoomVideoSdk(context: Context){
+        val zoomSdk = ZoomSDK.getInstance()
 
-        val params = ZoomVideoSDKInitParams().apply {
+        if(zoomSdk.isInitialized){
+            Log.d("ZoomSDK", "Already Initialized")
+            return
+        }
+
+        val jwtTokenString = ZoomJWTGenerator.generateTokenZoom()
+        // Token validation
+        if (jwtTokenString.isEmpty()) {
+            Log.e("ZoomSDK", "JWT Token is EMPTY!")
+            return
+        }
+
+        Log.d("ZoomSDK", "Token length: ${jwtTokenString.length}")
+        Log.d("ZoomSDK", "Token preview: ${jwtTokenString.take(50)}...")
+
+        val params  = ZoomSDKInitParams().apply{
             domain = "zoom.us"
-            enableLog = true    // Taki logcat mein errors dikhein
+            enableLog = true
+            jwtToken = jwtTokenString
         }
 
-        val errorCode = zoomVideoSdk.initialize(this.applicationContext,params)
-        // Check karo ki successfully init hua ya nahi
-        if (errorCode == ZoomVideoSDKErrors.Errors_Success) {
-            Log.d("ZoomVideoSDK", "Initialization Success! Ab tum sessions join kar sakte ho.")
-        } else {
-            Log.e("ZoomVideoSDK", "Initialization Failed! Error Code: $errorCode")
+        val listener = object : ZoomSDKInitializeListener {
+            override fun onZoomSDKInitializeResult(errorCode: Int, internalErrorCode: Int) {
+                when (errorCode) {
+                    ZoomError.ZOOM_ERROR_SUCCESS -> {
+                        Log.d("ZoomInit", " SUCCESS! SDK initialized")
+                    }
+                    ZoomError.ZOOM_ERROR_INVALID_ARGUMENTS -> {
+                        Log.e("ZoomInit", " INVALID ARGUMENTS - Check JWT token format")
+                    }
+                    ZoomError.ZOOM_ERROR_ILLEGAL_APP_KEY_OR_SECRET -> {
+                        Log.e("ZoomInit", " INVALID SDK KEY/SECRET")
+                    }
+                    else -> {
+                        Log.e("ZoomInit", " Error: $errorCode, Internal: $internalErrorCode")
+                    }
+                }
+            }
+
+            override fun onZoomAuthIdentityExpired() {
+                Log.w("ZoomInit", " JWT token expired - regenerate token")
+            }
         }
+        zoomSdk.initialize(context,listener,params)
+
     }
 }
 @Composable
