@@ -76,7 +76,7 @@ fun BasicInfoOfPatient(modifier: Modifier = Modifier) {
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xffFAFAFA))
+                .background(Color(0xffF1F5F9))
                 .verticalScroll(rememberScrollState()),
         ) {
             ElevatedCard(
@@ -87,7 +87,7 @@ fun BasicInfoOfPatient(modifier: Modifier = Modifier) {
                     containerColor = Color(0xffFFFFFF)
                 ),
                 elevation = CardDefaults.cardElevation(
-                    defaultElevation = 8.dp
+                    defaultElevation = 6.dp
                 )
             ) {
                 Row(
@@ -331,13 +331,12 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
     var showFullScreen by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
-    Column{
+    Column(modifier = Modifier.fillMaxWidth().background(color = Color(0xffFAFAFA))){
         SecondaryScrollableTabRow(
             selectedTabIndex = tabIndex,
             scrollState = scrollState,
             containerColor = Color(0xffFFFFFF),
             contentColor = Color(0xff1E293B),
-            modifier = modifier.padding(horizontal = 10.dp),
             edgePadding = 3.dp
         ) {
             tabs.forEachIndexed { index, title ->
@@ -361,7 +360,7 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
             }
         }
         when (tabIndex) {
-            0 -> RandomScreen2()
+            0 -> OverViewScreen()
             1 -> RandomScreen1()
             2 -> RandomScreen2()
             3 -> RandomScreen1()
