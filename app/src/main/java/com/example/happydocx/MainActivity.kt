@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.happydocx.Data.ZoomMeetingManager.ZoomJWTGenerator
 import com.example.happydocx.ui.Navigation.NavigationGraph
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.BasicInfoOfPatient
 import com.example.happydocx.ui.theme.HappyDocxTheme
 import us.zoom.sdk.MeetingError
 import us.zoom.sdk.MeetingParameter
@@ -78,7 +79,7 @@ class MainActivity : ComponentActivity(){
         enableEdgeToEdge()
         setContent {
             HappyDocxTheme {
-                StartCall(context = this)
+                BasicInfoOfPatient()
             }
         }
     }

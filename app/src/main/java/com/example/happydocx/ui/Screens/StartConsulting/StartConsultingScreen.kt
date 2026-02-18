@@ -82,7 +82,7 @@ fun StartConsultingScreenTabLayout(
                 title = {
                     // ADDED: Put TabRow inside the TopAppBar title
                     TabRow(
-                        selectedTabIndex = tabIndex.value,
+                        selectedTabIndex = tabIndex.intValue,
                         containerColor = Color.Transparent, // Transparent to show gradient
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -98,7 +98,7 @@ fun StartConsultingScreenTabLayout(
                                 },
                                 selected = tabIndex.value == index,
                                 onClick = {
-                                    tabIndex.value = index
+                                    tabIndex.intValue = index
                                 }
                             )
                         }
@@ -123,7 +123,7 @@ fun StartConsultingScreenTabLayout(
                 .fillMaxSize()
                 .background(Color(0xfff0f5ff))
         ) {
-            when (tabIndex.value) {
+            when (tabIndex.intValue) {
                 0 -> {
                     ConsultingMainScreen(
                         viewModel = viewModel,
