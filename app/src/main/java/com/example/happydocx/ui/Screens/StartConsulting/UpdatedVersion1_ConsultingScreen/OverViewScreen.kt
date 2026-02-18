@@ -19,7 +19,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
@@ -46,6 +48,7 @@ fun OverViewScreen(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .background(color = Color(0xffFAFAFA))
+            .verticalScroll(rememberScrollState())
     ) {
        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
            Column {
@@ -135,8 +138,7 @@ fun OverViewScreen(modifier: Modifier = Modifier) {
         ) {
                     CurrentMedicationCard()
                     CurrentMedicationCard()
-                    CurrentMedicationCard()
-                    CurrentMedicationCard()
+
         }
 
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -171,9 +173,7 @@ fun OverViewScreen(modifier: Modifier = Modifier) {
         ) {
             LabResultCard()
             LabResultCard()
-            LabResultCard()
-            LabResultCard()
-            LabResultCard()
+
         }
 
     }

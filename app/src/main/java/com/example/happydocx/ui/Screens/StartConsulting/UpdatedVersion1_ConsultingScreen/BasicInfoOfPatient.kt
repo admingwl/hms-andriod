@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -76,8 +77,7 @@ fun BasicInfoOfPatient(modifier: Modifier = Modifier) {
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xffF1F5F9))
-                .verticalScroll(rememberScrollState()),
+                .background(Color(0xffF1F5F9)),
         ) {
             ElevatedCard(
                 modifier = Modifier
@@ -330,8 +330,7 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
     val tabs = rememberSaveable { tabsOptions }
     var showFullScreen by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
-
-    Column(modifier = Modifier.fillMaxWidth().background(color = Color(0xffFAFAFA))){
+    Column(modifier = modifier.fillMaxSize()) {
         SecondaryScrollableTabRow(
             selectedTabIndex = tabIndex,
             scrollState = scrollState,
@@ -359,18 +358,15 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
-        when (tabIndex) {
-            0 -> OverViewScreen()
-            1 -> RandomScreen1()
-            2 -> RandomScreen2()
-            3 -> RandomScreen1()
-            4 -> RandomScreen2()
-            5 -> RandomScreen1()
-            6 -> RandomScreen2()
-            7 -> RandomScreen1()
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (tabIndex) {
+                0 -> OverViewScreen()
+                1 -> AllVitalsScreen()
+            }
         }
     }
 }
+
 
 
 
