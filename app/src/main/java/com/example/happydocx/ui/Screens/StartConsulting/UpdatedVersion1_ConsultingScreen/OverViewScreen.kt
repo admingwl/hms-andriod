@@ -256,7 +256,7 @@ fun CurrentMedicationCard(
             .fillMaxWidth()
             .padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xffFFFFFF)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier
             .fillMaxWidth()

@@ -361,6 +361,10 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
             when (tabIndex) {
                 0 -> OverViewScreen()
                 1 -> AllVitalsScreen()
+                2 -> AllMedicationList()
+                3 -> LabResultScreen()
+                4 -> AllHistoryList()
+                5 -> AllDocumentsScreen()
             }
         }
     }
