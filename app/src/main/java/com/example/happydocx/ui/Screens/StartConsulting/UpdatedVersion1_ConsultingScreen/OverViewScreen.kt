@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,19 +88,20 @@ fun OverViewScreen(modifier: Modifier = Modifier) {
                 .padding(4.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(8.dp)) { CurrentVitalCard()
-                Spacer(Modifier.weight(1f))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxWidth().padding(8.dp)) { CurrentVitalCard()
+
                 CurrentVitalCard()
             }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically,  horizontalArrangement = Arrangement.SpaceEvenly,modifier = Modifier.fillMaxWidth().padding(8.dp)) {
                 CurrentVitalCard()
-                Spacer(Modifier.weight(1f))
                 CurrentVitalCard()
             }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically,  horizontalArrangement = Arrangement.SpaceEvenly,modifier = Modifier.fillMaxWidth().padding(8.dp)) {
                 CurrentVitalCard()
-                Spacer(Modifier.weight(1f))
+
                 CurrentVitalCard()
             }
         }
@@ -190,12 +192,12 @@ fun CurrentVitalCard(
     normalRange: String = "Normal: 60-100",
 ) {
     ElevatedCard(
-        modifier = modifier,
+        modifier = modifier.height(110.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xffFFFFFF)),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .padding(8.dp)
                 .background(color = Color(0xffFFFFFF))
 
@@ -213,14 +215,16 @@ fun CurrentVitalCard(
                 Text(
                     text = cardName,
                     color = Color(0xff475595),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
 
                 )
-                Spacer(Modifier.width(20.dp))
+                Spacer(Modifier.width(10.dp))
                     Text(
                         text = condition,
                         color = Color(0xff15803D),
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp
+                        fontSize = 11.sp
                     )
 
             }

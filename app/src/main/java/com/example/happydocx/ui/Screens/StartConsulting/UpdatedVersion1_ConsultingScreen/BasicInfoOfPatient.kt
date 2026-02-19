@@ -327,7 +327,6 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
         "Overview", "Vitals", "Medications", "LabResult", "History", "Documents", "Notes"
     )
     var tabIndex by rememberSaveable { mutableStateOf(0) }
-    val tabs = rememberSaveable { tabsOptions }
     var showFullScreen by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     Column(modifier = modifier.fillMaxSize()) {
@@ -338,7 +337,7 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
             contentColor = Color(0xff1E293B),
             edgePadding = 3.dp
         ) {
-            tabs.forEachIndexed { index, title ->
+            tabsOptions.forEachIndexed { index, title ->
                 Tab(
                     text = {
                         Text(
