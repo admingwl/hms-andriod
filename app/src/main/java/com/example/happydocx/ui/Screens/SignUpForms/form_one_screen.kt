@@ -148,7 +148,7 @@ fun Form_One_Screen(
             ExposedDropdownMenuBox(
                 expanded = formInformationState.salutationDropDownexpandedState,
                 onExpandedChange = { viewModel.onSalutationDropDownPressed(!formInformationState.salutationDropDownexpandedState) },
-            ) {
+            ){
                 OutlinedTextField(
                     value = formInformationState.salutationselectedOptions,
                     onValueChange = {},

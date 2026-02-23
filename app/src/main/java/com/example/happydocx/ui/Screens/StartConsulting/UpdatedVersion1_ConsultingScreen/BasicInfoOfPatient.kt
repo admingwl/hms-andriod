@@ -365,6 +365,7 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
                 3 -> LabResultScreen()
                 4 -> AllHistoryList()
                 5 -> AllDocumentsScreen()
+                6 -> NotesScreen()
             }
         }
     }
