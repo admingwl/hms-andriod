@@ -171,7 +171,7 @@ class StartConsultingViewModel : ViewModel() {
         viewModelScope.launch {
              saveVitals.value = SaveVital_SignsUiState.Loading
             try {
-                val result = repo.Save_Patient_Vitals_Signs_And_Symptoms(token = token,requestBody)
+                val result = repo.Save_Patient_Vitals_Signs_And_Symptoms(token = token,requestBody,appointmentId = appointment)
                 result.onSuccess { response ->
                     saveVitals.value = SaveVital_SignsUiState.Success(data = response)
                 }.onFailure { errorMessage ->

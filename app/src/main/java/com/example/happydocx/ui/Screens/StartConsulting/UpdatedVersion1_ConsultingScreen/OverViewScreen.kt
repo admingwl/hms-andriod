@@ -50,6 +50,7 @@ import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.ViewModels.StartConsulting.AllMedicalRecordUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
+import kotlinx.coroutines.coroutineScope
 
 @Composable
 fun OverViewScreen(
@@ -58,6 +59,8 @@ fun OverViewScreen(
     appointmentId: String,
     startConsultingViewModel: StartConsultingViewModel,
     navController: NavController,
+    patientId:String,
+    doctorId:String
 
 ) {
 
@@ -110,7 +113,7 @@ fun OverViewScreen(
                     }
                     Spacer(Modifier.weight(1f))
                     Button(
-                        onClick = {navController.navigate("addNewVitalSigns")},
+                        onClick = {navController.navigate("addNewVitalSigns/$token/$appointmentId/$patientId/$doctorId")},
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xff1D4ED8),
                             contentColor = Color.White
@@ -263,7 +266,9 @@ fun OverViewScreen(
             }
             Spacer(Modifier.weight(1f))
             Button(
-                onClick = {},
+                onClick = {
+
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xff1D4ED8),
                     contentColor = Color.White

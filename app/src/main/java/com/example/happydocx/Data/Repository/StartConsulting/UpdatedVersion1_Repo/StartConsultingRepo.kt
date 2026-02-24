@@ -41,14 +41,15 @@ class StartConsultingRepo {
     // function for save the vital signs and symptoms
     suspend fun Save_Patient_Vitals_Signs_And_Symptoms(
         token: String,
-        requestBody: Save_Vital_Signs_RequestBody
+        requestBody: Save_Vital_Signs_RequestBody,
+        appointmentId: String
     ): Result<Save_vitalSigns_Response_Body> {
         return try {
             Log.d("REPO_SAVE", "Calling API...")
             Log.d("REPO_SAVE", "Token: Bearer ${token.take(20)}...")
             Log.d("REPO_SAVE", "Request: $requestBody")
             // call api here first
-            val result = apiService.sendVitalSignsAndSymptoms(token = "Bearer $token", body = requestBody)
+            val result = apiService.sendVitalSignsAndSymptoms(token = "Bearer $token", body = requestBody, appointmentId = appointmentId )
             Log.d("REPO_SAVE", "Response Code: ${result.code()}")
             Log.d("REPO_SAVE", "Response Body: ${result.body()}")
 

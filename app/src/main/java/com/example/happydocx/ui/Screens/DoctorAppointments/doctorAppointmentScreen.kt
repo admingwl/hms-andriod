@@ -571,6 +571,7 @@ fun DoctorAppointmentScreen(
                                                     navController = navController,
                                                     patientId = appointment.patient._id,
                                                     appointmentId = appointment.id,
+                                                    doctorId = appointment.doctor
                                                 )
 
                                             }
@@ -680,6 +681,7 @@ fun DoctorAppointmentCard(
     navController: NavController,
     patientId: String,
     appointmentId: String,
+    doctorId:String
 
 ) {
     val scope = rememberCoroutineScope()
@@ -730,7 +732,7 @@ fun DoctorAppointmentCard(
         modifier = modifier
             .clickable {
                 scope.launch {
-                    navController.navigate("StartConsultation/$token/$appointmentId")
+                    navController.navigate("StartConsultation/$token/$appointmentId/$patientId/$doctorId")
                 }
             }
             .fillMaxWidth()

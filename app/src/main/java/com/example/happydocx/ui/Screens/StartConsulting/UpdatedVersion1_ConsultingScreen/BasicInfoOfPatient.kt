@@ -1,7 +1,5 @@
 package com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen
 
-import android.graphics.Paint
-import android.widget.Space
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -10,7 +8,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,16 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
@@ -38,14 +32,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -54,7 +46,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -71,12 +62,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.R
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVital_SignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 import kotlinx.coroutines.launch
-import us.zoom.proguard.FONT_WEIGHT_BOLD
 
 
 @Composable
@@ -86,7 +75,8 @@ fun BasicInfoOfPatient(
     appointmentId: String,
     startConsultingViewModel: StartConsultingViewModel,
     navController: NavController,
-
+    patientId:String,
+    doctorId:String
 ) {
     Scaffold(
         topBar = {
@@ -132,6 +122,8 @@ fun BasicInfoOfPatient(
                 appointmentId = appointmentId,
                 startConsultingViewModel = startConsultingViewModel,
                 navController = navController,
+                patientId = patientId,
+                doctorId = doctorId
             )
         }
     }
@@ -354,6 +346,8 @@ fun PatientAppointmentInfoTabScreen(
     appointmentId: String,
     startConsultingViewModel: StartConsultingViewModel,
     navController: NavController,
+    patientId: String,
+    doctorId:String
 ) {
 
     val tabsOptions = listOf<String>(
@@ -397,6 +391,8 @@ fun PatientAppointmentInfoTabScreen(
                     appointmentId = appointmentId,
                     startConsultingViewModel = startConsultingViewModel,
                     navController = navController,
+                    patientId = patientId,
+                    doctorId = doctorId
                 )
 
                 1 -> AllVitalsScreen()
@@ -416,7 +412,10 @@ fun AddNewVitalSignsScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     startConsultingViewModel: StartConsultingViewModel,
-
+    patientId:String,
+    appointmentId:String,
+    token:String,
+    doctorId:String
 ) {
     val startConsultingState = startConsultingViewModel._startConsultationfUpdatedVersion.collectAsStateWithLifecycle().value
     // get the network state
@@ -615,7 +614,14 @@ fun AddNewVitalSignsScreen(
                 Spacer(Modifier.width(4.dp))
                 Button(
                     onClick = {
-
+                      scope.launch {
+                          startConsultingViewModel.Save_patient_Vitals(
+                              token = token,
+                              doctor = doctorId,
+                              patient = patientId,
+                              appointment = appointmentId
+                          )
+                      }
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(4.dp),

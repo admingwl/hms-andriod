@@ -220,7 +220,8 @@ interface ApiService{
     @POST("api/v1/medical-record-v2/{appointmentId}")
     suspend fun sendVitalSignsAndSymptoms(
         @Header("Authorization") token: String,
-        @Body body: Save_Vital_Signs_RequestBody
+        @Body body: Save_Vital_Signs_RequestBody,
+        @Path("appointmentId") appointmentId:String
     ): Response<Save_vitalSigns_Response_Body>
 
    //------------------------update patient Consulting Screen-----------------------------------------

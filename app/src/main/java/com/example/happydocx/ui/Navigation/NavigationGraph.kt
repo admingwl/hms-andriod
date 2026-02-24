@@ -258,24 +258,45 @@ fun NavigationGraph() {
         }
         //--------------------new Consulting Screen-----------------------------------------------//
         composable(
-            route = "StartConsultation/{token}/{appointmentId}", arguments = listOf(
+            route = "StartConsultation/{token}/{appointmentId}/{patientId}/{doctorId}", arguments = listOf(
                 navArgument(name = "token") { type = NavType.StringType },
                 navArgument(name = "appointmentId") { type = NavType.StringType },
-            )) { backStackEntry ->
+                navArgument(name = "patientId") { type = NavType.StringType },
+                navArgument(name = "doctorId"){type = NavType.StringType}
+                )) { backStackEntry ->
             val token = backStackEntry.arguments?.getString("token") ?: ""
             val appointmentId = backStackEntry.arguments?.getString("appointmentId") ?: ""
+            val patientId = backStackEntry.arguments?.getString("patientId")?:""
+            val doctorId = backStackEntry.arguments?.getString("doctorId")?:""
             BasicInfoOfPatient(
                 startConsultingViewModel = startConsultingViewModel,
                 token = token,
                 appointmentId = appointmentId,
                 navController = navController,
+                patientId = patientId,
+                doctorId = doctorId
             )
         }
 
-        composable(route = "addNewVitalSigns") {backStackEntry ->
+        composable(route = "addNewVitalSigns/{token}/{appointmentId}/{patientId}/{doctorId}",
+        arguments = listOf(
+            navArgument(name = "token") { type = NavType.StringType },
+            navArgument(name = "appointmentId") { type = NavType.StringType },
+            navArgument(name = "patientId") { type = NavType.StringType },
+            navArgument(name = "doctorId"){type = NavType.StringType}
+        )
+        ) {backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            val appointmentId = backStackEntry.arguments?.getString("appointmentId") ?: ""
+            val patientId = backStackEntry.arguments?.getString("patientId")?:""
+            val doctorId = backStackEntry.arguments?.getString("doctorId")?:""
             AddNewVitalSignsScreen(
                 navController = navController,
-                startConsultingViewModel = startConsultingViewModel
+                startConsultingViewModel = startConsultingViewModel,
+                patientId = patientId,
+                doctorId = doctorId,
+                token = token,
+                appointmentId = appointmentId
             )
         }
         //--------------------new Consulting Screen-----------------------------------------------//
