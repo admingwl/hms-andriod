@@ -2,6 +2,7 @@ package com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_Consult
 
 import android.graphics.Paint
 import android.widget.Space
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,13 +27,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryScrollableTabRow
@@ -42,12 +47,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,17 +63,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.R
+import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVital_SignsUiState
+import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
+import kotlinx.coroutines.launch
 import us.zoom.proguard.FONT_WEIGHT_BOLD
 
 
 @Composable
-fun BasicInfoOfPatient(modifier: Modifier = Modifier) {
+fun BasicInfoOfPatient(
+    modifier: Modifier = Modifier,
+    token: String,
+    appointmentId: String,
+    startConsultingViewModel: StartConsultingViewModel,
+    navController: NavController,
+
+) {
     Scaffold(
         topBar = {
             ParticularPatientAppointmentInfoTopAppBar(
@@ -105,7 +127,12 @@ fun BasicInfoOfPatient(modifier: Modifier = Modifier) {
                 ActiveAllergiesSection()
             }
             Spacer(Modifier.height(8.dp))
-            PatientAppointmentInfoTabScreen()
+            PatientAppointmentInfoTabScreen(
+                token = token,
+                appointmentId = appointmentId,
+                startConsultingViewModel = startConsultingViewModel,
+                navController = navController,
+            )
         }
     }
 }
@@ -321,7 +348,13 @@ fun ContactInfoOfPatient(
 }
 
 @Composable
-fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
+fun PatientAppointmentInfoTabScreen(
+    modifier: Modifier = Modifier,
+    token: String,
+    appointmentId: String,
+    startConsultingViewModel: StartConsultingViewModel,
+    navController: NavController,
+) {
 
     val tabsOptions = listOf<String>(
         "Overview", "Vitals", "Medications", "LabResult", "History", "Documents", "Notes"
@@ -359,7 +392,13 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
         }
         Box(modifier = Modifier.fillMaxSize()) {
             when (tabIndex) {
-                0 -> OverViewScreen()
+                0 -> OverViewScreen(
+                    token = token,
+                    appointmentId = appointmentId,
+                    startConsultingViewModel = startConsultingViewModel,
+                    navController = navController,
+                )
+
                 1 -> AllVitalsScreen()
                 2 -> AllMedicationList()
                 3 -> LabResultScreen()
@@ -369,6 +408,237 @@ fun PatientAppointmentInfoTabScreen(modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddNewVitalSignsScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    startConsultingViewModel: StartConsultingViewModel,
+
+) {
+    val startConsultingState = startConsultingViewModel._startConsultationfUpdatedVersion.collectAsStateWithLifecycle().value
+    // get the network state
+    val saveVitalsState = startConsultingViewModel._saveVitals.collectAsStateWithLifecycle().value
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(saveVitalsState) {
+        when (saveVitalsState) {
+            is SaveVital_SignsUiState.Success -> {
+                Toast.makeText(context, "Vitals saved successfully!", Toast.LENGTH_SHORT).show()
+                navController.popBackStack() // Go back to Overview after saving
+            }
+            is SaveVital_SignsUiState.Error -> {
+                Toast.makeText(context, "Error: ${saveVitalsState.message}", Toast.LENGTH_LONG).show()
+            }
+            else -> {}
+        }
+    }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Add Vital Signs") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xff2563EB)
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = {navController.popBackStack()}
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                }
+                )
+        },
+        containerColor = Color(0xffFBFCFD)
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .padding(12.dp)
+                .fillMaxSize()
+                .background(Color(0xffFBFCFD))
+        ) {
+            Text(
+                text = "Heart Rate",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = startConsultingState.heartRate,
+                onValueChange = {startConsultingViewModel.on_Heart_RateChanged(it)},
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("72 bpm", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Text(
+                text = "Oxygen Saturation",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = startConsultingState.oxygenSaturation,
+                onValueChange = {startConsultingViewModel.on_Oxygen_Saturation_Changed(it)},
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("98 %", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Text(
+                text = "Systolic BP",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = startConsultingState.systolicBp,
+                onValueChange = {startConsultingViewModel.on_SystolicBpChanged(it)},
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("mmHg", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Text(
+                text = "Diastolic BP",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = startConsultingState.diastolicBp,
+                onValueChange = {startConsultingViewModel.on_DystolicBpChanged(it)},
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("mmHg", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Text(
+                text = "Respiratory Rate",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = startConsultingState.respiratoryRate,
+                onValueChange = {startConsultingViewModel.on_RespiratoryRateChanged(it)},
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("/min", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Text(
+                text = "Temperature",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = startConsultingState.temperature,
+                onValueChange = {startConsultingViewModel.on_TemperatureChanged(it)},
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("°C", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Text(
+                text = "Weight",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = startConsultingState.weight,
+                onValueChange = {startConsultingViewModel.on_WeightChanged(it)},
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("KG", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+
+                )
+            )
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = {navController.popBackStack()},
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1D4ED8)
+                    )
+                ) {
+                    Text("Cancel",color =Color.White)
+                }
+                Spacer(Modifier.width(4.dp))
+                Button(
+                    onClick = {
+
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1D4ED8)
+                    )
+                ) {
+                    Text("Save Vitals",color =Color.White)
+                }
+            }
+        }
+    }
+
+}
+
+@Composable
+fun AddNewMedicationScreen(modifier: Modifier = Modifier) {
+
+}
+
+@Composable
+fun AddNewLabResultScreen(modifier: Modifier = Modifier) {
+
 }
 
 

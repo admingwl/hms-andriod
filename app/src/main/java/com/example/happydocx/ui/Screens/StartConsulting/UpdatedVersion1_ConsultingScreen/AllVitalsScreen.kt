@@ -139,38 +139,38 @@ fun VitalCard() {
 @Preview
 @Composable
 fun PatientVitalSignsInsideCard(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(4.dp) // increased from 4.dp
-            .background(Color(0xffFFFFFF)),
-        verticalArrangement = Arrangement.spacedBy(4.dp) // increased from 8.dp
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp) // consistent spacing
-        ) {
-            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.heart, normalRange = "Normal: 60-100")
-            CurrentVitalCard(modifier = Modifier.weight(1f) ,cardName = "BP", normalRange = "Normal: 120-80")
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp) // consistent spacing
-        ) {
-            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.temperature ,cardName = "Temperature", normalRange = "Normal: 97-99")
-            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.wind,cardName = "Respiration", normalRange = "Normal: 12-20")
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp) // consistent spacing
-        ) {
-            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.blood_drop,cardName = "Oxygen", normalRange = "Normal: >95")
-            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.weight,cardName = "Weight", normalRange = "Normal: 50-80")
-        }
-    }
+//    Column(
+//        modifier = modifier
+//            .fillMaxWidth()
+//            .padding(4.dp) // increased from 4.dp
+//            .background(Color(0xffFFFFFF)),
+//        verticalArrangement = Arrangement.spacedBy(4.dp) // increased from 8.dp
+//    ) {
+//        Row(
+//            verticalAlignment = Alignment.CenterVertically,
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.spacedBy(4.dp) // consistent spacing
+//        ) {
+//            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.heart, normalRange = "Normal: 60-100")
+//            CurrentVitalCard(modifier = Modifier.weight(1f) ,cardName = "BP", normalRange = "Normal: 120-80")
+//        }
+//        Row(
+//            verticalAlignment = Alignment.CenterVertically,
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.spacedBy(4.dp) // consistent spacing
+//        ) {
+//            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.temperature ,cardName = "Temperature", normalRange = "Normal: 97-99")
+//            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.wind,cardName = "Respiration", normalRange = "Normal: 12-20")
+//        }
+//        Row(
+//            verticalAlignment = Alignment.CenterVertically,
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.spacedBy(4.dp) // consistent spacing
+//        ) {
+//            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.blood_drop,cardName = "Oxygen", normalRange = "Normal: >95")
+//            CurrentVitalCard(modifier = Modifier.weight(1f), cardIcon = R.drawable.weight,cardName = "Weight", normalRange = "Normal: 50-80")
+//        }
+//    }
 }
 
 

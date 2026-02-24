@@ -39,6 +39,8 @@ import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.StartConsulting.AddSymptomScreen
 import com.example.happydocx.ui.Screens.StartConsulting.InvoicesScreen
 import com.example.happydocx.ui.Screens.StartConsulting.StartConsultingScreen
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewVitalSignsScreen
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.BasicInfoOfPatient
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
@@ -49,6 +51,7 @@ import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -70,9 +73,10 @@ fun NavigationGraph() {
     )
     val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
 
-    val SavePatientGeneralViewModel : SavePatientViewModel = viewModel()
-    val getTimeSlotsViewModel : GetTimeSlotsForAppointmentViewModel = viewModel()
-
+    val SavePatientGeneralViewModel: SavePatientViewModel = viewModel()
+    val getTimeSlotsViewModel: GetTimeSlotsForAppointmentViewModel = viewModel()
+    // update version
+    val startConsultingViewModel: StartConsultingViewModel = viewModel()
     NavHost(
         startDestination = "Login",
         navController = navController
@@ -89,33 +93,48 @@ fun NavigationGraph() {
             arguments = listOf(navArgument("doctorId") { type = NavType.StringType })
         ) { backStackEntry ->
             val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
-            Form_One_Screen(doctorId = doctorId, navController = navController, viewModel = sharedViewModel)
+            Form_One_Screen(
+                doctorId = doctorId,
+                navController = navController,
+                viewModel = sharedViewModel
+            )
         }
         composable(
             route = "second_form/{doctorId}",
             arguments = listOf(navArgument("doctorId") { type = NavType.StringType })
         ) { backStackEntry ->
             val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
-            Form_Two_Screen(doctorId = doctorId, navController = navController, viewModel = sharedViewModel)
+            Form_Two_Screen(
+                doctorId = doctorId,
+                navController = navController,
+                viewModel = sharedViewModel
+            )
         }
-        composable("AppointmentsScreen/{token}",
+        composable(
+            "AppointmentsScreen/{token}",
             arguments = listOf(
-                navArgument("token"){
+                navArgument("token") {
                     type = NavType.StringType
                     nullable = false
                 }
-            )) {backStackEntry->
-            val token_one = backStackEntry.arguments?.getString("token")?:""
+            )) { backStackEntry ->
+            val token_one = backStackEntry.arguments?.getString("token") ?: ""
             Log.d("DEBUG_NAV", "Navigation: Token = $token_one")
-            DoctorAppointmentScreen(token = token_one, navController = navController,viewModel = doctorAppointmentViewModel)
+            DoctorAppointmentScreen(
+                token = token_one,
+                navController = navController,
+                viewModel = doctorAppointmentViewModel
+            )
         }
         // patient list screen.
-        composable("patientScreen/{token}",
-            arguments = listOf(navArgument("token"){type = NavType.StringType
+        composable(
+            "patientScreen/{token}",
+            arguments = listOf(navArgument("token") {
+                type = NavType.StringType
                 nullable = false
             }
-            )){backStackEntry->
-            val tokenOne = backStackEntry.arguments?.getString("token")?:""
+            )) { backStackEntry ->
+            val tokenOne = backStackEntry.arguments?.getString("token") ?: ""
 
             val patientListViewModel: PatientListViewModel = viewModel(
                 factory = PatientListViewModelFactory(context)
@@ -129,49 +148,48 @@ fun NavigationGraph() {
         composable(
             route = "addSymptoms/{token}/{patientId}/{appointmentId}",
             arguments = listOf(
-                navArgument("token"){type = NavType.StringType},
-                navArgument("patientId"){type = NavType.StringType},
-                navArgument("appointmentId"){type = NavType.StringType}
+                navArgument("token") { type = NavType.StringType },
+                navArgument("patientId") { type = NavType.StringType },
+                navArgument("appointmentId") { type = NavType.StringType }
             )
         )
-            {backStack->
-                val token = backStack.arguments?.getString("token")?:""
-                val patientId = backStack.arguments?.getString("patientId")?:""
-                val appointmentId = backStack.arguments?.getString("appointmentId")?:""
+        { backStack ->
+            val token = backStack.arguments?.getString("token") ?: ""
+            val patientId = backStack.arguments?.getString("patientId") ?: ""
+            val appointmentId = backStack.arguments?.getString("appointmentId") ?: ""
             AddSymptomScreen(
                 viewModel = BasicPatientInformationViewModel,
                 navController = navController,
                 token = token,
                 patinetId = patientId,
                 appointmentId = appointmentId
-                )
+            )
         }
 
-        composable(route = "invoiceScreen"){
+        composable(route = "invoiceScreen") {
             InvoicesScreen()
         }
-            composable(
-                route = "SartConsultationScreen/{patientId}/{token}/{appointmentId}",
-                arguments = listOf(
-                    navArgument("patientId"){type = NavType.StringType},
-                    navArgument("token") { type = NavType.StringType },
-                    navArgument("appointmentId") { type = NavType.StringType }
-                )
-            ) {
-                backStack->
-                val patientId = backStack.arguments?.getString("patientId")?:""
-                val token = backStack.arguments?.getString("token")?:""
-                val appointmentId = backStack.arguments?.getString("appointmentId")?:""
-
-                StartConsultingScreen(
-                    viewModel = BasicPatientInformationViewModel,
-                    navController = navController ,
-                    patientId = patientId,
-                    token = token,
-                    appointmentID = appointmentId,
-                    documentViewModel = documentUploadViewModel
-                )
-            }
+//        composable(
+//            route = "SartConsultationScreen/{patientId}/{token}/{appointmentId}",
+//            arguments = listOf(
+//                navArgument("patientId") { type = NavType.StringType },
+//                navArgument("token") { type = NavType.StringType },
+//                navArgument("appointmentId") { type = NavType.StringType }
+//            )
+//        ) { backStack ->
+//            val patientId = backStack.arguments?.getString("patientId") ?: ""
+//            val token = backStack.arguments?.getString("token") ?: ""
+//            val appointmentId = backStack.arguments?.getString("appointmentId") ?: ""
+//
+//            StartConsultingScreen(
+//                viewModel = BasicPatientInformationViewModel,
+//                navController = navController,
+//                patientId = patientId,
+//                token = token,
+//                appointmentID = appointmentId,
+//                documentViewModel = documentUploadViewModel
+//            )
+//        }
         composable(
             "NewPage/{patientId}/{token}",
             arguments = listOf(
@@ -189,29 +207,34 @@ fun NavigationGraph() {
         composable(
             route = "AddNewPatientScreen/{token}",
             arguments = listOf(
-                navArgument("token") {type = NavType.StringType}
+                navArgument("token") { type = NavType.StringType }
             )
-        ) {backStackEntry->
-            val token = backStackEntry.arguments?.getString("token")?:""
-            AddNewPatientScreen(navController = navController,viewModel = SavePatientGeneralViewModel,token = token)
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            AddNewPatientScreen(
+                navController = navController,
+                viewModel = SavePatientGeneralViewModel,
+                token = token
+            )
         }
 
-        composable (route = "scheduleAppointmentScreen/{token}/{patientId}/{perfectPatientId}/{firstName}/{middleName}/{lastName}",
+        composable(
+            route = "scheduleAppointmentScreen/{token}/{patientId}/{perfectPatientId}/{firstName}/{middleName}/{lastName}",
             arguments = listOf(
-                navArgument(name = "token"){type = NavType.StringType},
-                navArgument(name = "patientId"){type = NavType.StringType},
-                navArgument(name = "perfectPatientId"){type = NavType.StringType},
-                navArgument(name = "firstName"){type = NavType.StringType},
-                navArgument(name = "middleName"){type = NavType.StringType},
-                navArgument(name = "lastName"){type = NavType.StringType}
+                navArgument(name = "token") { type = NavType.StringType },
+                navArgument(name = "patientId") { type = NavType.StringType },
+                navArgument(name = "perfectPatientId") { type = NavType.StringType },
+                navArgument(name = "firstName") { type = NavType.StringType },
+                navArgument(name = "middleName") { type = NavType.StringType },
+                navArgument(name = "lastName") { type = NavType.StringType }
             )
-        ){backStackEntry->
-            val token = backStackEntry.arguments?.getString("token")?:""
-            val patientId  = backStackEntry.arguments?.getString("patientId")?:""
-            val perfectPatientId = backStackEntry.arguments?.getString("perfectPatientId")?:""
-            val firstName  = backStackEntry.arguments?.getString("firstName")?:""
-            val middleName  = backStackEntry.arguments?.getString("middleName")?:""
-            val lastName  = backStackEntry.arguments?.getString("lastName")?:""
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
+            val perfectPatientId = backStackEntry.arguments?.getString("perfectPatientId") ?: ""
+            val firstName = backStackEntry.arguments?.getString("firstName") ?: ""
+            val middleName = backStackEntry.arguments?.getString("middleName") ?: ""
+            val lastName = backStackEntry.arguments?.getString("lastName") ?: ""
 
             ScheduleAppointmentScreen(
                 navController = navController,
@@ -222,22 +245,43 @@ fun NavigationGraph() {
                 patientFirstName = firstName,
                 patientMiddleName = middleName,
                 patientLastName = lastName
-                )
+            )
         }
 
         // forgot password screen enter email.
-        composable(route = "forgotPasswordScreen"){
+        composable(route = "forgotPasswordScreen") {
             ForgotPasswordScreen(navController = navController)
         }
 
-        composable(route = "updatePasswordScreen"){
+        composable(route = "updatePasswordScreen") {
             UpdatePasswordScreen(navController = navController)
         }
+        //--------------------new Consulting Screen-----------------------------------------------//
+        composable(
+            route = "StartConsultation/{token}/{appointmentId}", arguments = listOf(
+                navArgument(name = "token") { type = NavType.StringType },
+                navArgument(name = "appointmentId") { type = NavType.StringType },
+            )) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            val appointmentId = backStackEntry.arguments?.getString("appointmentId") ?: ""
+            BasicInfoOfPatient(
+                startConsultingViewModel = startConsultingViewModel,
+                token = token,
+                appointmentId = appointmentId,
+                navController = navController,
+            )
+        }
+
+        composable(route = "addNewVitalSigns") {backStackEntry ->
+            AddNewVitalSignsScreen(
+                navController = navController,
+                startConsultingViewModel = startConsultingViewModel
+            )
+        }
+        //--------------------new Consulting Screen-----------------------------------------------//
 
     }
 }
-
-
 
 
 // custom top bar in Appointment screen
@@ -246,7 +290,7 @@ fun NavigationGraph() {
 fun AppointmentSearchBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    modifier : Modifier = Modifier
+    modifier: Modifier = Modifier
 ) {
 
     SearchBar(
@@ -288,6 +332,6 @@ fun AppointmentSearchBar(
             containerColor = Color(0xFFF3F4F6),
         ),
         tonalElevation = 0.dp
-    ){}
+    ) {}
 }
 
