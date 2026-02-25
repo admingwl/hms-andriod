@@ -3,7 +3,9 @@ package com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Re
 import android.util.Log
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Network.ApiService
@@ -19,7 +21,6 @@ class StartConsultingRepo {
         token:String,
         appointmentId:String
     ): Result<AllVitalSignsResponse>{
-
        return try{
             val result = apiService.allMedicalRecords(
                 token =  "Bearer $token" ,
@@ -69,4 +70,47 @@ class StartConsultingRepo {
         }
     }
 
+
+    suspend fun currentMedications(
+        token:String,
+        appointmentId:String
+    ):Result<CurrentMedicationResponse>{
+        return try{
+            val result = apiService.getCurrentMedication(
+                token =  "Bearer $token" ,
+                appointmentId = appointmentId
+            )
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e:Exception){
+            Result.failure(e)
+        }
+    }
+
+    // function for getting all Lab results
+    suspend fun labResults(
+        token:String,
+        patientId:String
+    ): Result<LabResultResponse>{
+        return try{
+            val result = apiService.getCurrentLabResult(
+                token =  "Bearer $token",
+                patientId = patientId
+            )
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e:Exception){
+            Result.failure(e)
+        }
+    }
 }

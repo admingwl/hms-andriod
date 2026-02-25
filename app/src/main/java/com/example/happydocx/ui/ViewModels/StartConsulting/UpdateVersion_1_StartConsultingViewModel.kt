@@ -5,8 +5,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.Vitals
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Request_Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
@@ -82,6 +84,14 @@ class StartConsultingViewModel : ViewModel() {
     // network state for save Vitals for patient
     private val saveVitals = MutableStateFlow<SaveVital_SignsUiState>(SaveVital_SignsUiState.Idle)
     val _saveVitals = saveVitals.asStateFlow()
+
+    // network state for list of current medications
+    private val currentMedicationState = MutableStateFlow<CurrentMedicationListUiState>(CurrentMedicationListUiState.Idle)
+    val _currentMedicationState = currentMedicationState.asStateFlow()
+
+    // get lab results state network
+    private val labResultState = MutableStateFlow<CurrentLabResultUiState>(CurrentLabResultUiState.Idle)
+    val _labResultState = labResultState.asStateFlow()
 
     // function to get the medical records
     suspend fun getAllMedicalRecords(
@@ -188,6 +198,59 @@ class StartConsultingViewModel : ViewModel() {
     }
 
 
+    // get list of current Medications.
+    fun getCurrentMedications(
+        token:String,
+        appointmentId:String
+    ){
+        viewModelScope.launch {
+            currentMedicationState.value = CurrentMedicationListUiState.Loading
+            try {
+                val result = repo.currentMedications(
+                    token = token,
+                    appointmentId = appointmentId
+                )
+                result.onSuccess { result->
+                    currentMedicationState.value = CurrentMedicationListUiState.Success(data = result)
+                }.onFailure { errorMessage->
+                    currentMedicationState.value = CurrentMedicationListUiState.Error(
+                        message = errorMessage.message ?: "Failed to load Medical details....")
+                }
+            }catch(e:Exception){
+                currentMedicationState.value = CurrentMedicationListUiState.Error(
+                    message = e.message ?: "An Unexpected error occurred"
+                )
+            }
+        }
+    }
+
+    // function to get the labResults
+    fun getAllLabResults(
+        token:String,
+        patientId:String
+    ){
+        viewModelScope.launch {
+            labResultState.value = CurrentLabResultUiState.Loading
+
+            try {
+                val result = repo.labResults(
+                    token = token,
+                    patientId = patientId
+                )
+                result.onSuccess { result->
+                    labResultState.value = CurrentLabResultUiState.Success(data = result)
+                }.onFailure { errorMessage->
+                    labResultState.value = CurrentLabResultUiState.Error(
+                        message = errorMessage.message ?: "Failed to load Medical details....")
+                }
+            }catch(e:Exception){
+                labResultState.value = CurrentLabResultUiState.Error(
+                    message = e.message ?: "An Unexpected error occurred"
+                )
+            }
+
+        }
+    }
 }
 
 sealed class AllMedicalRecordUiState {
@@ -202,4 +265,20 @@ sealed class SaveVital_SignsUiState {
     object Loading : SaveVital_SignsUiState()
     data class Success(val data: Save_vitalSigns_Response_Body) : SaveVital_SignsUiState()
     data class Error(val message: String) : SaveVital_SignsUiState()
+}
+
+// sealed class for list of current Medications
+sealed class CurrentMedicationListUiState{
+    object Idle : CurrentMedicationListUiState()
+    object Loading : CurrentMedicationListUiState()
+    data class Success(val data: CurrentMedicationResponse) : CurrentMedicationListUiState()
+    data class Error(val message: String) : CurrentMedicationListUiState()
+}
+
+// lab result list ui state
+sealed class CurrentLabResultUiState{
+    object Idle : CurrentLabResultUiState()
+    object Loading : CurrentLabResultUiState()
+    data class Success(val data: LabResultResponse) : CurrentLabResultUiState()
+    data class Error(val message: String) : CurrentLabResultUiState()
 }

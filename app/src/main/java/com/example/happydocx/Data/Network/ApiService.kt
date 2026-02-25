@@ -21,7 +21,9 @@ import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSym
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
@@ -224,5 +226,17 @@ interface ApiService{
         @Path("appointmentId") appointmentId:String
     ): Response<Save_vitalSigns_Response_Body>
 
+    // get current Medications list
+    @GET("api/v1/patient/medications/{appointmentId}")
+    suspend fun getCurrentMedication(
+        @Header("Authorization") token:String,
+        @Path("appointmentId") appointmentId:String
+    ): Response<CurrentMedicationResponse>
+
+    @GET("api/v1/lab-results/by-patient/{patientId}")
+    suspend fun getCurrentLabResult(
+        @Header("Authorization")token:String,
+        @Path("patientId")patientId:String
+    ): Response<LabResultResponse>
    //------------------------update patient Consulting Screen-----------------------------------------
 }

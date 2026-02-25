@@ -81,7 +81,9 @@ fun BasicInfoOfPatient(
     Scaffold(
         topBar = {
             ParticularPatientAppointmentInfoTopAppBar(
-                onArrowBackClicked = {},
+                onArrowBackClicked = {
+                    navController.popBackStack()
+                },
                 onMenuBarIconClicked = {})
         }
     ) { paddingValues ->
