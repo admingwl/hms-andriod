@@ -13,6 +13,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Repo.StartConsultingRepo
+import com.example.happydocx.ui.uiStates.StartConsulting.AddMedicationUpdated1
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiStateUpdated1
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +27,7 @@ class StartConsultingViewModel : ViewModel() {
     // UI state of start Consultation new Version
    private val startConsultationUpdatedVersion = MutableStateFlow(StartConsultingUiStateUpdated1())
     val _startConsultationfUpdatedVersion = startConsultationUpdatedVersion.asStateFlow()
+
 
     fun on_Heart_RateChanged(newHeartRate:String){
         startConsultationUpdatedVersion.update { it->
@@ -73,6 +75,67 @@ class StartConsultingViewModel : ViewModel() {
         startConsultationUpdatedVersion.update { it->
             it.copy(
                 weight = newWeight
+            )
+        }
+    }
+
+    // ui state of add medications.
+    private val addMedicationUpdatedVersion = MutableStateFlow(AddMedicationUpdated1())
+    val _addMedicationUpdateVersion = addMedicationUpdatedVersion.asStateFlow()
+
+    fun onMedicationNameChanged(newMedication:String){
+        addMedicationUpdatedVersion.update { it->
+            it.copy(
+                medicationName = newMedication
+            )
+        }
+    }
+    fun onDosageChanged(newDosage:String){
+        addMedicationUpdatedVersion.update { it->
+            it.copy(
+                medicationDosage = newDosage
+            )
+        }
+    }
+    fun onFrequencyChanged(newFrequency:String){
+        addMedicationUpdatedVersion.update { it->
+            it.copy(
+                medicationFrequency = newFrequency
+            )
+        }
+    }
+    fun onDurationChanged( newDuration:String){
+      addMedicationUpdatedVersion.update { it->
+          it.copy(
+              medicationDuration = newDuration
+          )
+      }
+    }
+    fun onRouteChanged(newRoute:String){
+        addMedicationUpdatedVersion.update { it->
+            it.copy(
+                medicationRoute = newRoute
+            )
+        }
+    }
+    fun onTimingChanged(newTiming:String) {
+        addMedicationUpdatedVersion.update { it ->
+            it.copy(
+                medicationTiming = newTiming
+            )
+        }
+    }
+    fun onDateChanged(newDate:String) {
+        addMedicationUpdatedVersion.update { it ->
+            it.copy(
+            medicationDate = newDate
+            )
+        }
+    }
+    fun onNotesChanged(newNotes:String){
+        addMedicationUpdatedVersion.update { it->
+            it.copy(
+                medicationNotes = newNotes
             )
         }
     }

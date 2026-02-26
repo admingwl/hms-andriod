@@ -39,6 +39,7 @@ import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.StartConsulting.AddSymptomScreen
 import com.example.happydocx.ui.Screens.StartConsulting.InvoicesScreen
 import com.example.happydocx.ui.Screens.StartConsulting.StartConsultingScreen
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewMedicationScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewVitalSignsScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.BasicInfoOfPatient
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
@@ -298,6 +299,10 @@ fun NavigationGraph() {
                 token = token,
                 appointmentId = appointmentId
             )
+        }
+
+        composable("addMedication") {
+            AddNewMedicationScreen(navController = navController, startConsultingViewModel = startConsultingViewModel)
         }
         //--------------------new Consulting Screen-----------------------------------------------//
 

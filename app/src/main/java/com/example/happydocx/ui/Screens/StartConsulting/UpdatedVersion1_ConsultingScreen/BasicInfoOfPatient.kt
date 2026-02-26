@@ -20,15 +20,22 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -39,13 +46,16 @@ import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -62,10 +72,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.R
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVital_SignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @Composable
@@ -75,8 +89,8 @@ fun BasicInfoOfPatient(
     appointmentId: String,
     startConsultingViewModel: StartConsultingViewModel,
     navController: NavController,
-    patientId:String,
-    doctorId:String
+    patientId: String,
+    doctorId: String
 ) {
     Scaffold(
         topBar = {
@@ -349,7 +363,7 @@ fun PatientAppointmentInfoTabScreen(
     startConsultingViewModel: StartConsultingViewModel,
     navController: NavController,
     patientId: String,
-    doctorId:String
+    doctorId: String
 ) {
 
     val tabsOptions = listOf<String>(
@@ -414,12 +428,13 @@ fun AddNewVitalSignsScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     startConsultingViewModel: StartConsultingViewModel,
-    patientId:String,
-    appointmentId:String,
-    token:String,
-    doctorId:String
+    patientId: String,
+    appointmentId: String,
+    token: String,
+    doctorId: String
 ) {
-    val startConsultingState = startConsultingViewModel._startConsultationfUpdatedVersion.collectAsStateWithLifecycle().value
+    val startConsultingState =
+        startConsultingViewModel._startConsultationfUpdatedVersion.collectAsStateWithLifecycle().value
     // get the network state
     val saveVitalsState = startConsultingViewModel._saveVitals.collectAsStateWithLifecycle().value
     val context = LocalContext.current
@@ -430,9 +445,12 @@ fun AddNewVitalSignsScreen(
                 Toast.makeText(context, "Vitals saved successfully!", Toast.LENGTH_SHORT).show()
                 navController.popBackStack() // Go back to Overview after saving
             }
+
             is SaveVital_SignsUiState.Error -> {
-                Toast.makeText(context, "Error: ${saveVitalsState.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Error: ${saveVitalsState.message}", Toast.LENGTH_LONG)
+                    .show()
             }
+
             else -> {}
         }
     }
@@ -445,7 +463,7 @@ fun AddNewVitalSignsScreen(
                 ),
                 navigationIcon = {
                     IconButton(
-                        onClick = {navController.popBackStack()}
+                        onClick = { navController.popBackStack() }
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
@@ -453,7 +471,7 @@ fun AddNewVitalSignsScreen(
                         )
                     }
                 }
-                )
+            )
         },
         containerColor = Color(0xffFBFCFD)
     ) { paddingValues ->
@@ -473,7 +491,7 @@ fun AddNewVitalSignsScreen(
             )
             OutlinedTextField(
                 value = startConsultingState.heartRate,
-                onValueChange = {startConsultingViewModel.on_Heart_RateChanged(it)},
+                onValueChange = { startConsultingViewModel.on_Heart_RateChanged(it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("72 bpm", color = Color(0xffF5EEEF)) },
                 colors = TextFieldDefaults.colors(
@@ -492,7 +510,7 @@ fun AddNewVitalSignsScreen(
             )
             OutlinedTextField(
                 value = startConsultingState.oxygenSaturation,
-                onValueChange = {startConsultingViewModel.on_Oxygen_Saturation_Changed(it)},
+                onValueChange = { startConsultingViewModel.on_Oxygen_Saturation_Changed(it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("98 %", color = Color(0xffF5EEEF)) },
                 colors = TextFieldDefaults.colors(
@@ -511,7 +529,7 @@ fun AddNewVitalSignsScreen(
             )
             OutlinedTextField(
                 value = startConsultingState.systolicBp,
-                onValueChange = {startConsultingViewModel.on_SystolicBpChanged(it)},
+                onValueChange = { startConsultingViewModel.on_SystolicBpChanged(it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("mmHg", color = Color(0xffF5EEEF)) },
                 colors = TextFieldDefaults.colors(
@@ -530,7 +548,7 @@ fun AddNewVitalSignsScreen(
             )
             OutlinedTextField(
                 value = startConsultingState.diastolicBp,
-                onValueChange = {startConsultingViewModel.on_DystolicBpChanged(it)},
+                onValueChange = { startConsultingViewModel.on_DystolicBpChanged(it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("mmHg", color = Color(0xffF5EEEF)) },
                 colors = TextFieldDefaults.colors(
@@ -549,7 +567,7 @@ fun AddNewVitalSignsScreen(
             )
             OutlinedTextField(
                 value = startConsultingState.respiratoryRate,
-                onValueChange = {startConsultingViewModel.on_RespiratoryRateChanged(it)},
+                onValueChange = { startConsultingViewModel.on_RespiratoryRateChanged(it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("/min", color = Color(0xffF5EEEF)) },
                 colors = TextFieldDefaults.colors(
@@ -568,7 +586,7 @@ fun AddNewVitalSignsScreen(
             )
             OutlinedTextField(
                 value = startConsultingState.temperature,
-                onValueChange = {startConsultingViewModel.on_TemperatureChanged(it)},
+                onValueChange = { startConsultingViewModel.on_TemperatureChanged(it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("°C", color = Color(0xffF5EEEF)) },
                 colors = TextFieldDefaults.colors(
@@ -587,7 +605,7 @@ fun AddNewVitalSignsScreen(
             )
             OutlinedTextField(
                 value = startConsultingState.weight,
-                onValueChange = {startConsultingViewModel.on_WeightChanged(it)},
+                onValueChange = { startConsultingViewModel.on_WeightChanged(it) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("KG", color = Color(0xffF5EEEF)) },
                 colors = TextFieldDefaults.colors(
@@ -600,30 +618,32 @@ fun AddNewVitalSignsScreen(
             )
             Spacer(Modifier.height(10.dp))
             Row(
-                modifier = Modifier.fillMaxWidth().padding(4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    onClick = {navController.popBackStack()},
+                    onClick = { navController.popBackStack() },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(4.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff1D4ED8)
                     )
                 ) {
-                    Text("Cancel",color =Color.White)
+                    Text("Cancel", color = Color.White)
                 }
                 Spacer(Modifier.width(4.dp))
                 Button(
                     onClick = {
-                      scope.launch {
-                          startConsultingViewModel.Save_patient_Vitals(
-                              token = token,
-                              doctor = doctorId,
-                              patient = patientId,
-                              appointment = appointmentId
-                          )
-                      }
+                        scope.launch {
+                            startConsultingViewModel.Save_patient_Vitals(
+                                token = token,
+                                doctor = doctorId,
+                                patient = patientId,
+                                appointment = appointmentId
+                            )
+                        }
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(4.dp),
@@ -631,7 +651,7 @@ fun AddNewVitalSignsScreen(
                         containerColor = Color(0xff1D4ED8)
                     )
                 ) {
-                    Text("Save Vitals",color =Color.White)
+                    Text("Save Vitals", color = Color.White)
                 }
             }
         }
@@ -639,9 +659,393 @@ fun AddNewVitalSignsScreen(
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddNewMedicationScreen(modifier: Modifier = Modifier) {
+fun AddNewMedicationScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    startConsultingViewModel: StartConsultingViewModel
+) {
+    val addMedicationUiState =
+        startConsultingViewModel._addMedicationUpdateVersion.collectAsStateWithLifecycle().value
 
+    val frequencyList = listOf(
+        "Once daily",
+        "Twice daily",
+        "Three times daily",
+        "Every four hrs",
+        "As needed"
+    )
+    val routesList = listOf(
+        "Oral(PO)",
+        "Intravenous(IV)",
+        "Intramuscular(IM)",
+        "Subcutaneous(SC)",
+        "Topical",
+    )
+
+    val timingList = listOf<String>(
+        "Before Meal",
+        "After Meal",
+        "With Food",
+        "Empty Stomach",
+        "At BedTime"
+    )
+    var datePickerState by rememberSaveable { mutableStateOf(false) }
+    val datePickerStateRemember = rememberDatePickerState()
+    var frequencyExpandState by rememberSaveable { mutableStateOf(false) }
+    var routExpandState by rememberSaveable { mutableStateOf(false) }
+    var timingExpandState by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Add Medications") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xff2563EB)
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() }
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                }
+            )
+        },
+        containerColor = Color(0xffFBFCFD)
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .padding(12.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .background(Color(0xffFBFCFD))
+        ) {
+            Text(
+                text = "Medication Name",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = addMedicationUiState.medicationName,
+                onValueChange = { startConsultingViewModel.onMedicationNameChanged(it) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("eg. Amoxicillin", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Text(
+                text = "Dosage",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = addMedicationUiState.medicationDosage,
+                onValueChange = { startConsultingViewModel.onDosageChanged(it) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("72 bpm", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Text(
+                text = "Frequency",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            ExposedDropdownMenuBox(
+                expanded = frequencyExpandState,
+                onExpandedChange = { frequencyExpandState = !frequencyExpandState },
+            ) {
+                OutlinedTextField(
+                    value = addMedicationUiState.medicationFrequency,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Twice Daily", color = Color(0xffF5EEEF)) },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                )
+                ExposedDropdownMenu(
+                    expanded = frequencyExpandState,
+                    onDismissRequest = { frequencyExpandState = !frequencyExpandState },
+                    containerColor = Color(0xffF8FAFC),
+                    matchTextFieldWidth = true,
+                ) {
+                    frequencyList.forEach { it ->
+                        DropdownMenuItem(
+                            text = { Text(it, color = Color.Black) },
+                            onClick = {
+                                startConsultingViewModel.onFrequencyChanged(it)
+                                frequencyExpandState = false
+                            }
+                        )
+                    }
+                }
+            }
+            Text(
+                text = "Duration",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = addMedicationUiState.medicationDuration,
+                onValueChange = { startConsultingViewModel.onDurationChanged(it) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("72 bpm", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+
+            Text(
+                text = "Route",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            ExposedDropdownMenuBox(
+                expanded = routExpandState,
+                onExpandedChange = { routExpandState = !routExpandState },
+            ) {
+                OutlinedTextField(
+                    value = addMedicationUiState.medicationRoute,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Select Route", color = Color(0xffF5EEEF)) },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                )
+                ExposedDropdownMenu(
+                    expanded = routExpandState,
+                    onDismissRequest = { routExpandState = !routExpandState },
+                    containerColor = Color(0xffF8FAFC),
+                    matchTextFieldWidth = true,
+                ) {
+                    routesList.forEach { it ->
+                        DropdownMenuItem(
+                            text = { Text(it, color = Color.Black) },
+                            onClick = {
+                                startConsultingViewModel.onRouteChanged(it)
+                                routExpandState = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = "Timing",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            ExposedDropdownMenuBox(
+                expanded = timingExpandState,
+                onExpandedChange = { timingExpandState = !timingExpandState },
+            ) {
+                OutlinedTextField(
+                    value = addMedicationUiState.medicationTiming,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {
+
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                )
+                ExposedDropdownMenu(
+                    expanded = timingExpandState,
+                    onDismissRequest = { timingExpandState = !timingExpandState },
+                    containerColor = Color(0xffF8FAFC),
+                    matchTextFieldWidth = true,
+                ) {
+                    timingList.forEach { it ->
+                        DropdownMenuItem(
+                            text = { Text(it, color = Color.Black) },
+                            onClick = {
+                                startConsultingViewModel.onTimingChanged(it)
+                                timingExpandState = false
+                            }
+                        )
+                    }
+                }
+            }
+            Text(
+                text = "Start Date",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = addMedicationUiState.medicationDate,
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                trailingIcon = {
+                    IconButton(
+                        onClick = { datePickerState = !datePickerState }
+                    ) {
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+            if (datePickerState) {
+                DatePickerDialog(
+                    shape = RoundedCornerShape(30.dp),
+                    colors = DatePickerDefaults.colors(
+                        // add color to date picker dialog
+                        containerColor = Color(0xffebedfc)
+                    ),
+                    onDismissRequest = { datePickerState = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            // Convert milliseconds to formatted date string
+                            val selectedMillis = datePickerStateRemember.selectedDateMillis
+                            if (selectedMillis != null) {
+                                val formattedDate =
+                                    SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                        .format(Date(selectedMillis))
+                                startConsultingViewModel.onDateChanged(formattedDate) //  Save to ViewModel
+                            }
+                            datePickerState = false
+                        }) { Text("OK", color = Color.Black) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { datePickerState = false }) {
+                            Text("Cancel", color = Color.Black)
+                        }
+                    }
+                ) {
+                    DatePicker(
+                        state = datePickerStateRemember,
+                        colors = DatePickerDefaults.colors(
+                            containerColor = Color(0xffebedfc),
+                            dayContentColor = Color.Black,
+                            titleContentColor = Color.Black,
+                            weekdayContentColor = Color.Black,
+                            headlineContentColor = Color.Black,
+                            navigationContentColor = Color.Black,
+                            subheadContentColor = Color.Black,
+                            dateTextFieldColors = TextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                unfocusedContainerColor = Color.White,
+                                focusedContainerColor = Color.White
+                            )
+                        )
+                    )
+                }
+            }
+
+
+            Text(
+                text = "Additional Information",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = addMedicationUiState.medicationNotes,
+                onValueChange = { startConsultingViewModel.onNotesChanged(it) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(4.dp)
+            ){
+                Button(
+                    onClick = {},
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1D4ED8)
+                    )
+                ) {
+                    Text("Add Prescription", color = Color.White,modifier = Modifier.padding(4.dp), fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.width(4.dp))
+                Button(
+                    onClick = {},
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1D4ED8)
+                    )
+                ) {
+                    Text("Cancel", color = Color.White,modifier = Modifier.padding(4.dp),fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
 }
 
 @Composable

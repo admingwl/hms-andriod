@@ -99,19 +99,19 @@ fun OverViewScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
-//                    Button(
-//                        onClick = {navController.navigate("addNewVitalSigns/$token/$appointmentId/$patientId/$doctorId")},
-//                        colors = ButtonDefaults.buttonColors(
-//                            containerColor = Color(0xff1D4ED8),
-//                            contentColor = Color.White
-//                        ),
-//                        shape = RoundedCornerShape(4.dp),
-//                        modifier = Modifier.padding(end = 8.dp)
-//                    ) {
-//                        Text(
-//                            text = "Add Vitals"
-//                        )
-//                    }
+                    Button(
+                        onClick = {navController.navigate("addNewVitalSigns/$token/$appointmentId/$patientId/$doctorId")},
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xff1D4ED8),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text(
+                            text = "Add Vitals"
+                        )
+                    }
         }
         when (val state = startConsultingState) {
 
@@ -260,43 +260,44 @@ fun OverViewScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
-//                    Button(
-//                        onClick = {
-//
-//                        },
-//                        colors = ButtonDefaults.buttonColors(
-//                            containerColor = Color(0xff1D4ED8),
-//                            contentColor = Color.White
-//                        ),
-//                        shape = RoundedCornerShape(4.dp),
-//                        modifier = Modifier.padding(end = 8.dp)
-//                    ) {
-//                        Text(
-//                            text = "Add"
-//                        )
-//                    }
+                    Button(
+                        onClick = {
+                          navController.navigate("addMedication")
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xff1D4ED8),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text(
+                            text = "Add"
+                        )
+                    }
         }
         when(val medicationState = state){
             is CurrentMedicationListUiState.Idle -> {}
             is CurrentMedicationListUiState.Loading -> {}
             is CurrentMedicationListUiState.Success -> {
                 val medications = medicationState.data.data
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                     medications.forEach { it ->
-                         CurrentMedicationCard(
-                             medicationName = it.name,
-                             medicationDose = it.dosage,
-                             medicationFrequency = it.frequency,
-                             medicationStarted = "Started: ${DateUtils.gettingOnlyDate(it.startDate)}",
-                             medicationStatus = if (it.active) "Active" else "Inactive"
-                         )
-                     }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    ) {
+                        medications.forEach { it ->
+                            CurrentMedicationCard(
+                                medicationName = it.name,
+                                medicationDose = it.dosage,
+                                medicationFrequency = it.frequency,
+                                medicationStarted = "Started: ${DateUtils.gettingOnlyDate(it.startDate)}",
+                                medicationStatus = if (it.active) "Active" else "Inactive"
+                            )
+                        }
+                    }
                 }
-            }
             else -> {}
         }
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -310,19 +311,19 @@ fun OverViewScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
-//                    Button(
-//                        onClick = {},
-//                        colors = ButtonDefaults.buttonColors(
-//                            containerColor = Color(0xff1D4ED8),
-//                            contentColor = Color.White
-//                        ),
-//                        shape = RoundedCornerShape(4.dp),
-//                        modifier = Modifier.padding(end = 8.dp)
-//                    ) {
-//                        Text(
-//                            text = "Add Result"
-//                        )
-//                    }
+                    Button(
+                        onClick = {},
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xff1D4ED8),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Text(
+                            text = "Add Result"
+                        )
+                    }
         }
         when(val labResultState = labResultState){
             is CurrentLabResultUiState.Idle -> {}
@@ -523,10 +524,12 @@ fun LabResultCard(
                 Box(
                     modifier = Modifier
                         .background(
-                            color =when(status){
+                            color = when (status) {
                                 "high" -> Color(0xffFEF9C3)
-                                "normal"-> Color(0xffF0FDF4)
-                                else -> {Color.Transparent}
+                                "normal" -> Color(0xffF0FDF4)
+                                else -> {
+                                    Color.Transparent
+                                }
                             },
                             shape = RoundedCornerShape(12.dp)
                         )
@@ -585,3 +588,4 @@ fun LabResultCard(
         }
     }
 }
+
