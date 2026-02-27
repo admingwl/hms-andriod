@@ -39,6 +39,9 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.SuggestionChip
@@ -50,10 +53,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,6 +79,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.R
+import com.example.happydocx.ui.Screens.SignUpForms.MyDashedBox
+import com.example.happydocx.ui.ViewModels.StartConsulting.CreateNewMedicationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVital_SignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 import kotlinx.coroutines.launch
@@ -664,10 +671,15 @@ fun AddNewVitalSignsScreen(
 fun AddNewMedicationScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    startConsultingViewModel: StartConsultingViewModel
+    startConsultingViewModel: StartConsultingViewModel,
+    appointmentId: String,
+    token: String
 ) {
     val addMedicationUiState =
         startConsultingViewModel._addMedicationUpdateVersion.collectAsStateWithLifecycle().value
+
+    val networkAddMedicationState =
+        startConsultingViewModel._createNewMedicationState.collectAsStateWithLifecycle().value
 
     val frequencyList = listOf(
         "Once daily",
@@ -696,7 +708,29 @@ fun AddNewMedicationScreen(
     var frequencyExpandState by rememberSaveable { mutableStateOf(false) }
     var routExpandState by rememberSaveable { mutableStateOf(false) }
     var timingExpandState by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
+    LaunchedEffect(networkAddMedicationState) {
+        when (networkAddMedicationState) {
+            is CreateNewMedicationUiState.Success -> {
+                Toast.makeText(context, "Medication added successfully!", Toast.LENGTH_SHORT)
+                    .show()
+                navController.popBackStack()
+            }
+
+            is CreateNewMedicationUiState.Error -> {
+                Toast.makeText(
+                    context,
+                    "Error: ${networkAddMedicationState.message}",
+                    Toast.LENGTH_LONG
+                )
+                    .show()
+            }
+
+            else -> {}
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -964,7 +998,7 @@ fun AddNewMedicationScreen(
                             val selectedMillis = datePickerStateRemember.selectedDateMillis
                             if (selectedMillis != null) {
                                 val formattedDate =
-                                    SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                    SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
                                         .format(Date(selectedMillis))
                                 startConsultingViewModel.onDateChanged(formattedDate) //  Save to ViewModel
                             }
@@ -1020,8 +1054,10 @@ fun AddNewMedicationScreen(
             )
             Spacer(Modifier.height(10.dp))
             Row(
-                modifier = Modifier.fillMaxWidth().padding(4.dp)
-            ){
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
+            ) {
                 Button(
                     onClick = {},
                     modifier = Modifier.weight(1f),
@@ -1030,7 +1066,859 @@ fun AddNewMedicationScreen(
                         containerColor = Color(0xff1D4ED8)
                     )
                 ) {
-                    Text("Add Prescription", color = Color.White,modifier = Modifier.padding(4.dp), fontWeight = FontWeight.Bold)
+                    Text(
+                        "Cancel",
+                        color = Color.White,
+                        modifier = Modifier.padding(4.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                Button(
+                    onClick = {
+                        scope.launch {
+                            startConsultingViewModel.createNewMedication(
+                                token = token,
+                                appointmentId = appointmentId
+                            )
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1D4ED8)
+                    )
+                ) {
+                    Text(
+                        "Add Prescription",
+                        color = Color.White,
+                        modifier = Modifier.padding(4.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddNewLabResultScreen(modifier: Modifier = Modifier, navController: NavController) {
+    var tabIndex by rememberSaveable { mutableIntStateOf(0) }
+    var showFullScreen by rememberSaveable { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val tabsOptions = listOf<String>("Manual Entry", "Upload Report")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Add New Lab Results") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xff2563EB)
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() }
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color(0xffFFFFFF))
+                .padding(8.dp)
+        ) {
+            PrimaryTabRow(
+                selectedTabIndex = tabIndex,
+                containerColor = Color(0xffFFFFFF),
+                contentColor = Color(0xff1E293B),
+            ) {
+                tabsOptions.forEachIndexed { index, title ->
+                    Tab(
+                        text = {
+                            Text(
+                                text = title,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        selected = tabIndex == index,
+                        selectedContentColor = Color(0xff2563EB),
+                        unselectedContentColor = Color(0xff727C86),
+
+                        onClick = {
+                            tabIndex = index
+                            showFullScreen = true  // Open full screen when tab clicked
+                        }
+                    )
+                }
+            }
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (tabIndex) {
+                    0 -> {
+                        ManualEntryScreen()
+                    }
+
+                    1 -> {
+                        UploadReportScreen()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ManualEntryScreen(modifier: Modifier = Modifier) {
+    val datePickerSateRemember = rememberDatePickerState()
+    var datePickerState by remember { mutableStateOf(false) }
+    val statusList = listOf<String>()
+    val scrollSate = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollSate)
+            .background(color = Color(0xffFFFFFF))
+    ) {
+        Text(
+            text = "Test Name",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
+        Text(
+            text = "Result Value",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
+        Text(
+            text = "Unit",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
+        Text(
+            text = "Test Date",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            readOnly = true,
+            placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+            trailingIcon = {
+                IconButton(
+                    onClick = { datePickerState = !datePickerState }
+                ) {
+                    Icon(
+                        Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+        if (datePickerState) {
+            DatePickerDialog(
+                shape = RoundedCornerShape(30.dp),
+                colors = DatePickerDefaults.colors(
+                    // add color to date picker dialog
+                    containerColor = Color(0xffebedfc)
+                ),
+                onDismissRequest = { datePickerState = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        // Convert milliseconds to formatted date string
+                        val selectedMillis = datePickerSateRemember.selectedDateMillis
+                        if (selectedMillis != null) {
+                            val formattedDate =
+                                SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+                                    .format(Date(selectedMillis))
+
+                        }
+                        datePickerState = false
+                    }) { Text("OK", color = Color.Black) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { datePickerState = false }) {
+                        Text("Cancel", color = Color.Black)
+                    }
+                }
+            ) {
+                DatePicker(
+                    state = datePickerSateRemember,
+                    colors = DatePickerDefaults.colors(
+                        containerColor = Color(0xffebedfc),
+                        dayContentColor = Color.Black,
+                        titleContentColor = Color.Black,
+                        weekdayContentColor = Color.Black,
+                        headlineContentColor = Color.Black,
+                        navigationContentColor = Color.Black,
+                        subheadContentColor = Color.Black,
+                        dateTextFieldColors = TextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White
+                        )
+                    )
+                )
+            }
+        }
+        Text(
+            text = "Normal Range",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
+        Text(
+            text = "Status",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        ExposedDropdownMenuBox(
+            expanded = false,
+            onExpandedChange = { },
+        ) {
+            OutlinedTextField(
+                value = "",
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+            )
+            ExposedDropdownMenu(
+                expanded = false,
+                onDismissRequest = {},
+                containerColor = Color(0xffF8FAFC),
+                matchTextFieldWidth = true,
+            ) {
+                statusList.forEach { it ->
+                    DropdownMenuItem(
+                        text = { Text(it, color = Color.Black) },
+                        onClick = {
+
+                        }
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+        ) {
+            Button(
+                onClick = {},
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8)
+                ),
+            ) {
+                Text(
+                    "+ Add Another Test", color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+        ) {
+            Button(
+                onClick = {},
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8)
+                ),
+            ) {
+                Text(
+                    "Cancel", color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(Modifier.width(4.dp))
+            Button(
+                onClick = {},
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8)
+                ),
+            ) {
+                Text(
+                    "Save Result", color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UploadReportScreen(modifier: Modifier = Modifier) {
+    val datePickerStateRemember = rememberDatePickerState()
+    var datePickerSate by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val reportTypeList = listOf(
+        "Blood Work",
+        "Urinalysis",
+        "culture",
+        "Biopsy"
+    )
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(state = scrollState)
+            .background(color = Color(0xffFFFFFF))
+            .padding(8.dp)
+    ) {
+        MyDashedBox(
+            fileType = "image",
+            selectedUri = null,
+            selectedName = null,
+            onFileSelected = { _, _ -> },
+            maxSizeBytes = 2 * 1024 * 1024,// 2MB,
+            fileSizeRecommendation = "PDF, JPG, PNG up to 10MB"
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "Test Date",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            readOnly = true,
+            placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+            trailingIcon = {
+                IconButton(
+                    onClick = { datePickerSate = !datePickerSate }
+                ) {
+                    Icon(
+                        Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+        if (datePickerSate) {
+            DatePickerDialog(
+                shape = RoundedCornerShape(30.dp),
+                colors = DatePickerDefaults.colors(
+                    // add color to date picker dialog
+                    containerColor = Color(0xffebedfc)
+                ),
+                onDismissRequest = { datePickerSate = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        // Convert milliseconds to formatted date string
+                        val selectedMillis = datePickerStateRemember.selectedDateMillis
+                        if (selectedMillis != null) {
+                            val formattedDate =
+                                SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+                                    .format(Date(selectedMillis))
+
+                        }
+                        datePickerSate = false
+                    }) { Text("OK", color = Color.Black) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { datePickerSate = false }) {
+                        Text("Cancel", color = Color.Black)
+                    }
+                }
+            ) {
+                DatePicker(
+                    state = datePickerStateRemember,
+                    colors = DatePickerDefaults.colors(
+                        containerColor = Color(0xffebedfc),
+                        dayContentColor = Color.Black,
+                        titleContentColor = Color.Black,
+                        weekdayContentColor = Color.Black,
+                        headlineContentColor = Color.Black,
+                        navigationContentColor = Color.Black,
+                        subheadContentColor = Color.Black,
+                        dateTextFieldColors = TextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White
+                        )
+                    )
+                )
+            }
+        }
+        Text(
+            text = "Report Type",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        ExposedDropdownMenuBox(
+            expanded = false,
+            onExpandedChange = { },
+        ) {
+            OutlinedTextField(
+                value = "",
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+            )
+            ExposedDropdownMenu(
+                expanded = false,
+                onDismissRequest = {},
+                containerColor = Color(0xffF8FAFC),
+                matchTextFieldWidth = true,
+            ) {
+                reportTypeList.forEach { it ->
+                    DropdownMenuItem(
+                        text = { Text(it, color = Color.Black) },
+                        onClick = {}
+                    )
+                }
+            }
+        }
+        Text(
+            text = "Laboratory Name",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
+        Text(
+            text = "Notes",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+        ) {
+            Button(
+                onClick = {},
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8)
+                ),
+            ) {
+                Text(
+                    "Cancel", color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(Modifier.width(4.dp))
+            Button(
+                onClick = {},
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8)
+                ),
+            ) {
+                Text(
+                    "Save Result", color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun AddNewOrderTestScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController = rememberNavController()
+) {
+val urgencyList = listOf<String>(
+    "Routine","Urgent","STAT"
+)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Add New Lab Results") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xff2563EB),
+                    titleContentColor = Color.White
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() }
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(color = Color(0xffFFFFFF))
+                .verticalScroll(rememberScrollState())
+        ) {
+            Column(modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()) {
+                Text(
+                    text = "Order Tests & Referrals",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    color = Color.Black,
+                )
+                Text(
+                    text = "Select labs, imaging, or create referrals",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                text = "Select labs, imaging, or create referrals",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            Spacer(Modifier.height(4.dp))
+            AddNewOrderTestScreenRadioButtonCard(modifier = Modifier.padding(8.dp))
+            AddNewOrderTestScreenRadioButtonCard(modifier = Modifier.padding(8.dp))
+            AddNewOrderTestScreenRadioButtonCard(modifier = Modifier.padding(8.dp))
+            AddNewOrderTestScreenRadioButtonCard(modifier = Modifier.padding(8.dp))
+            AddNewOrderTestScreenRadioButtonCard(modifier = Modifier.padding(8.dp))
+            AddNewOrderTestScreenRadioButtonCard(modifier = Modifier.padding(8.dp))
+            AddNewOrderTestScreenRadioButtonCard(modifier = Modifier.padding(8.dp))
+            AddNewOrderTestScreenRadioButtonCard(modifier = Modifier.padding(8.dp))
+
+            Spacer(Modifier.height(10.dp))
+
+            Column(modifier = Modifier.padding(8.dp,).background(color = Color(0xffFFFFFF))){
+                Text(
+                    text = "Other / Custom Tests",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(8.dp)
+                )
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+
+                Text(
+                    text = "Imaging Studies",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(8.dp)
+                )
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+
+                Text(
+                    text = "Referrals",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(8.dp)
+                )
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+
+                Text(
+                    text = "Urgency",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(8.dp)
+                )
+                ExposedDropdownMenuBox(
+                    expanded = false,
+                    onExpandedChange = { },
+                ) {
+                    OutlinedTextField(
+                        value = "",
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xffF8FAFC),
+                            unfocusedContainerColor = Color(0xffF8FAFC),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = false,
+                        onDismissRequest = {},
+                        containerColor = Color(0xffF8FAFC),
+                        matchTextFieldWidth = true,
+                    ) {
+                        urgencyList.forEach { it ->
+                            DropdownMenuItem(
+                                text = { Text(it, color = Color.Black) },
+                                onClick = {}
+                            )
+                        }
+                    }
+                }
+
+                Text(
+                    text = "Expected Timeline",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(8.dp)
+                )
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+
+                Text(
+                    text = "Clinical Indication / Notes",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(8.dp)
+                )
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+            ) {
+                Button(
+                    onClick = {},
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1D4ED8)
+                    ),
+                ) {
+                    Text(
+                        "Cancel", color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 Spacer(Modifier.width(4.dp))
                 Button(
@@ -1039,18 +1927,60 @@ fun AddNewMedicationScreen(
                     shape = RoundedCornerShape(4.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xff1D4ED8)
-                    )
+                    ),
                 ) {
-                    Text("Cancel", color = Color.White,modifier = Modifier.padding(4.dp),fontWeight = FontWeight.Bold)
+                    Text(
+                        "Submit Order", color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
     }
+
 }
 
 @Composable
-fun AddNewLabResultScreen(modifier: Modifier = Modifier) {
-
+fun AddNewOrderTestScreenRadioButtonCard(
+    modifier: Modifier = Modifier,
+    laboratoryTestName: String = "Lipid Panel",
+    orderTestName: String = "Chemistry"
+) {
+    var radioButtonState by remember { mutableStateOf(false) }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = if (radioButtonState) Color(0xFFC4D5F5) else Color(0xffFFFFFF),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border(width = 1.dp, color = Color(0xff93C5FD), shape = RoundedCornerShape(8.dp)),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = radioButtonState,
+            onClick = { radioButtonState = !radioButtonState },
+            colors = RadioButtonDefaults.colors(
+                selectedColor = Color(0xff2563EB),
+                unselectedColor = Color.Black
+            )
+        )
+        Column(modifier = Modifier.padding(8.dp)) {
+            Text(
+                text = laboratoryTestName,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = Color.Black,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = orderTestName,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+            )
+        }
+    }
 }
 
 

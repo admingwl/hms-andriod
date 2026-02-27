@@ -12,6 +12,7 @@ import java.util.TimeZone
 object DateUtils {
     @RequiresApi(Build.VERSION_CODES.O)
     fun formatAppointmentDate(isoDate: String?): String? {
+        if (isoDate == null) return null
         return try {
             // For Android API 26+ (Use this if minSdk >= 26)
             val zonedDateTime = ZonedDateTime.parse(isoDate)
@@ -25,7 +26,8 @@ object DateUtils {
     }
 
     // For older Android versions (API < 26)
-    fun formatAppointmentDateLegacy(isoDate: String): String {
+    fun formatAppointmentDateLegacy(isoDate: String?): String {
+        if (isoDate == null) return ""
         return try {
             val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
             inputFormat.timeZone = TimeZone.getTimeZone("UTC")
@@ -39,7 +41,8 @@ object DateUtils {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun gettingOnlyDate(isoDate: String): String {
+    fun gettingOnlyDate(isoDate: String?): String {
+        if (isoDate == null) return ""
         return try {
             val localDate = LocalDate.parse(isoDate.substringBefore('T'))  // Extracts "2025-11-05"
             val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
@@ -49,4 +52,3 @@ object DateUtils {
         }
     }
 }
-

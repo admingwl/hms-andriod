@@ -21,6 +21,8 @@ import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSym
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisRequest
 import com.example.happydocx.Data.Model.StartConsulting.SaveSymptomDiagnosisResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationRequest
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
@@ -238,5 +240,14 @@ interface ApiService{
         @Header("Authorization")token:String,
         @Path("patientId")patientId:String
     ): Response<LabResultResponse>
+
+
+    // function for create new medication
+    @POST("api/v1/patient/medications/{appointmentId}")
+    suspend fun createNewMedicationResult(
+        @Header("Authorization") token:String,
+        @Path("appointmentId") appointmentId:String,
+        @Body body: CreateMedicationRequest
+    ): Response<CreateMedicationResponse>
    //------------------------update patient Consulting Screen-----------------------------------------
 }

@@ -39,9 +39,12 @@ import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.StartConsulting.AddSymptomScreen
 import com.example.happydocx.ui.Screens.StartConsulting.InvoicesScreen
 import com.example.happydocx.ui.Screens.StartConsulting.StartConsultingScreen
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewLabResultScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewMedicationScreen
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewOrderTestScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewVitalSignsScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.BasicInfoOfPatient
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.ManualEntryScreen
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
@@ -301,8 +304,21 @@ fun NavigationGraph() {
             )
         }
 
-        composable("addMedication") {
-            AddNewMedicationScreen(navController = navController, startConsultingViewModel = startConsultingViewModel)
+        composable("addMedication/{appointmentId}/{token}",
+            arguments = listOf(
+                navArgument(name = "token") { type = NavType.StringType },
+                navArgument(name = "appointmentId") { type = NavType.StringType },
+            )) {backStackEntry->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            val appointmentId = backStackEntry.arguments?.getString("appointmentId")?:""
+            AddNewMedicationScreen(navController = navController, startConsultingViewModel = startConsultingViewModel, appointmentId = appointmentId,token = token)
+        }
+
+        composable("addResultScreen") {backStackEntry->
+            AddNewLabResultScreen(navController = navController)
+        }
+        composable(route ="addNewOrderTestScreen") {
+            AddNewOrderTestScreen(navController = navController)
         }
         //--------------------new Consulting Screen-----------------------------------------------//
 

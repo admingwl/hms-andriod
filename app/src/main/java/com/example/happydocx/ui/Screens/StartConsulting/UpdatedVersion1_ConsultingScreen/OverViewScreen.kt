@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -61,8 +62,8 @@ fun OverViewScreen(
     appointmentId: String,
     startConsultingViewModel: StartConsultingViewModel,
     navController: NavController,
-    patientId:String,
-    doctorId:String
+    patientId: String,
+    doctorId: String
 
 ) {
     val startConsultingState =
@@ -74,7 +75,8 @@ fun OverViewScreen(
     LaunchedEffect(token) {
         startConsultingViewModel.getCurrentMedications(token, appointmentId)
     }
-    val labResultState = startConsultingViewModel._labResultState.collectAsStateWithLifecycle().value
+    val labResultState =
+        startConsultingViewModel._labResultState.collectAsStateWithLifecycle().value
     LaunchedEffect(token) {
         startConsultingViewModel.getAllLabResults(token, patientId)
     }
@@ -99,19 +101,19 @@ fun OverViewScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
-                    Button(
-                        onClick = {navController.navigate("addNewVitalSigns/$token/$appointmentId/$patientId/$doctorId")},
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xff1D4ED8),
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        Text(
-                            text = "Add Vitals"
-                        )
-                    }
+            Button(
+                onClick = { navController.navigate("addNewVitalSigns/$token/$appointmentId/$patientId/$doctorId") },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Text(
+                    text = "Add Vitals"
+                )
+            }
         }
         when (val state = startConsultingState) {
 
@@ -130,12 +132,20 @@ fun OverViewScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
 
-                    val oxygenCondition = startConsultingViewModel.getOxygenCondition(vitals.oxygenSaturation)
-                    val temperatureCondition = startConsultingViewModel.getCondition(vitals.temperature, 97, 99)
-                    val respiratoryCondition = startConsultingViewModel.getCondition(vitals.respiratoryRate, 12, 20)
-                    val weightCondition = startConsultingViewModel.getCondition(vitals.weight, 50, 80)
-                    val hrCondition = startConsultingViewModel.getCondition(vitals.heartRate, 60, 100)
-                    val bpCondition = startConsultingViewModel.getBloodPressureCondition(vitals.bpSystolic, vitals.bpDiastolic)
+                    val oxygenCondition =
+                        startConsultingViewModel.getOxygenCondition(vitals.oxygenSaturation)
+                    val temperatureCondition =
+                        startConsultingViewModel.getCondition(vitals.temperature, 97, 99)
+                    val respiratoryCondition =
+                        startConsultingViewModel.getCondition(vitals.respiratoryRate, 12, 20)
+                    val weightCondition =
+                        startConsultingViewModel.getCondition(vitals.weight, 50, 80)
+                    val hrCondition =
+                        startConsultingViewModel.getCondition(vitals.heartRate, 60, 100)
+                    val bpCondition = startConsultingViewModel.getBloodPressureCondition(
+                        vitals.bpSystolic,
+                        vitals.bpDiastolic
+                    )
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -185,7 +195,9 @@ fun OverViewScreen(
                                 .weight(1f)
                                 .padding(4.dp),
                             cardValue = "${vitals.temperature ?: 0} °C",
-                            conditionColor = startConsultingViewModel.getConditionColor(temperatureCondition),
+                            conditionColor = startConsultingViewModel.getConditionColor(
+                                temperatureCondition
+                            ),
                             condition = startConsultingViewModel.getCondition(
                                 vitals.temperature,
                                 97,
@@ -199,7 +211,9 @@ fun OverViewScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(4.dp),
-                            conditionColor = startConsultingViewModel.getConditionColor(respiratoryCondition),
+                            conditionColor = startConsultingViewModel.getConditionColor(
+                                respiratoryCondition
+                            ),
                             cardValue = "${vitals.respiratoryRate ?: 0} /min",
                             condition = startConsultingViewModel.getCondition(
                                 vitals.respiratoryRate,
@@ -226,7 +240,9 @@ fun OverViewScreen(
                             condition = startConsultingViewModel.getOxygenCondition(vitals.oxygenSaturation),
                             normalRange = ">95",
                             cardName = "OxygenSaturation",
-                            conditionColor = startConsultingViewModel.getConditionColor(oxygenCondition),
+                            conditionColor = startConsultingViewModel.getConditionColor(
+                                oxygenCondition
+                            ),
                             cardIcon = R.drawable.blood_drop
                         )
                         CurrentVitalCard(
@@ -241,12 +257,15 @@ fun OverViewScreen(
                             ),
                             normalRange = "50-80",
                             cardName = "Weight",
-                            conditionColor = startConsultingViewModel.getConditionColor(weightCondition),
+                            conditionColor = startConsultingViewModel.getConditionColor(
+                                weightCondition
+                            ),
                             cardIcon = R.drawable.weight
                         )
                     }
                 }
             }
+
             else -> {}
         }
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -260,44 +279,45 @@ fun OverViewScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
-                    Button(
-                        onClick = {
-                          navController.navigate("addMedication")
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xff1D4ED8),
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        Text(
-                            text = "Add"
-                        )
-                    }
+            Button(
+                onClick = {
+                    navController.navigate("addMedication/$appointmentId/$token")
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Text(
+                    text = "Add"
+                )
+            }
         }
-        when(val medicationState = state){
+        when (val medicationState = state) {
             is CurrentMedicationListUiState.Idle -> {}
             is CurrentMedicationListUiState.Loading -> {}
             is CurrentMedicationListUiState.Success -> {
                 val medications = medicationState.data.data
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp)
-                    ) {
-                        medications.forEach { it ->
-                            CurrentMedicationCard(
-                                medicationName = it.name,
-                                medicationDose = it.dosage,
-                                medicationFrequency = it.frequency,
-                                medicationStarted = "Started: ${DateUtils.gettingOnlyDate(it.startDate)}",
-                                medicationStatus = if (it.active) "Active" else "Inactive"
-                            )
-                        }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    medications.forEach { it ->
+                        CurrentMedicationCard(
+                            medicationName = it.name,
+                            medicationDose = it.dosage,
+                            medicationFrequency = it.frequency,
+                            medicationStarted = "Started: ${DateUtils.gettingOnlyDate(it.startDate)}",
+                            medicationStatus = if (it.active) "Active" else "Inactive"
+                        )
                     }
                 }
+            }
+
             else -> {}
         }
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -311,21 +331,34 @@ fun OverViewScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
-                    Button(
-                        onClick = {},
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xff1D4ED8),
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        Text(
-                            text = "Add Result"
-                        )
-                    }
+            Button(
+                onClick = {navController.navigate("addResultScreen")},
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(4.dp),
+            ) {
+                Text(
+                    text = "Result"
+                )
+            }
+            Spacer(Modifier.width(4.dp))
+            Button(
+                onClick = {navController.navigate("addNewOrderTestScreen")},
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff1D4ED8),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Text(
+                    text = "Order Tests"
+                )
+            }
         }
-        when(val labResultState = labResultState){
+        when (val labResultState = labResultState) {
             is CurrentLabResultUiState.Idle -> {}
             is CurrentLabResultUiState.Loading -> {}
             is CurrentLabResultUiState.Success -> {
@@ -335,7 +368,7 @@ fun OverViewScreen(
                         .fillMaxWidth()
                         .padding(8.dp)
                 ) {
-                    data.forEach { it->
+                    data.forEach { it ->
                         LabResultCard(
                             testName = it.testName,
                             status = it.status,
@@ -347,6 +380,7 @@ fun OverViewScreen(
                     }
                 }
             }
+
             else -> {}
         }
 
@@ -429,68 +463,68 @@ fun CurrentMedicationCard(
     medicationStatus: String = "Active",
 ) {
 
-            ElevatedCard(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xffFFFFFF)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                    Row {
-                        Column() {
-                            Text(
-                                text = medicationName,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                            Text(
-                                text = medicationDose,
-                                color = Color(0xff6474A8),
-                                fontSize = 12.sp
-                            )
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xffFFFFFF)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Row {
+                Column() {
+                    Text(
+                        text = medicationName,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = medicationDose,
+                        color = Color(0xff6474A8),
+                        fontSize = 12.sp
+                    )
 
-                        }
-                        Spacer(Modifier.weight(1f))
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    color = Color(0xFFE6F9F0),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = medicationStatus,
-                                color = Color(0xff15803D),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Row() {
-                        Text(
-                            text = medicationFrequency,
-                            fontSize = 12.sp,
-                            color = Color(0xff6474A8)
-                        )
-                        Spacer(Modifier.weight(1f))
-                        Text(
-                            text = medicationStarted,
-                            fontSize = 12.sp,
-                            color = Color(0xff6474A8)
-                        )
-                    }
                 }
+                Spacer(Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFFE6F9F0),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = medicationStatus,
+                        color = Color(0xff15803D),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+            }
+            Spacer(Modifier.height(8.dp))
+            Row() {
+                Text(
+                    text = medicationFrequency,
+                    fontSize = 12.sp,
+                    color = Color(0xff6474A8)
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = medicationStarted,
+                    fontSize = 12.sp,
+                    color = Color(0xff6474A8)
+                )
             }
         }
+    }
+}
 
 @Preview
 @Composable
@@ -537,10 +571,12 @@ fun LabResultCard(
                 ) {
                     Text(
                         text = status,
-                        color = when(status){
+                        color = when (status) {
                             "high" -> Color(0XFFA1624A)
-                            "normal"-> Color(0XFF15803D)
-                            else -> {Color.Transparent}
+                            "normal" -> Color(0XFF15803D)
+                            else -> {
+                                Color.Transparent
+                            }
                         },
                         fontWeight = FontWeight.SemiBold
                     )

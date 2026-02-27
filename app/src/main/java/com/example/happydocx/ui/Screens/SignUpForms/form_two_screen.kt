@@ -363,7 +363,8 @@ fun MyDashedBox(
     selectedUri: Uri?,
     selectedName: String?,
     onFileSelected: (Uri?, String?) -> Unit,
-    maxSizeBytes: Long = 2 * 1024 * 1024 // 2MB
+    maxSizeBytes: Long = 2 * 1024 * 1024, // 2MB,
+    fileSizeRecommendation:String = "PNG, JPG up to 2MB "
 ) {
     val context = LocalContext.current
     var errorMessage = remember { mutableStateOf<String?>(null) }
@@ -521,7 +522,7 @@ fun MyDashedBox(
                         color = Color.Black
                     )
                     Text(
-                        text = if (fileType == "image") "PNG, JPG up to 2MB" else "PDF up to 2MB",
+                        text = if (fileType == "image") fileSizeRecommendation else "PDF up to 2MB",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
