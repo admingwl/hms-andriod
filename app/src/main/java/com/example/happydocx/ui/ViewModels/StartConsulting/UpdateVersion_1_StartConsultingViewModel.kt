@@ -5,6 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewLabResults.Manualy.ManualLabReportCreateRequestUpdate1
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewLabResults.Manualy.ManualLabReportCreateResponseUpdate1
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
@@ -15,12 +17,14 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Repo.StartConsultingRepo
+import com.example.happydocx.ui.uiStates.StartConsulting.AddLabResultManualUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.AddMedicationUpdated1
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiStateUpdated1
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import us.zoom.proguard.bo
 
 class StartConsultingViewModel : ViewModel() {
 
@@ -156,6 +160,68 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
+    // manual lab entry ui state
+    private val labManualEntryUiState = MutableStateFlow(AddLabResultManualUpdate1())
+    val _labManuLEntryUiState = labManualEntryUiState.asStateFlow()
+
+    fun onTestNameChanged(newTest: String) {
+        labManualEntryUiState.update { it ->
+            it.copy(
+                testName = newTest
+            )
+        }
+    }
+
+    fun onResultValueChanged(newResultValue: String) {
+        labManualEntryUiState.update { it ->
+            it.copy(
+                resultValue = newResultValue
+            )
+        }
+    }
+
+    fun onUnitChanged(newUnit: String) {
+        labManualEntryUiState.update { it ->
+            it.copy(
+                unit = newUnit
+            )
+        }
+    }
+
+    fun onTestDateChanged(newTestDate: String) {
+        labManualEntryUiState.update { it ->
+            it.copy(
+                testDate = newTestDate
+            )
+        }
+    }
+
+    fun onNormalRangeChanged(newNormalRange: String) {
+
+        labManualEntryUiState.update { it ->
+            it.copy(
+                normalRange = newNormalRange
+            )
+        }
+    }
+
+    fun onStatusChanged(newStatus: String) {
+
+        labManualEntryUiState.update { it ->
+            it.copy(
+                status = newStatus
+            )
+        }
+    }
+
+    fun onManualLabRecordsNotesChanged(newNotes: String) {
+        labManualEntryUiState.update { it ->
+            it.copy(
+                notes = newNotes
+            )
+        }
+    }
+
     // network state of medical Records
     private val medicalRecordState =
         MutableStateFlow<AllMedicalRecordUiState>(AllMedicalRecordUiState.Idle)
@@ -179,6 +245,11 @@ class StartConsultingViewModel : ViewModel() {
     private val createNewMedicationState =
         MutableStateFlow<CreateNewMedicationUiState>(CreateNewMedicationUiState.Idle)
     val _createNewMedicationState = createNewMedicationState.asStateFlow()
+
+    // create lab result Manually network state
+    private val createLabResultManuallyState: MutableStateFlow<CreateLabResultManuallyUiState> =
+        MutableStateFlow(CreateLabResultManuallyUiState.Idle)
+    val _createLabResultManuallyState = createLabResultManuallyState.asStateFlow()
 
 
     // function to get the medical records
@@ -362,7 +433,7 @@ class StartConsultingViewModel : ViewModel() {
                     dosage = addMedicationUpdatedVersion.value.medicationDosage,
                     duration = addMedicationUpdatedVersion.value.medicationDuration,
                     frequency = addMedicationUpdatedVersion.value.medicationFrequency,
-                    medicationName =  addMedicationUpdatedVersion.value.medicationName,
+                    medicationName = addMedicationUpdatedVersion.value.medicationName,
                     instructions = addMedicationUpdatedVersion.value.medicationNotes,
                     route = addMedicationUpdatedVersion.value.medicationRoute,
                     timing = addMedicationUpdatedVersion.value.medicationTiming,
@@ -374,27 +445,70 @@ class StartConsultingViewModel : ViewModel() {
                     requestBody = requestBody
                 )
                 result.onSuccess { result ->
-                    createNewMedicationState.value = CreateNewMedicationUiState.Success(data = result)
+                    createNewMedicationState.value =
+                        CreateNewMedicationUiState.Success(data = result)
                     resetMedicalRecordState()
                 }.onFailure { errorMessage ->
                     createNewMedicationState.value = CreateNewMedicationUiState.Error(
                         message = errorMessage.message ?: "Failed to load Medical details...."
                     )
                 }
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 createNewMedicationState.value = CreateNewMedicationUiState.Error(
                     message = e.message ?: "An Unexpected error occurred"
                 )
             }
         }
-     }
+    }
 
     // reset the state of the medical records
     fun resetMedicalRecordState() {
         medicalRecordState.value = AllMedicalRecordUiState.Idle
     }
 
+    // create lab result manually
+    fun createLabResultManuallyViewModelFunction(
+        token: String,
+        doctorId: String,
+        patientId: String
+    ) {
+        viewModelScope.launch {
+            createLabResultManuallyState.value = CreateLabResultManuallyUiState.Loading
 
+            try {
+                val body = ManualLabReportCreateRequestUpdate1(
+                    doctor = doctorId,
+                    normalRange = labManualEntryUiState.value.normalRange,
+                    notes = labManualEntryUiState.value.notes,
+                    patient = patientId,
+                    resultValue = labManualEntryUiState.value.resultValue,
+                    status = labManualEntryUiState.value.status,
+                    testDate = labManualEntryUiState.value.testDate,
+                    testName = labManualEntryUiState.value.testName,
+                    unit = labManualEntryUiState.value.unit
+                )
+                val result = repo.CreateLabResultManuallyRepo(
+                    token = token,
+                    requestBody = body
+                )
+                result.onSuccess { result ->
+                    createLabResultManuallyState.value =
+                        CreateLabResultManuallyUiState.Success(data = result)
+                }.onFailure { errorMessage ->
+                    createLabResultManuallyState.value = CreateLabResultManuallyUiState.Error(
+                        message = errorMessage.message ?: "Failed to load Medical details...."
+                    )
+                }
+            } catch (e: Exception) {
+
+            }
+        }
+
+    }
+
+    fun resetManuallyAddLabResult() {
+        createLabResultManuallyState.value = CreateLabResultManuallyUiState.Idle
+    }
 
 }
 
@@ -433,4 +547,14 @@ sealed class CreateNewMedicationUiState {
     object Loading : CreateNewMedicationUiState()
     data class Success(val data: CreateMedicationResponse) : CreateNewMedicationUiState()
     data class Error(val message: String) : CreateNewMedicationUiState()
+}
+
+// sealed class for creating the lab result manually
+sealed class CreateLabResultManuallyUiState {
+    object Idle : CreateLabResultManuallyUiState()
+    object Loading : CreateLabResultManuallyUiState()
+    data class Success(val data: ManualLabReportCreateResponseUpdate1) :
+        CreateLabResultManuallyUiState()
+
+    data class Error(val message: String) : CreateLabResultManuallyUiState()
 }

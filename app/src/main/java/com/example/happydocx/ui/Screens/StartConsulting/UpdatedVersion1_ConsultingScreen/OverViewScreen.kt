@@ -332,7 +332,7 @@ fun OverViewScreen(
             }
             Spacer(Modifier.weight(1f))
             Button(
-                onClick = {navController.navigate("addResultScreen")},
+                onClick = {navController.navigate("addResultScreen/$token/$patientId/$doctorId")},
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xff1D4ED8),
                     contentColor = Color.White
@@ -561,6 +561,8 @@ fun LabResultCard(
                             color = when (status) {
                                 "high" -> Color(0xffFEF9C3)
                                 "normal" -> Color(0xffF0FDF4)
+                                "low" -> Color(0xffFEE2E2)
+                                "critical" -> Color(0xffFEE2E2)
                                 else -> {
                                     Color.Transparent
                                 }
@@ -574,6 +576,8 @@ fun LabResultCard(
                         color = when (status) {
                             "high" -> Color(0XFFA1624A)
                             "normal" -> Color(0XFF15803D)
+                            "low" -> Color(0xffB91C1C)
+                            "critical" -> Color(0xffB91C1C)
                             else -> {
                                 Color.Transparent
                             }

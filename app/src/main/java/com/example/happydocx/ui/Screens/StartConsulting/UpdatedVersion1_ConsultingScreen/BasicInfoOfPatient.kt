@@ -80,6 +80,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.SignUpForms.MyDashedBox
+import com.example.happydocx.ui.ViewModels.StartConsulting.CreateLabResultManuallyUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.CreateNewMedicationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVital_SignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
@@ -1103,7 +1104,14 @@ fun AddNewMedicationScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddNewLabResultScreen(modifier: Modifier = Modifier, navController: NavController) {
+fun AddNewLabResultScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    startConsultingViewModel: StartConsultingViewModel,
+    doctorId: String,
+    patientId: String,
+    token:String
+) {
     var tabIndex by rememberSaveable { mutableIntStateOf(0) }
     var showFullScreen by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -1163,7 +1171,13 @@ fun AddNewLabResultScreen(modifier: Modifier = Modifier, navController: NavContr
             Box(modifier = Modifier.fillMaxSize()) {
                 when (tabIndex) {
                     0 -> {
-                        ManualEntryScreen()
+                        ManualEntryScreen(
+                            startConsultingViewModel = startConsultingViewModel,
+                            navController = navController,
+                            doctorId = doctorId,
+                            patientId = patientId,
+                            token = token
+                        )
                     }
 
                     1 -> {
@@ -1177,11 +1191,41 @@ fun AddNewLabResultScreen(modifier: Modifier = Modifier, navController: NavContr
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ManualEntryScreen(modifier: Modifier = Modifier) {
+fun ManualEntryScreen(
+    modifier: Modifier = Modifier,
+    startConsultingViewModel: StartConsultingViewModel,
+    navController: NavController,
+    doctorId:String,
+    token:String,
+    patientId:String
+) {
+
     val datePickerSateRemember = rememberDatePickerState()
     var datePickerState by remember { mutableStateOf(false) }
-    val statusList = listOf<String>()
+    val statusList = listOf<String>("normal","high","low","critical")
+    var statusExpandState by remember{mutableStateOf(false)}
     val scrollSate = rememberScrollState()
+    val context = LocalContext.current
+    val manualEntryUiState = startConsultingViewModel._labManuLEntryUiState.collectAsStateWithLifecycle().value
+    val manualEntryNetworkState = startConsultingViewModel._createLabResultManuallyState.collectAsStateWithLifecycle().value
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(manualEntryNetworkState) {
+        when(manualEntryNetworkState){
+           is CreateLabResultManuallyUiState.Success -> {
+                Toast.makeText(context, "Lab Result added successfully!", Toast.LENGTH_SHORT)
+                    .show()
+                navController.popBackStack()
+               startConsultingViewModel.resetManuallyAddLabResult()
+            }
+            is CreateLabResultManuallyUiState.Error -> {
+                Toast.makeText(context, "Error: ${manualEntryNetworkState.message}", Toast.LENGTH_LONG)
+                    .show()
+                startConsultingViewModel.resetManuallyAddLabResult()
+            }
+            else -> {}
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1196,8 +1240,8 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = manualEntryUiState.testName,
+            onValueChange = {startConsultingViewModel.onTestNameChanged(it)},
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
@@ -1215,8 +1259,8 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = manualEntryUiState.resultValue,
+            onValueChange = {startConsultingViewModel.onResultValueChanged(it)},
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
@@ -1234,8 +1278,8 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = manualEntryUiState.unit,
+            onValueChange = {startConsultingViewModel.onUnitChanged(it)},
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
@@ -1253,7 +1297,7 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
+            value = manualEntryUiState.testDate,
             onValueChange = {},
             readOnly = true,
             placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
@@ -1294,7 +1338,7 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
                             val formattedDate =
                                 SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
                                     .format(Date(selectedMillis))
-
+                           startConsultingViewModel.onTestDateChanged(formattedDate)
                         }
                         datePickerState = false
                     }) { Text("OK", color = Color.Black) }
@@ -1333,8 +1377,8 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = manualEntryUiState.normalRange,
+            onValueChange = {startConsultingViewModel.onNormalRangeChanged(it)},
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
@@ -1352,11 +1396,11 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         ExposedDropdownMenuBox(
-            expanded = false,
-            onExpandedChange = { },
+            expanded = statusExpandState,
+            onExpandedChange = { statusExpandState = !statusExpandState },
         ) {
             OutlinedTextField(
-                value = "",
+                value = manualEntryUiState.status,
                 onValueChange = {},
                 readOnly = true,
                 placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
@@ -1371,8 +1415,8 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
                     .menuAnchor(),
             )
             ExposedDropdownMenu(
-                expanded = false,
-                onDismissRequest = {},
+                expanded = statusExpandState,
+                onDismissRequest = {statusExpandState = !statusExpandState},
                 containerColor = Color(0xffF8FAFC),
                 matchTextFieldWidth = true,
             ) {
@@ -1380,12 +1424,33 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
                     DropdownMenuItem(
                         text = { Text(it, color = Color.Black) },
                         onClick = {
-
+                          startConsultingViewModel.onStatusChanged(it)
+                            statusExpandState = false
                         }
                     )
                 }
             }
         }
+
+        Text(
+            text = "Notes / Interpretation",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        OutlinedTextField(
+            value = manualEntryUiState.notes,
+            onValueChange = {startConsultingViewModel.onManualLabRecordsNotesChanged(it)},
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xffF8FAFC),
+                unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
 
         Row(
             modifier = Modifier
@@ -1427,7 +1492,15 @@ fun ManualEntryScreen(modifier: Modifier = Modifier) {
             }
             Spacer(Modifier.width(4.dp))
             Button(
-                onClick = {},
+                onClick = {
+                    scope.launch{
+                        startConsultingViewModel.createLabResultManuallyViewModelFunction(
+                            token = token,
+                            doctorId = doctorId,
+                            patientId = patientId
+                        )
+                    }
+                },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(4.dp),
                 colors = ButtonDefaults.buttonColors(

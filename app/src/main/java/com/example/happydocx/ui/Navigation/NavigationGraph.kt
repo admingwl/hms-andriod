@@ -314,8 +314,17 @@ fun NavigationGraph() {
             AddNewMedicationScreen(navController = navController, startConsultingViewModel = startConsultingViewModel, appointmentId = appointmentId,token = token)
         }
 
-        composable("addResultScreen") {backStackEntry->
-            AddNewLabResultScreen(navController = navController)
+        composable("addResultScreen/{token}/{patientId}/{doctorId}",
+            arguments = listOf(
+                navArgument(name = "token") { type = NavType.StringType },
+                navArgument(name = "patientId") { type = NavType.StringType },
+                navArgument(name = "doctorId"){type = NavType.StringType}
+            )
+            ) {backStackEntry->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            val patientId = backStackEntry.arguments?.getString("patientId")?:""
+            val doctorId = backStackEntry.arguments?.getString("doctorId")?:""
+            AddNewLabResultScreen(navController = navController, startConsultingViewModel = startConsultingViewModel,token =token,patientId = patientId,doctorId = doctorId)
         }
         composable(route ="addNewOrderTestScreen") {
             AddNewOrderTestScreen(navController = navController)

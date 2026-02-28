@@ -22,3 +22,14 @@ data class AddMedicationUpdated1(
         val medicationDate:String="",
         val medicationNotes:String=""
 )
+
+// manual entry for creating lab report
+data class AddLabResultManualUpdate1(
+    val testName:String = "",
+    val resultValue:String = "",
+    val unit:String = "",
+    val testDate:String = "",
+    val normalRange:String="",
+    val status:String="",
+    val notes:String= ""
+)
