@@ -13,6 +13,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Request_Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
@@ -250,6 +251,11 @@ class StartConsultingViewModel : ViewModel() {
     private val createLabResultManuallyState: MutableStateFlow<CreateLabResultManuallyUiState> =
         MutableStateFlow(CreateLabResultManuallyUiState.Idle)
     val _createLabResultManuallyState = createLabResultManuallyState.asStateFlow()
+
+    // particular patient appointment data network state
+    private val particularPatientAppointmentDataState: MutableStateFlow<ParticularPatientAppointmentDataUiState> = MutableStateFlow(ParticularPatientAppointmentDataUiState.Idle)
+    val _particularPatientAppointmentDataState = particularPatientAppointmentDataState.asStateFlow()
+
 
 
     // function to get the medical records
@@ -510,6 +516,35 @@ class StartConsultingViewModel : ViewModel() {
         createLabResultManuallyState.value = CreateLabResultManuallyUiState.Idle
     }
 
+    // fun to get particular patient data
+    suspend fun getParticularPatientAppointmentData(
+        token:String,
+        appointmentId:String
+    ){
+        viewModelScope.launch {
+            labResultState.value = CurrentLabResultUiState.Loading
+
+            try {
+                val result = repo.particularPatientAppointmentDataRepo(
+                    token = token,
+                    appointmentId = appointmentId
+                )
+                result.onSuccess { result ->
+                    particularPatientAppointmentDataState.value = ParticularPatientAppointmentDataUiState.Success(data = result)
+                }.onFailure { errorMessage ->
+                    particularPatientAppointmentDataState.value = ParticularPatientAppointmentDataUiState.Error(
+                        message = errorMessage.message ?: "Failed to load Medical details...."
+                    )
+                }
+            } catch (e: Exception) {
+                labResultState.value = CurrentLabResultUiState.Error(
+                    message = e.message ?: "An Unexpected error occurred"
+                )
+            }
+
+        }
+    }
+
 }
 
 sealed class AllMedicalRecordUiState {
@@ -558,3 +593,12 @@ sealed class CreateLabResultManuallyUiState {
 
     data class Error(val message: String) : CreateLabResultManuallyUiState()
 }
+
+// particular patient appointment Data
+sealed class ParticularPatientAppointmentDataUiState {
+    object Idle : ParticularPatientAppointmentDataUiState()
+    object Loading : ParticularPatientAppointmentDataUiState()
+    data class Success(val data: PatientAppointmentData) : ParticularPatientAppointmentDataUiState()
+    data class Error(val message: String) : ParticularPatientAppointmentDataUiState()
+}
+

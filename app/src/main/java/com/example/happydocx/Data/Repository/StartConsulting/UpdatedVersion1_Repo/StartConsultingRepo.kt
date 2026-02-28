@@ -10,6 +10,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Network.ApiService
@@ -179,4 +180,35 @@ class StartConsultingRepo {
             Result.failure(e)
         }
     }
+
+
+    // get particular patient Appointment data
+    suspend fun particularPatientAppointmentDataRepo(
+        token:String,
+        appointmentId:String
+    ): Result<PatientAppointmentData>{
+        return try {
+            Log.d("REPO_SAVE", "Calling API...")
+            Log.d("REPO_SAVE", "Token: Bearer ${token.take(20)}...")
+            // call api here first
+            val result = apiService.getParticularPatientAppointmentUpdate1(token = "Bearer $token",appointmentId)
+            Log.d("REPO_SAVE", "Response Code: ${result.code()}")
+            Log.d("REPO_SAVE", "Response Body: ${result.body()}")
+
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("REPO_SAVE", " API Success")
+                Log.d("Server Code", "${result.code()}")
+                Log.d("Server Response", "Success: ${result.body()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Log.e("REPO_SAVE", " API Failed: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e("REPO_SAVE", " Exception: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
 }

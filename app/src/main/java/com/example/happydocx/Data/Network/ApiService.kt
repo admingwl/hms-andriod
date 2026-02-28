@@ -28,6 +28,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
@@ -133,13 +134,12 @@ interface ApiService{
         @Header ("Authorization") token:String
     ): Response<AllDepartments>
 
-
     // api for getting the particular patient's appointment data
     // we use path here because the appointmentId is the part of the url .
     @GET("api/v1/appointment/{appointmentId}")
     suspend fun getParticularPatientAppointment(
-          @Header("Authorization") token:String,
-          @Path("appointmentId") appointmentId:String
+        @Header("Authorization") token:String,
+        @Path("appointmentId") appointmentId:String
     ): Response<AppointmentApiResponse>
 
 
@@ -258,5 +258,13 @@ interface ApiService{
         @Header("Authorization") token:String,
         @Body body: ManualLabReportCreateRequestUpdate1
     ): Response<ManualLabReportCreateResponseUpdate1>
+
+    // api for getting the particular patient's appointment data
+    // we use path here because the appointmentId is the part of the url .
+    @GET("api/v1/appointment/{appointmentId}")
+    suspend fun getParticularPatientAppointmentUpdate1(
+        @Header("Authorization") token:String,
+        @Path("appointmentId") appointmentId:String
+    ): Response<PatientAppointmentData>
    //------------------------update patient Consulting Screen-----------------------------------------
 }
