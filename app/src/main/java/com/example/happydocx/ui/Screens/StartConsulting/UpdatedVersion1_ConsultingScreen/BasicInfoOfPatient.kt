@@ -175,7 +175,7 @@ fun BasicInfoOfPatient(
                         ContactInfoOfPatient(
                             phone = patient.contactNumber,
                             email = patient.email,
-                            address = patient.address.addressLine1
+                            address = patient.address?.addressLine1?:"N/A"
                         )
                         ActiveAllergiesSection(
                             allergies = patient.allergies
@@ -1247,7 +1247,9 @@ fun AddNewLabResultScreen(
                     }
 
                     1 -> {
-                        UploadReportScreen()
+                        UploadReportScreen(
+                            startConsultingViewModel = startConsultingViewModel
+                        )
                     }
                 }
             }
@@ -1593,7 +1595,7 @@ fun ManualEntryScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UploadReportScreen(modifier: Modifier = Modifier) {
+fun UploadReportScreen(modifier: Modifier = Modifier,startConsultingViewModel: StartConsultingViewModel) {
     val datePickerStateRemember = rememberDatePickerState()
     var datePickerSate by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -1603,6 +1605,8 @@ fun UploadReportScreen(modifier: Modifier = Modifier) {
         "culture",
         "Biopsy"
     )
+      var reportTypeExpandedState by remember { mutableStateOf(false) }
+      val uploadReportUiState = startConsultingViewModel._uploadLabReportState.collectAsStateWithLifecycle().value
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -1627,10 +1631,10 @@ fun UploadReportScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
+            value = uploadReportUiState.reportDate,
             onValueChange = {},
             readOnly = true,
-            placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+            placeholder = { Text("Select Date", color = Color(0xffF5EEEF)) },
             trailingIcon = {
                 IconButton(
                     onClick = { datePickerSate = !datePickerSate }
@@ -1668,7 +1672,7 @@ fun UploadReportScreen(modifier: Modifier = Modifier) {
                             val formattedDate =
                                 SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
                                     .format(Date(selectedMillis))
-
+                           startConsultingViewModel.onReportDateChanged(formattedDate)
                         }
                         datePickerSate = false
                     }) { Text("OK", color = Color.Black) }
@@ -1707,14 +1711,14 @@ fun UploadReportScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         ExposedDropdownMenuBox(
-            expanded = false,
-            onExpandedChange = { },
+            expanded = reportTypeExpandedState,
+            onExpandedChange = { reportTypeExpandedState = !reportTypeExpandedState},
         ) {
             OutlinedTextField(
-                value = "",
+                value = uploadReportUiState.reportType,
                 onValueChange = {},
                 readOnly = true,
-                placeholder = { Text("Select Timing", color = Color(0xffF5EEEF)) },
+                placeholder = { Text("Select Report Type", color = Color(0xffF5EEEF)) },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xffF8FAFC),
                     unfocusedContainerColor = Color(0xffF8FAFC),
@@ -1726,15 +1730,18 @@ fun UploadReportScreen(modifier: Modifier = Modifier) {
                     .menuAnchor(),
             )
             ExposedDropdownMenu(
-                expanded = false,
-                onDismissRequest = {},
+                expanded = reportTypeExpandedState,
+                onDismissRequest = {reportTypeExpandedState = !reportTypeExpandedState},
                 containerColor = Color(0xffF8FAFC),
                 matchTextFieldWidth = true,
             ) {
                 reportTypeList.forEach { it ->
                     DropdownMenuItem(
                         text = { Text(it, color = Color.Black) },
-                        onClick = {}
+                        onClick = {
+                            startConsultingViewModel.onReportTypeChanged(it)
+                            reportTypeExpandedState = false
+                        }
                     )
                 }
             }
@@ -1747,10 +1754,10 @@ fun UploadReportScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = uploadReportUiState.laboratoryName,
+            onValueChange = {startConsultingViewModel.onLaboratoryNameChanged(it)},
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
+            placeholder = { Text("Name of Laboratory", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
@@ -1766,8 +1773,8 @@ fun UploadReportScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = uploadReportUiState.notes,
+            onValueChange = {startConsultingViewModel.onLaboratoryNotesChanged(it)},
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
@@ -1798,7 +1805,10 @@ fun UploadReportScreen(modifier: Modifier = Modifier) {
             }
             Spacer(Modifier.width(4.dp))
             Button(
-                onClick = {},
+                onClick = {
+                    // here you need to call api for uploading the report
+
+                },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(4.dp),
                 colors = ButtonDefaults.buttonColors(

@@ -33,3 +33,11 @@ data class AddLabResultManualUpdate1(
     val status:String="",
     val notes:String= ""
 )
+
+// upload lab report
+data class UploadLabReportUpdate1(
+    val reportDate:String = "",
+    val reportType:String="",
+    val laboratoryName:String="",
+    val notes:String=""
+)

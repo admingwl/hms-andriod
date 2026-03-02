@@ -21,6 +21,7 @@ import com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Rep
 import com.example.happydocx.ui.uiStates.StartConsulting.AddLabResultManualUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.AddMedicationUpdated1
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiStateUpdated1
+import com.example.happydocx.ui.uiStates.StartConsulting.UploadLabReportUpdate1
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -217,6 +218,43 @@ class StartConsultingViewModel : ViewModel() {
 
     fun onManualLabRecordsNotesChanged(newNotes: String) {
         labManualEntryUiState.update { it ->
+            it.copy(
+                notes = newNotes
+            )
+        }
+    }
+
+    // upload lab report UI state
+    private val uploadLabReportState = MutableStateFlow(UploadLabReportUpdate1())
+    val _uploadLabReportState = uploadLabReportState.asStateFlow()
+
+    // on report date changed
+    fun onReportDateChanged(newDate:String){
+        uploadLabReportState.update { it->
+            it.copy(
+                reportDate = newDate
+            )
+        }
+    }
+    // on report type changed
+   fun onReportTypeChanged(newType:String){
+        uploadLabReportState.update { it->
+            it.copy(
+                reportType = newType
+            )
+        }
+    }
+    // on laboratory name changed
+    fun onLaboratoryNameChanged(newLaboratory:String) {
+        uploadLabReportState.update { it ->
+            it.copy(
+                laboratoryName = newLaboratory
+            )
+        }
+    }
+    // on laboratory notes changed
+    fun onLaboratoryNotesChanged(newNotes:String) {
+        uploadLabReportState.update { it ->
             it.copy(
                 notes = newNotes
             )

@@ -4,7 +4,7 @@ data class Patient(
     val Age: String,
     val __v: Int,
     val _id: String,
-    val address: Address,
+    val address: Address?,
     val age: Age,
     val allergies: List<String>,
     val bloodGroup: String,
