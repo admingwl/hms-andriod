@@ -266,5 +266,11 @@ interface ApiService{
         @Header("Authorization") token:String,
         @Path("appointmentId") appointmentId:String
     ): Response<PatientAppointmentData>
+
+    // upload lab result
+    @POST("api/v1/lab-results")
+    suspend fun UploadLabResults(
+
+    )
    //------------------------update patient Consulting Screen-----------------------------------------
 }

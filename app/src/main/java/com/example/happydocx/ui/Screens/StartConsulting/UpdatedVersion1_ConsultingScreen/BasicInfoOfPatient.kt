@@ -486,8 +486,8 @@ fun PatientAppointmentInfoTabScreen(
                 )
 
                 1 -> AllVitalsScreen()
-                2 -> AllMedicationList()
-                3 -> LabResultScreen()
+                2 -> AllMedicationList(token = token, appointmentId = appointmentId, startConsultingViewModel = startConsultingViewModel)
+                3 -> LabResultScreen(token = token, patientId = patientId, startConsultingViewModel = startConsultingViewModel)
                 4 -> AllHistoryList()
                 5 -> AllDocumentsScreen()
                 6 -> NotesScreen()
