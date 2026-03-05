@@ -1,10 +1,13 @@
 package com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,6 +16,8 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,70 +27,188 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.happydocx.R
+import com.example.happydocx.Utils.DateUtils
+import com.example.happydocx.ui.ViewModels.StartConsulting.HistoriesUiState
+import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
+import kotlinx.coroutines.launch
+import kotlin.math.ceil
 
 @Composable
-fun AllHistoryList(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color(0xffFAFAFA))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xffFAFAFA))
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Total Visits",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = Color.Black,
-                modifier = Modifier.padding(8.dp)
-            )
-            Spacer(Modifier.width(4.dp))
-            Box(
-                modifier = modifier.background(Color.Red, shape = RoundedCornerShape(8.dp))
+fun AllHistoryList(
+    token: String,
+    patient: String,
+    modifier: Modifier = Modifier,
+    startConsultingViewModel: StartConsultingViewModel
+) {
+    val historyState = startConsultingViewModel._historiesState.collectAsStateWithLifecycle().value
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(token) {
+        startConsultingViewModel.getAllHistories(
+            token = token,
+            patient = patient
+        )
+    }
+    when (val state = historyState) {
+        is HistoriesUiState.Success -> {
+            val historyState = state.data
+            val totalPages = ceil(
+                state.data.totalPages.toDouble() / (state.data.limit ?: 10)
+            ).toInt()
+            val currentPage = state.data.page ?: 1
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(Color(0xffFAFAFA))
             ) {
-                Text(
-                    text = "100+",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(4.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xffFAFAFA))
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Total Visits",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Box(
+                        modifier = modifier
+                            .background(Color.Red, shape = CircleShape)
+                            .size(30.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = historyState.totalRecords.toString(),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(4.dp)
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
+                    IconButton(
+                        onClick = {}
+                    ) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            tint = Color.Black,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(6.dp)
+                ) {
+                    items(historyState.appointments) { it ->
+                        HistoryItem(
+                            visitId = it.appointmentId,
+                            doctorName = "${it.doctor.first_name} ${it.doctor.middle_name} ${it.doctor.last_name}".trim(),
+                            doctorSpecialization = it.department.departmentName,
+                            date = DateUtils.gettingOnlyDate(it.appointmentDate),
+                            status = it.status
+                        )
+                    }
+                }
+                Column(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .background(Color.White),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                            .background(Color(0xffFEFEFF)),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    startConsultingViewModel.loadPreviousHistoryPage(
+                                        token = token,
+                                        patientId = patient
+                                    )
+                                }
+                            },
+                            border = BorderStroke(
+                                width = 1.dp, color = Color.Black
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = modifier
+                                .padding(6.dp)
+                                .weight(1f)
+                        ) {
+                            Text("Previous", color = Color.Black)
+                        }
+                        Text(
+                            "$currentPage / $totalPages",
+                            color = Color.Black,
+                            modifier = modifier.padding(horizontal = 10.dp)
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    startConsultingViewModel.loadNextHistoryPage(
+                                        token = token,
+                                        patientId = patient
+                                    )
+                                }
+                            },
+                            border = BorderStroke(
+                                width = 1.dp, color = Color.Black
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = modifier
+                                .padding(6.dp)
+                                .weight(1f)
+                        ) {
+                            Text("Next", color = Color.Black)
+                        }
+                    }
+                }
             }
-            Spacer(Modifier.weight(1f))
-           IconButton(
-               onClick = {}
-           ) {
-               Icon(
-                   Icons.Default.MoreVert,
-                   tint =Color.Black,
-                   contentDescription = null,
-                   modifier =  Modifier.size(18.dp)
-               )
-           }
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(6.dp)
-        ) {
-            items(10){it->
-                HistoryItem()
+        is HistoriesUiState.Error -> {}
+        is HistoriesUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
         }
+
+        is HistoriesUiState.Idle -> {}
     }
 }
 
 
 @Composable
-fun HistoryItem() {
+fun HistoryItem(
+    modifier: Modifier = Modifier,
+    visitId: String,
+    doctorName: String,
+    doctorSpecialization: String,
+    date: String,
+    status: String
+) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(8.dp),
         shape = RoundedCornerShape(16.dp),
@@ -121,7 +244,7 @@ fun HistoryItem() {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "#APP-20251217-D59A00005",
+                            text = visitId,
                             color = Color.Gray,
                             fontSize = 14.sp
                         )
@@ -148,7 +271,7 @@ fun HistoryItem() {
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "Dr. Brian L. Kamau",
+                            text = doctorName,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = Color.Black
@@ -156,7 +279,7 @@ fun HistoryItem() {
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "Psychiatry",
+                                text = doctorSpecialization,
                                 color = Color.Gray,
                                 fontSize = 14.sp
                             )
@@ -178,7 +301,7 @@ fun HistoryItem() {
 //                        )
                         //   Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "30 Dec 2025",
+                            text = date,
                             color = Color.Gray,
                             fontSize = 14.sp
                         )
@@ -199,7 +322,7 @@ fun HistoryItem() {
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "COMPLETED",
+                                text = status,
                                 color = Color(0xFF00A86B),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp

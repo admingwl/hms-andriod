@@ -142,21 +142,21 @@ fun DoctorAppointmentScreen(
             when (networkStatus) {
                 ConnectivityObserver.Status.Available -> {
                     snackbarHostState.showSnackbar(
-                        message = "✓ Internet Connected",
+                        message = "Internet Connected",
                         duration = androidx.compose.material3.SnackbarDuration.Short
                     )
                 }
 
                 ConnectivityObserver.Status.Lost, ConnectivityObserver.Status.Unavailable -> {
                     snackbarHostState.showSnackbar(
-                        message = "⚠ No Internet Connection",
+                        message = " No Internet Connection",
                         duration = androidx.compose.material3.SnackbarDuration.Short
                     )
                 }
 
                 ConnectivityObserver.Status.Losing -> {
                     snackbarHostState.showSnackbar(
-                        message = "⚠ Connection Unstable",
+                        message = " Connection Unstable",
                         duration = androidx.compose.material3.SnackbarDuration.Short
                     )
                 }

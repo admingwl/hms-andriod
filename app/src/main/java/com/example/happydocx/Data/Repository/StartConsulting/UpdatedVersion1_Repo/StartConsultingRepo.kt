@@ -11,6 +11,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Network.ApiService
@@ -207,6 +208,31 @@ class StartConsultingRepo {
             }
         } catch (e: Exception) {
             Log.e("REPO_SAVE", " Exception: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun historyRepo(
+        token:String,
+        patientId:String,
+        page:Int = 1,
+        limit:Int = 10
+    ): Result<GetAllHistoryResponse>{
+        return try{
+            val result = apiService.historiesList(
+                token =  "Bearer $token",
+                patient = patientId,
+                page = page,
+                limit = limit
+            )
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e:Exception){
             Result.failure(e)
         }
     }

@@ -14,10 +14,12 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Request_Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Repo.StartConsultingRepo
+import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.uiStates.StartConsulting.AddLabResultManualUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.AddMedicationUpdated1
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiStateUpdated1
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import us.zoom.proguard.bo
+import kotlin.math.ceil
 
 class StartConsultingViewModel : ViewModel() {
 
@@ -294,6 +297,13 @@ class StartConsultingViewModel : ViewModel() {
     private val particularPatientAppointmentDataState: MutableStateFlow<ParticularPatientAppointmentDataUiState> = MutableStateFlow(ParticularPatientAppointmentDataUiState.Idle)
     val _particularPatientAppointmentDataState = particularPatientAppointmentDataState.asStateFlow()
 
+    // network state for histories
+    private val historiesState = MutableStateFlow<HistoriesUiState>(HistoriesUiState.Idle)
+    val _historiesState = historiesState.asStateFlow()
+
+
+    private val _currentPageHistory = MutableStateFlow(1)
+    val currentPageHistory = _currentPageHistory.asStateFlow()
 
 
     // function to get the medical records
@@ -583,6 +593,59 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
+    suspend fun getAllHistories(
+        token: String,
+        patient: String,
+        page:Int = 1,
+        limit:Int = 10
+    ) {
+        viewModelScope.launch {
+            historiesState.value = HistoriesUiState.Loading
+            try {
+                val result = repo.historyRepo(
+                    token = token,
+                    patientId = patient,
+                    page = page,
+                    limit = limit
+                )
+                result.onSuccess { response ->
+                    historiesState.value = HistoriesUiState.Success(data = response)
+                }.onFailure { errorMessage ->
+                    historiesState.value = HistoriesUiState.Error(
+                        message = errorMessage.message ?: "Failed to load Medical details...."
+                    )
+                }
+            } catch (e: Exception) {
+                historiesState.value = HistoriesUiState.Error(
+                    message = e.message ?: "An Unexpected error occurred"
+                )
+            }
+        }
+    }
+
+    // create helper function for pagination
+   suspend fun loadNextHistoryPage(token:String,patientId: String){
+        val currentState = historiesState.value
+        if(currentState is HistoriesUiState.Success){
+            val totalpage = ceil(currentState.data.totalPages.toDouble() / (currentState.data.limit ?: 10)).toInt()
+            val nextPage = (currentState.data.page ?: 1)+1
+            if(nextPage<=totalpage){
+                getAllHistories(token,page = nextPage, patient = patientId)
+            }
+        }
+    }
+
+    // create helper function for load previous page
+    suspend fun loadPreviousHistoryPage(token:String,patientId:String){
+        val currentState = historiesState.value
+        if(currentState is HistoriesUiState.Success){
+            val prevPage = (currentState.data.page ?: 1) - 1
+            if(prevPage>=1) {
+                getAllHistories(token, page = prevPage, patient = patientId)
+            }
+        }
+    }
+
 }
 
 sealed class AllMedicalRecordUiState {
@@ -640,3 +703,10 @@ sealed class ParticularPatientAppointmentDataUiState {
     data class Error(val message: String) : ParticularPatientAppointmentDataUiState()
 }
 
+// histories sealed class
+sealed class HistoriesUiState{
+    object Idle : HistoriesUiState()
+    object Loading : HistoriesUiState()
+    data class Success(val data: GetAllHistoryResponse) : HistoriesUiState()
+    data class Error(val message: String) : HistoriesUiState()
+}

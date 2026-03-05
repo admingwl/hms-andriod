@@ -29,6 +29,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
@@ -267,10 +268,14 @@ interface ApiService{
         @Path("appointmentId") appointmentId:String
     ): Response<PatientAppointmentData>
 
-    // upload lab result
-    @POST("api/v1/lab-results")
-    suspend fun UploadLabResults(
-
-    )
+   // get list Of Histories
+    @GET("api/v1/appointment/get-previous-patient-appointments/{patient}")
+    suspend fun historiesList(
+        @Header("Authorization")token:String,
+        @Path("patient")patient:String,
+        @Query("page") page:Int =  1,
+        @Query("limit") limit : Int = 10,
+//        @Query("sort") sort:String = "desc" // ignore for know
+    ): Response<GetAllHistoryResponse>
    //------------------------update patient Consulting Screen-----------------------------------------
 }
