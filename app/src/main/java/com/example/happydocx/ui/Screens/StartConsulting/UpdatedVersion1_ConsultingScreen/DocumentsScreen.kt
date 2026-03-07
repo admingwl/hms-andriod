@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,10 +22,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,58 +37,95 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.happydocx.R
+import com.example.happydocx.Utils.DateUtils
+import com.example.happydocx.ui.ViewModels.StartConsulting.MedicalDocumentListUiState
+import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 
-@Preview
 @Composable
 fun AllDocumentsScreen(
-    modifier:Modifier = Modifier
+    modifier:Modifier = Modifier,
+    token:String,
+    patientId:String,
+    startConsultingViewModel: StartConsultingViewModel
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth().background(Color(0xffFAFAFA))
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().background(Color(0xffFAFAFA))
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Medical Documents",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = Color.Black,
-                modifier = Modifier.padding(8.dp)
-            )
-            Spacer(Modifier.weight(1f))
-            Button(
-                onClick = {},
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xff1D4ED8),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(4.dp),
-            ) {
-                Text(
-                    "Upload",
-                    color = Color.White
-                )
-            }
-        }
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(6.dp)
-        ) {
-            items(10){it->
-              DocumentItem()
-            }
-        }
+    val  allDocumentListState = startConsultingViewModel._medicalDocumentRecords.collectAsStateWithLifecycle().value
+    LaunchedEffect(token) {
+     startConsultingViewModel.getAllMedicalRecordsViewModel(
+         token = token,
+         patientId = patientId
+     )
     }
+
+    when(val state = allDocumentListState){
+        is MedicalDocumentListUiState.Idle -> {}
+        is MedicalDocumentListUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ){
+                CircularProgressIndicator()
+            }
+        }
+        is MedicalDocumentListUiState.Success -> {
+            val data = state.data
+            Column(
+                modifier = modifier.fillMaxWidth().background(Color(0xffFAFAFA))
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(Color(0xffFAFAFA))
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Medical Documents",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Button(
+                        onClick = {},
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xff1D4ED8),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(4.dp),
+                    ) {
+                        Text(
+                            "Upload",
+                            color = Color.White
+                        )
+                    }
+                }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(6.dp)
+                ) {
+                    items(data){it->
+                        DocumentItem(
+                            testName = it.documentName,
+                            date = it.uploadedAt,
+                            documentType = it.documentType
+                        )
+                    }
+                }
+            }
+        }
+        is MedicalDocumentListUiState.Error -> {}
+        else -> {}
+    }
+
 }
 
-@Preview
 @Composable
-fun DocumentItem() {
+fun DocumentItem(
+    testName:String,
+    date:String,
+    documentType:String
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -117,21 +157,21 @@ fun DocumentItem() {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Ultrasound",
+                        text = testName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = Color.Blue
                     )
                 }
+//                Spacer(modifier = Modifier.height(4.dp))
+//                Text(
+//                    text = doctorName,
+//                    color = Color.Gray,
+//                    fontSize = 14.sp
+//                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Dr. Aris Thorne",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Oct 24, 2023",
+                    text = DateUtils.gettingOnlyDate(date),
                     color = Color.Gray,
                     fontSize = 12.sp
                 )

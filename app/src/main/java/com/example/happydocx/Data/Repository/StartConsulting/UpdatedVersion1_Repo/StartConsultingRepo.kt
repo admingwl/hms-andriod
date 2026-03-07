@@ -8,6 +8,8 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords.GetAllMedicalRecordsResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords.GetAllMedicalRecordsResponseItem
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
@@ -224,6 +226,27 @@ class StartConsultingRepo {
                 patient = patientId,
                 page = page,
                 limit = limit
+            )
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e:Exception){
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getAllMedicationDocumentListRepo(
+        token:String,
+        patientId:String,
+    ):Result<List<GetAllMedicalRecordsResponseItem>>{
+        return try{
+            val result = apiService.getAllMedicalDocuments(
+                token =  "Bearer $token",
+                patientId = patientId,
             )
             if (result.isSuccessful && result.body() != null) {
                 Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")

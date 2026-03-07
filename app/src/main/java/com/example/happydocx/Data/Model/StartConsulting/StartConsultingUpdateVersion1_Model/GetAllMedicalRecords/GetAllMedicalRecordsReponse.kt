@@ -1,0 +1,3 @@
+package com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords
+
+typealias GetAllMedicalRecordsResponse = List<GetAllMedicalRecordsResponseItem>

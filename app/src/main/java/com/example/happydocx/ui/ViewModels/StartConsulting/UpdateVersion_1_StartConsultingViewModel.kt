@@ -10,6 +10,8 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords.GetAllMedicalRecordsResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords.GetAllMedicalRecordsResponseItem
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
@@ -300,6 +302,10 @@ class StartConsultingViewModel : ViewModel() {
     // network state for histories
     private val historiesState = MutableStateFlow<HistoriesUiState>(HistoriesUiState.Idle)
     val _historiesState = historiesState.asStateFlow()
+
+    // get all medical document
+    private val medicalDocumentRecords: MutableStateFlow<MedicalDocumentListUiState> = MutableStateFlow(MedicalDocumentListUiState.Idle)
+    val _medicalDocumentRecords = medicalDocumentRecords.asStateFlow()
 
 
     private val _currentPageHistory = MutableStateFlow(1)
@@ -623,6 +629,31 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
+    suspend fun getAllMedicalRecordsViewModel(
+        token: String,
+        patientId: String,
+    ){
+        viewModelScope.launch {
+            medicalDocumentRecords.value = MedicalDocumentListUiState.Loading
+            try {
+                val result = repo.getAllMedicationDocumentListRepo(
+                    token = token,
+                    patientId = patientId,
+                )
+                result.onSuccess { response ->
+                    medicalDocumentRecords.value = MedicalDocumentListUiState.Success(data = response)
+                }.onFailure { errorMessage ->
+                    medicalDocumentRecords.value = MedicalDocumentListUiState.Error(
+                        message = errorMessage.message ?: "Failed to load Medical details...."
+                    )
+                }
+            } catch (e: Exception) {
+                medicalDocumentRecords.value = MedicalDocumentListUiState.Error(
+                    message = e.message ?: "An Unexpected error occurred"
+                )
+            }
+        }
+    }
     // create helper function for pagination
    suspend fun loadNextHistoryPage(token:String,patientId: String){
         val currentState = historiesState.value
@@ -710,3 +741,12 @@ sealed class HistoriesUiState{
     data class Success(val data: GetAllHistoryResponse) : HistoriesUiState()
     data class Error(val message: String) : HistoriesUiState()
 }
+
+// Medical Document list
+sealed class MedicalDocumentListUiState{
+    object Idle : MedicalDocumentListUiState()
+    object Loading : MedicalDocumentListUiState()
+    data class Success(val data: List<GetAllMedicalRecordsResponseItem>) : MedicalDocumentListUiState()
+    data class Error(val message: String) : MedicalDocumentListUiState()
+}
+
