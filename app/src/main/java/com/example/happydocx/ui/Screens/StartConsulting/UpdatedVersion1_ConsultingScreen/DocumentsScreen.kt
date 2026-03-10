@@ -1,6 +1,8 @@
 package com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,23 +20,54 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,6 +75,9 @@ import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.ViewModels.StartConsulting.MedicalDocumentListUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun AllDocumentsScreen(
@@ -71,10 +107,14 @@ fun AllDocumentsScreen(
         is MedicalDocumentListUiState.Success -> {
             val data = state.data
             Column(
-                modifier = modifier.fillMaxWidth().background(Color(0xffFAFAFA))
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(Color(0xffFAFAFA))
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().background(Color(0xffFAFAFA))
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xffFAFAFA))
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -120,86 +160,390 @@ fun AllDocumentsScreen(
 
 }
 
+@Preview
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DocumentItem(
-    testName:String,
-    date:String,
-    documentType:String
+fun UploadDocumentScreen(
+    modifier: Modifier = Modifier,
+    onClose: () -> Unit = {},
+    onUpload: () -> Unit = {}
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFE3F2FD)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.document),
-                    contentDescription = "Document Icon",
-                    tint = Color.Blue,
-                    modifier = Modifier.size(30.dp)
+    var documentName by remember { mutableStateOf("") }
+    var documentType by remember { mutableStateOf("") }
+    var reportDate by remember { mutableStateOf("") }
+    var datePickerState by rememberSaveable { mutableStateOf(false) }
+    val datePickerStateRemember = rememberDatePickerState()
+    val documentTypeList = listOf<String>(
+        "Lab Report",
+        "Prescription",
+        "Imaging(X-Ray/MRI)",
+        "Insurance",
+        "Discharge Summary",
+        "Other"
+    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Upload Patient Document", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xff2563EB)
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { },
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "arrow back",
+                            tint = Color.White,
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {},
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "arrow back",
+                            tint = Color.White,
+                        )
+                    }
+                }
+            )
+        }
+    ) {paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().background(Color(0xffFBFCFD)).padding(paddingValues).padding(12.dp)) {
+
+                LabelText("Document Name")
+                OutlinedTextField(
+                    value = documentName,
+                    onValueChange = { documentName = it },
+                    placeholder = {
+                        Text(
+                            "e.g., CBC Blood Test",
+                            color = Color(0xFF94A3B8)
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = customTextFieldColors()
                 )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = testName,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color.Blue
+                Spacer(modifier = Modifier.height(16.dp))
+                LabelText("Document Type")
+                ExposedDropdownMenuBox(
+                    expanded = false,
+                    onExpandedChange = { },
+                ) {
+                    OutlinedTextField(
+                        value = "",
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = { Text("Select Type", color = Color(0xFF94A3B8)) },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xffF8FAFC),
+                            unfocusedContainerColor = Color(0xffF8FAFC),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = false,
+                        onDismissRequest = { },
+                        containerColor = Color(0xffF8FAFC),
+                        matchTextFieldWidth = true,
+                    ) {
+                        documentTypeList.forEach { it ->
+                            DropdownMenuItem(
+                                text = { Text(it, color = Color.Black) },
+                                onClick = {
+
+                                }
+                            )
+                        }
+                    }
+                }
+
+
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // --- Report Date ---
+                LabelText("Report Date")
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("mm/dd/yyyy", color = Color(0xFF94A3B8)) },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { }
+                        ) {
+                            Icon(
+                                Icons.Default.DateRange,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                if (datePickerState) {
+                    DatePickerDialog(
+                        shape = RoundedCornerShape(30.dp),
+                        colors = DatePickerDefaults.colors(
+                            // add color to date picker dialog
+                            containerColor = Color(0xffebedfc)
+                        ),
+                        onDismissRequest = { datePickerState = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                // Convert milliseconds to formatted date string
+                                val selectedMillis = datePickerStateRemember.selectedDateMillis
+                                if (selectedMillis != null) {
+                                    val formattedDate =
+                                        SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+                                            .format(Date(selectedMillis))
+//                                    startConsultingViewModel.onDateChanged(formattedDate) //  Save to ViewModel
+                                }
+                                datePickerState = false
+                            }) { Text("OK", color = Color.Black) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { datePickerState = false }) {
+                                Text("Cancel", color = Color.Black)
+                            }
+                        }
+                    ) {
+                        DatePicker(
+                            state = datePickerStateRemember,
+                            colors = DatePickerDefaults.colors(
+                                containerColor = Color(0xffebedfc),
+                                dayContentColor = Color.Black,
+                                titleContentColor = Color.Black,
+                                weekdayContentColor = Color.Black,
+                                headlineContentColor = Color.Black,
+                                navigationContentColor = Color.Black,
+                                subheadContentColor = Color.Black,
+                                dateTextFieldColors = TextFieldDefaults.colors(
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedContainerColor = Color.White
+                                )
+                            )
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // --- Attachment Section ---
+                LabelText("Attachment")
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .dashedBorder(1.dp, Color(0xFFCBD5E1), 12.dp)
+                        .background(Color.White, RoundedCornerShape(12.dp))
+                        .clickable { /* Handle Upload */ },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Color(0xFFF1F5F9),
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    painter = painterResource(R.drawable.baseline_cloud_24),
+                                    contentDescription = null,
+                                    tint = Color(0xFF64748B),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Click to upload document",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = Color(0xFF475569)
+                        )
+                        Text(
+                            text = "PDF, JPG, PNG (Max 5MB)",
+                            fontSize = 12.sp,
+                            color = Color(0xFF94A3B8)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // --- Buttons ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onClose,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                        modifier = Modifier
+                            .height(44.dp)
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        Text("Cancel", color = Color(0xFF475569))
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Button(
+                        onClick = onUpload,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                        modifier = Modifier.height(44.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.baseline_cloud_24),
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Upload Document",color =Color.White)
+                    }
+                }
+        }
+    }
+
+
+    }
+
+    @Composable
+    fun LabelText(text: String) {
+        Text(
+            text = text,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color(0xFF475569),
+            modifier = Modifier.padding(bottom = 6.dp)
+        )
+    }
+
+    @Composable
+    fun customTextFieldColors() = OutlinedTextFieldDefaults.colors(
+        unfocusedBorderColor = Color(0xFFCBD5E1),
+        focusedBorderColor = Color(0xFF2563EB),
+        unfocusedContainerColor = Color.White,
+        focusedContainerColor = Color.White
+    )
+
+    // Extension for the dashed border
+    fun Modifier.dashedBorder(width: Dp, color: Color, cornerRadius: Dp) = drawBehind {
+        val stroke = Stroke(
+            width = width.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+        )
+        drawRoundRect(
+            color = color,
+            style = stroke,
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx())
+        )
+    }
+
+
+    @Composable
+    fun DocumentItem(
+        testName: String,
+        date: String,
+        documentType: String
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFE3F2FD)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.document),
+                        contentDescription = "Document Icon",
+                        tint = Color.Blue,
+                        modifier = Modifier.size(30.dp)
                     )
                 }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = testName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = Color.Blue
+                        )
+                    }
 //                Spacer(modifier = Modifier.height(4.dp))
 //                Text(
 //                    text = doctorName,
 //                    color = Color.Gray,
 //                    fontSize = 14.sp
 //                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = DateUtils.gettingOnlyDate(date),
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically){
-                IconButton(onClick = { /*TODO*/ }) {
-                    Icon(
-                        painter = painterResource(R.drawable.eye),
-                        contentDescription = "View Document",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(24.dp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = DateUtils.gettingOnlyDate(date),
+                        color = Color.Gray,
+                        fontSize = 12.sp
                     )
                 }
-                IconButton(
-                    onClick = { /*TODO*/ },
-                    modifier = Modifier.background(color = Color.White, shape = CircleShape)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(
+                            painter = painterResource(R.drawable.eye),
+                            contentDescription = "View Document",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = { /*TODO*/ },
+                        modifier = Modifier.background(color = Color.White, shape = CircleShape)
                     ) {
-                    Icon(
-                        painter = painterResource(R.drawable.download),
-                        contentDescription = "Download Document",
-                        tint = Color.Blue,
-                        modifier = Modifier.size(24.dp),
-                    )
+                        Icon(
+                            painter = painterResource(R.drawable.download),
+                            contentDescription = "Download Document",
+                            tint = Color.Blue,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
-            }
 
+            }
         }
     }
-}
 
 
