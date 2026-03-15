@@ -1,5 +1,8 @@
 package com.example.happydocx.ui.uiStates.StartConsulting
 
+import android.net.Uri
+import kotlinx.serialization.BinaryFormat
+
 data class StartConsultingUiStateUpdated1(
   // save Vital Signs State
     val heartRate:String = "",
@@ -40,4 +43,12 @@ data class UploadLabReportUpdate1(
     val reportType:String="",
     val laboratoryName:String="",
     val notes:String=""
+)
+
+data class UploadDocumentUpdate1(
+    val documentName:String = "",
+    val documentType:String = "",
+    val reportDate:String = "",
+    val attachmentURI: Uri? = null,
+    val attachmentName:String = ""
 )

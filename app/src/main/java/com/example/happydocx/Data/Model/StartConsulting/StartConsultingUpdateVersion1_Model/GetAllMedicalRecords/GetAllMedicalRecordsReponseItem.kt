@@ -13,5 +13,14 @@ data class GetAllMedicalRecordsResponseItem(
     val signedUrl: String,
     val testResult: String,
     val uploadedAt: String,
-    val uploadedBy: Any
+    val uploadedBy: UploadedByObject
+)
+
+data class UploadedByObject(
+    val _id:String,
+    val salutation:String,
+    val first_name:String,
+    val last_name:String,
+    val status:String,
+    val id:String
 )

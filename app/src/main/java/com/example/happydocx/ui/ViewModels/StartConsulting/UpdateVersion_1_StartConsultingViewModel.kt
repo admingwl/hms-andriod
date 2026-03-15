@@ -1,5 +1,7 @@
 package com.example.happydocx.ui.ViewModels.StartConsulting
 
+import android.content.Context
+import android.net.Uri
 import androidx.camera.core.impl.MutableStateObservable
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
@@ -20,11 +22,13 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Request_Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
 import com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Repo.StartConsultingRepo
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.uiStates.StartConsulting.AddLabResultManualUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.AddMedicationUpdated1
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiStateUpdated1
+import com.example.happydocx.ui.uiStates.StartConsulting.UploadDocumentUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.UploadLabReportUpdate1
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -234,34 +238,77 @@ class StartConsultingViewModel : ViewModel() {
     val _uploadLabReportState = uploadLabReportState.asStateFlow()
 
     // on report date changed
-    fun onReportDateChanged(newDate:String){
-        uploadLabReportState.update { it->
+    fun onReportDateChanged(newDate: String) {
+        uploadLabReportState.update { it ->
             it.copy(
                 reportDate = newDate
             )
         }
     }
+
     // on report type changed
-   fun onReportTypeChanged(newType:String){
-        uploadLabReportState.update { it->
+    fun onReportTypeChanged(newType: String) {
+        uploadLabReportState.update { it ->
             it.copy(
                 reportType = newType
             )
         }
     }
+
     // on laboratory name changed
-    fun onLaboratoryNameChanged(newLaboratory:String) {
+    fun onLaboratoryNameChanged(newLaboratory: String) {
         uploadLabReportState.update { it ->
             it.copy(
                 laboratoryName = newLaboratory
             )
         }
     }
+
     // on laboratory notes changed
-    fun onLaboratoryNotesChanged(newNotes:String) {
+    fun onLaboratoryNotesChanged(newNotes: String) {
         uploadLabReportState.update { it ->
             it.copy(
                 notes = newNotes
+            )
+        }
+    }
+
+    // upload Documents ui state
+    private val uploadDocumentState = MutableStateFlow(UploadDocumentUpdate1())
+    val _uploadDocumentState = uploadDocumentState.asStateFlow()
+
+    fun onDocumentNameChanged(newDocumentName: String) {
+        uploadDocumentState.update {
+            it.copy(
+                documentName = newDocumentName
+            )
+        }
+    }
+
+    fun onDocumentTypeChanged(documentType: String) {
+        uploadDocumentState.update {
+            it.copy(
+                documentType = documentType
+            )
+        }
+    }
+
+    fun onDocumentDateChanged(documentDate: String) {
+        uploadDocumentState.update {
+            it.copy(
+                reportDate = documentDate
+            )
+        }
+    }
+
+    fun onAttachmentChange(
+        uri: Uri?,
+        name: String
+    ) {
+        uploadDocumentState.update {
+            it.copy(
+                attachmentURI = uri,
+                attachmentName = name
             )
         }
     }
@@ -296,7 +343,8 @@ class StartConsultingViewModel : ViewModel() {
     val _createLabResultManuallyState = createLabResultManuallyState.asStateFlow()
 
     // particular patient appointment data network state
-    private val particularPatientAppointmentDataState: MutableStateFlow<ParticularPatientAppointmentDataUiState> = MutableStateFlow(ParticularPatientAppointmentDataUiState.Idle)
+    private val particularPatientAppointmentDataState: MutableStateFlow<ParticularPatientAppointmentDataUiState> =
+        MutableStateFlow(ParticularPatientAppointmentDataUiState.Idle)
     val _particularPatientAppointmentDataState = particularPatientAppointmentDataState.asStateFlow()
 
     // network state for histories
@@ -304,9 +352,13 @@ class StartConsultingViewModel : ViewModel() {
     val _historiesState = historiesState.asStateFlow()
 
     // get all medical document
-    private val medicalDocumentRecords: MutableStateFlow<MedicalDocumentListUiState> = MutableStateFlow(MedicalDocumentListUiState.Idle)
+    private val medicalDocumentRecords: MutableStateFlow<MedicalDocumentListUiState> =
+        MutableStateFlow(MedicalDocumentListUiState.Idle)
     val _medicalDocumentRecords = medicalDocumentRecords.asStateFlow()
 
+
+    private val uploadDocumentNetworkState: MutableStateFlow<UploadPatientDocumentUIState> = MutableStateFlow(UploadPatientDocumentUIState.Idle)
+    val _uploadDocumentNetworkState = uploadDocumentNetworkState.asStateFlow()
 
     private val _currentPageHistory = MutableStateFlow(1)
     val currentPageHistory = _currentPageHistory.asStateFlow()
@@ -572,9 +624,9 @@ class StartConsultingViewModel : ViewModel() {
 
     // fun to get particular patient data
     suspend fun getParticularPatientAppointmentData(
-        token:String,
-        appointmentId:String
-    ){
+        token: String,
+        appointmentId: String
+    ) {
         viewModelScope.launch {
             labResultState.value = CurrentLabResultUiState.Loading
 
@@ -584,11 +636,13 @@ class StartConsultingViewModel : ViewModel() {
                     appointmentId = appointmentId
                 )
                 result.onSuccess { result ->
-                    particularPatientAppointmentDataState.value = ParticularPatientAppointmentDataUiState.Success(data = result)
+                    particularPatientAppointmentDataState.value =
+                        ParticularPatientAppointmentDataUiState.Success(data = result)
                 }.onFailure { errorMessage ->
-                    particularPatientAppointmentDataState.value = ParticularPatientAppointmentDataUiState.Error(
-                        message = errorMessage.message ?: "Failed to load Medical details...."
-                    )
+                    particularPatientAppointmentDataState.value =
+                        ParticularPatientAppointmentDataUiState.Error(
+                            message = errorMessage.message ?: "Failed to load Medical details...."
+                        )
                 }
             } catch (e: Exception) {
                 labResultState.value = CurrentLabResultUiState.Error(
@@ -602,8 +656,8 @@ class StartConsultingViewModel : ViewModel() {
     suspend fun getAllHistories(
         token: String,
         patient: String,
-        page:Int = 1,
-        limit:Int = 10
+        page: Int = 1,
+        limit: Int = 10
     ) {
         viewModelScope.launch {
             historiesState.value = HistoriesUiState.Loading
@@ -632,7 +686,7 @@ class StartConsultingViewModel : ViewModel() {
     suspend fun getAllMedicalRecordsViewModel(
         token: String,
         patientId: String,
-    ){
+    ) {
         viewModelScope.launch {
             medicalDocumentRecords.value = MedicalDocumentListUiState.Loading
             try {
@@ -641,7 +695,8 @@ class StartConsultingViewModel : ViewModel() {
                     patientId = patientId,
                 )
                 result.onSuccess { response ->
-                    medicalDocumentRecords.value = MedicalDocumentListUiState.Success(data = response)
+                    medicalDocumentRecords.value =
+                        MedicalDocumentListUiState.Success(data = response)
                 }.onFailure { errorMessage ->
                     medicalDocumentRecords.value = MedicalDocumentListUiState.Error(
                         message = errorMessage.message ?: "Failed to load Medical details...."
@@ -654,29 +709,76 @@ class StartConsultingViewModel : ViewModel() {
             }
         }
     }
+
     // create helper function for pagination
-   suspend fun loadNextHistoryPage(token:String,patientId: String){
+    suspend fun loadNextHistoryPage(token: String, patientId: String) {
         val currentState = historiesState.value
-        if(currentState is HistoriesUiState.Success){
-            val totalpage = ceil(currentState.data.totalPages.toDouble() / (currentState.data.limit ?: 10)).toInt()
-            val nextPage = (currentState.data.page ?: 1)+1
-            if(nextPage<=totalpage){
-                getAllHistories(token,page = nextPage, patient = patientId)
+        if (currentState is HistoriesUiState.Success) {
+            val totalpage = ceil(
+                currentState.data.totalPages.toDouble() / (currentState.data.limit ?: 10)
+            ).toInt()
+            val nextPage = (currentState.data.page ?: 1) + 1
+            if (nextPage <= totalpage) {
+                getAllHistories(token, page = nextPage, patient = patientId)
             }
         }
     }
 
     // create helper function for load previous page
-    suspend fun loadPreviousHistoryPage(token:String,patientId:String){
+    suspend fun loadPreviousHistoryPage(token: String, patientId: String) {
         val currentState = historiesState.value
-        if(currentState is HistoriesUiState.Success){
+        if (currentState is HistoriesUiState.Success) {
             val prevPage = (currentState.data.page ?: 1) - 1
-            if(prevPage>=1) {
+            if (prevPage >= 1) {
                 getAllHistories(token, page = prevPage, patient = patientId)
             }
         }
     }
 
+    // uplaod patient documents
+    suspend fun UploadPatientDocumentClicked(
+        context: Context,
+        token: String,
+        appointmentId: String,
+        patientId: String
+    ) {
+        viewModelScope.launch {
+            val state = uploadDocumentState.value
+            if (state.attachmentURI != null) {
+                val fileSize = context.contentResolver
+                    .openFileDescriptor(state.attachmentURI, "r")?.statSize ?: 0
+                val maxSize = 5 * 1024 * 1024 // 5MB in bytes
+                if (fileSize > maxSize) {
+                    uploadDocumentNetworkState.value = UploadPatientDocumentUIState.Error(
+                        "File too large. Maximum size is 5MB"
+                    )
+                    return@launch
+                }
+            }
+            uploadDocumentNetworkState.value = UploadPatientDocumentUIState.Loading
+            try {
+                val result = repo.uploadPatientDocuments(
+                    context = context,
+                    token = token,
+                    appointmentId = appointmentId,
+                    patientId = patientId,
+                    state = state
+                )
+                result.onSuccess {
+                    uploadDocumentNetworkState.value =
+                        UploadPatientDocumentUIState.Success(data = it)
+                    // Reset form after success
+                    uploadDocumentState.update { UploadDocumentUpdate1() }
+                }.onFailure { error ->
+                    uploadDocumentNetworkState.value =
+                        UploadPatientDocumentUIState.Error(error.message ?: "Upload failed")
+                }
+            } catch (e: Exception) {
+                uploadDocumentNetworkState.value =
+                    UploadPatientDocumentUIState.Error(e.message ?: "Something went wrong")
+            }
+        }
+    }
 }
 
 sealed class AllMedicalRecordUiState {
@@ -735,7 +837,7 @@ sealed class ParticularPatientAppointmentDataUiState {
 }
 
 // histories sealed class
-sealed class HistoriesUiState{
+sealed class HistoriesUiState {
     object Idle : HistoriesUiState()
     object Loading : HistoriesUiState()
     data class Success(val data: GetAllHistoryResponse) : HistoriesUiState()
@@ -743,10 +845,20 @@ sealed class HistoriesUiState{
 }
 
 // Medical Document list
-sealed class MedicalDocumentListUiState{
+sealed class MedicalDocumentListUiState {
     object Idle : MedicalDocumentListUiState()
     object Loading : MedicalDocumentListUiState()
-    data class Success(val data: List<GetAllMedicalRecordsResponseItem>) : MedicalDocumentListUiState()
+    data class Success(val data: List<GetAllMedicalRecordsResponseItem>) :
+        MedicalDocumentListUiState()
+
     data class Error(val message: String) : MedicalDocumentListUiState()
+}
+
+// upload patient document ui state
+sealed class UploadPatientDocumentUIState {
+    object Idle : UploadPatientDocumentUIState()
+    object Loading : UploadPatientDocumentUIState()
+    data class Success(val data: UploadDocumentResponse) : UploadPatientDocumentUIState()
+    data class Error(val message: String) : UploadPatientDocumentUIState()
 }
 

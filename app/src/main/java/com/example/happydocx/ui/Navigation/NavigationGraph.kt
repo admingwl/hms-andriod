@@ -45,6 +45,7 @@ import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_Consulti
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewVitalSignsScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.BasicInfoOfPatient
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.ManualEntryScreen
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.UploadDocumentScreen
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
@@ -69,22 +70,14 @@ fun NavigationGraph() {
 
 
     // Create viewModel at navigation graph level so it survives between screens
-    val sharedViewModel: formViewModel = viewModel(
-        factory = FormViewModelFactory(context)
-    )
-    val doctorAppointmentViewModel: DoctorAppointmentsViewModel = viewModel(
-        factory = DoctorAppointmentsViewModelFactory(context)
-    )
+    val sharedViewModel: formViewModel = viewModel(factory = FormViewModelFactory(context))
+    val doctorAppointmentViewModel: DoctorAppointmentsViewModel = viewModel(factory = DoctorAppointmentsViewModelFactory(context))
     val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
-
     val SavePatientGeneralViewModel: SavePatientViewModel = viewModel()
     val getTimeSlotsViewModel: GetTimeSlotsForAppointmentViewModel = viewModel()
     // update version
     val startConsultingViewModel: StartConsultingViewModel = viewModel()
-    NavHost(
-        startDestination = "Login",
-        navController = navController
-    ) {
+    NavHost(startDestination = "Login", navController = navController) {
 
         composable(route = "Login") {
             LoginPage(navController = navController, userViewModel = userViewModel)
@@ -328,6 +321,18 @@ fun NavigationGraph() {
         }
         composable(route ="addNewOrderTestScreen") {
             AddNewOrderTestScreen(navController = navController)
+        }
+
+        composable(route = "submitDocumentScreen/{token}/{patientId}/{appointmentId}",
+            arguments = listOf(
+                navArgument(name = "token") { type = NavType.StringType },
+                navArgument(name = "patientId") { type = NavType.StringType },
+                navArgument(name = "appointmentId"){type = NavType.StringType}
+            )){backStackEntry->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            val patientId = backStackEntry.arguments?.getString("patientId")?:""
+            val appointmentId = backStackEntry.arguments?.getString("appointmentId")?:""
+            UploadDocumentScreen(startConsultingViewModel = startConsultingViewModel,token = token, patientId = patientId, appointmentId = appointmentId)
         }
         //--------------------new Consulting Screen-----------------------------------------------//
 

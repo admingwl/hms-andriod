@@ -1,5 +1,6 @@
 package com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Repo
 
+import android.content.Context
 import android.util.Log
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
@@ -16,8 +17,14 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
 import com.example.happydocx.Data.Network.ApiService
 import com.example.happydocx.Utils.RetrofitInstance
+import com.example.happydocx.ui.uiStates.StartConsulting.UploadDocumentUpdate1
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 
 class StartConsultingRepo {
 
@@ -257,6 +264,56 @@ class StartConsultingRepo {
             }
         }catch (e:Exception){
             Result.failure(e)
+        }
+    }
+
+    suspend fun uploadPatientDocuments(
+        context: Context,
+        token:String,
+        appointmentId:String,
+        patientId:String,
+        state: UploadDocumentUpdate1
+    ): Result<UploadDocumentResponse>{
+
+        val documentName = state.documentName.toRequestBody("text/plain".toMediaType())
+        val documentType = state.documentType.toRequestBody("text/plain".toMediaType())
+        val reportDate = state.reportDate.toRequestBody("text/plain".toMediaType())
+        val appointmentId = appointmentId.toRequestBody("text/plain".toMediaType())
+        val patientId = patientId.toRequestBody("text/plain".toMediaType())
+
+        // convert URI to binary
+        val byteArray = context.contentResolver.openInputStream(state.attachmentURI!!)?.use { it.readBytes() }
+
+        val mimeType = context.contentResolver
+            .getType(state.attachmentURI) ?: "application/octet-stream"
+
+        val fileRequestBody = byteArray!!
+            .toRequestBody(mimeType.toMediaType())
+
+        // "file" must match the key name API expects
+        val filePart = MultipartBody.Part.createFormData(
+            "file",                  //  key name
+            state.attachmentName,    //  file name
+            fileRequestBody          //  binary
+        )
+
+        return try {
+            val response = apiService.uploadMedicalDocuments(
+                token = "Bearer $token",
+                documentName = documentName,
+                documentType = documentType,
+                reportDate = reportDate,
+                appointmentId = appointmentId,
+                patientId = patientId,
+                attachment = filePart
+            )
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)   //  wrap in Result.success
+            } else {
+                Result.failure(Exception(response.message()))  //  wrap error
+            }
+        } catch (e: Exception) {
+            Result.failure(e)   //  wrap exception
         }
     }
 

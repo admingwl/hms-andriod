@@ -16,12 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.example.happydocx.Data.ZoomMeetingManager.ZoomJWTGenerator
 import com.example.happydocx.ui.Navigation.NavigationGraph
-import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewVitalSignsScreen
-import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.BasicInfoOfPatient
-import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.UploadDocumentScreen
 import com.example.happydocx.ui.theme.HappyDocxTheme
 import us.zoom.sdk.MeetingError
 import us.zoom.sdk.MeetingParameter
@@ -81,7 +77,7 @@ class MainActivity : ComponentActivity(){
         enableEdgeToEdge()
         setContent {
             HappyDocxTheme {
-                UploadDocumentScreen()
+                HappyDocx()
             }
         }
     }

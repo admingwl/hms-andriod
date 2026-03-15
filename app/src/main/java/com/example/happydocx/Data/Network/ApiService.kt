@@ -34,6 +34,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
 import com.example.happydocx.Data.Model.StartConsulting.TestInvestigationResponse
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusRequestBody
@@ -52,7 +53,7 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-interface ApiService{
+interface ApiService {
     // here is the end point in post(parameter)
     // api end point for Sign in User
     @POST("api/v1/user/sign-in")
@@ -112,44 +113,43 @@ interface ApiService{
     ): Response<DoctorProfileResponse>
 
 
-
     // Api integration for getting all the list of appointments of the doctor
     @GET("api/v1/appointment/doctor")
     suspend fun getDoctorAppointments(
-      @Header("Authorization") token:String?, // bearer token
-      @Query("page") page:Int = 1,
-      @Query("limit") limit:Int = 10,
-      @Query("showCompleted") showCompleted:Boolean = false
+        @Header("Authorization") token: String?, // bearer token
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 10,
+        @Query("showCompleted") showCompleted: Boolean = false
     ): Response<AppointmentResponse>
 
     // Api integration for getting the list of all the patients.
     @GET("api/v1/patient/get-all-patients")
     suspend fun getAllPatients(
-        @Header("Authorization") token:String?,
-        @Query("page") page:Int =  1,
-        @Query("limit") limit : Int = 10
+        @Header("Authorization") token: String?,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 10
     ): Response<PatientListResponse>
 
 
     // api for getting the all departments
     @GET("api/v1/department/all-departments")
     suspend fun getAllDepartments(
-        @Header ("Authorization") token:String
+        @Header("Authorization") token: String
     ): Response<AllDepartments>
 
     // api for getting the particular patient's appointment data
     // we use path here because the appointmentId is the part of the url .
     @GET("api/v1/appointment/{appointmentId}")
     suspend fun getParticularPatientAppointment(
-        @Header("Authorization") token:String,
-        @Path("appointmentId") appointmentId:String
+        @Header("Authorization") token: String,
+        @Path("appointmentId") appointmentId: String
     ): Response<AppointmentApiResponse>
 
 
     // post request for the submit of the symptoms and diagnosis and notes
     @POST("api/v1/investigation/add")
     suspend fun SubmitSymptomsDiagnosisNotes(
-        @Header("Authentication") token:String,
+        @Header("Authentication") token: String,
         @Body body: SaveSymptomDiagnosisRequest,
     ): Response<SaveSymptomDiagnosisResponse>
 
@@ -166,13 +166,13 @@ interface ApiService{
     suspend fun getAllVitalSignsAndSymptoms(
         @Header("Authorization") token: String,
         @Path("patientId") patientId: String
-    ):Response<vitalSignList>
+    ): Response<vitalSignList>
 
     // submit medication api
     @POST("api/v1/medical/medication")
     suspend fun sendMedication(
-       @Header("Authorization") token:String,
-       @Body body: MedicationRequest
+        @Header("Authorization") token: String,
+        @Body body: MedicationRequest
     ): Response<MedicationResponse>
 
     // here is my api call for the test and investigation
@@ -184,81 +184,81 @@ interface ApiService{
 
     @POST("api/v1/appointment/update/status/{id}") // id -> appointment Id
     suspend fun updateAppointmentStatus(
-        @Header("Authorization") token:String,
-        @Path("id") appointmentId:String,
-        @Body body : UpdateAppointmentStatusRequestBody
+        @Header("Authorization") token: String,
+        @Path("id") appointmentId: String,
+        @Body body: UpdateAppointmentStatusRequestBody
     ): Response<UpdateAppointmentStatusResponseBody>
 
     @GET("api/v1/record/by-appointment/{appointmentId}")
     suspend fun getMedicalRecords(
-        @Header("Authorization") token:String,
+        @Header("Authorization") token: String,
         @Path("appointmentId") appointmentId: String
     ): Response<List<PrescriptionRecord>>
 
     // save patient
     @POST("api/v1/patient/add-patient")
     suspend fun savePatientGeneral(
-        @Header("Authorization") token:String,
+        @Header("Authorization") token: String,
         @Body requestBody: SavePatientRequestBody
     ): Response<SavePatientResponseBody>
 
     // function for getting all the slots for the particular date of appointment
     @GET("api/v1/doctor/slots")
-   suspend fun getTimeSlotsForParticularAppointmentDate(
-        @Header(value = "Authorization") token:String,
-        @Query(value = "date") date:String
+    suspend fun getTimeSlotsForParticularAppointmentDate(
+        @Header(value = "Authorization") token: String,
+        @Query(value = "date") date: String
     ): Response<scheduleAppointmentTimeResponse>
 
-   // schedule the appointment of the particular patient
-   @POST("api/v1/appointment/create/v2")
-   suspend fun scheduleAppointment(
-       @Header("Authorization") token:String,
-       @Body requestBody: ScheduleAppointmentRequest
-   ): Response<ScheduleAppointmentResponse>
+    // schedule the appointment of the particular patient
+    @POST("api/v1/appointment/create/v2")
+    suspend fun scheduleAppointment(
+        @Header("Authorization") token: String,
+        @Body requestBody: ScheduleAppointmentRequest
+    ): Response<ScheduleAppointmentResponse>
 
 
-   //-------------------------updated Patient Consulting Screen---------------------------------------
+    //-------------------------updated Patient Consulting Screen---------------------------------------
     // getting medicalRecords.
-   @GET("api/v1/medical-record-v2/by-appointment/{appointmentId}")
+    @GET("api/v1/medical-record-v2/by-appointment/{appointmentId}")
     suspend fun allMedicalRecords(
-        @Header("Authorization") token:String,
-        @Path("appointmentId") appointmentId:String
-    ) : Response<AllVitalSignsResponse>
+        @Header("Authorization") token: String,
+        @Path("appointmentId") appointmentId: String
+    ): Response<AllVitalSignsResponse>
 
-  // post the vital signs for the patient
+    // post the vital signs for the patient
     @POST("api/v1/medical-record-v2/{appointmentId}")
     suspend fun sendVitalSignsAndSymptoms(
         @Header("Authorization") token: String,
         @Body body: Save_Vital_Signs_RequestBody,
-        @Path("appointmentId") appointmentId:String
+        @Path("appointmentId") appointmentId: String
     ): Response<Save_vitalSigns_Response_Body>
 
     // get current Medications list
     @GET("api/v1/patient/medications/{appointmentId}")
     suspend fun getCurrentMedication(
-        @Header("Authorization") token:String,
-        @Path("appointmentId") appointmentId:String
+        @Header("Authorization") token: String,
+        @Path("appointmentId") appointmentId: String
     ): Response<CurrentMedicationResponse>
 
     @GET("api/v1/lab-results/by-patient/{patientId}")
     suspend fun getCurrentLabResult(
-        @Header("Authorization")token:String,
-        @Path("patientId")patientId:String
+        @Header("Authorization") token: String,
+        @Path("patientId") patientId: String
     ): Response<LabResultResponse>
 
 
     // function for create new medication
     @POST("api/v1/patient/medications/{appointmentId}")
     suspend fun createNewMedicationResult(
-        @Header("Authorization") token:String,
-        @Path("appointmentId") appointmentId:String,
+        @Header("Authorization") token: String,
+        @Path("appointmentId") appointmentId: String,
         @Body body: CreateMedicationRequest
     ): Response<CreateMedicationResponse>
 
     // create lab result manually
     @POST("api/v1/lab-results")
     suspend fun CreateLabResultManually(
-        @Header("Authorization") token:String,
+        @Header("Authorization") token: String,
         @Body body: ManualLabReportCreateRequestUpdate1
     ): Response<ManualLabReportCreateResponseUpdate1>
 
@@ -266,25 +266,38 @@ interface ApiService{
     // we use path here because the appointmentId is the part of the url .
     @GET("api/v1/appointment/{appointmentId}")
     suspend fun getParticularPatientAppointmentUpdate1(
-        @Header("Authorization") token:String,
-        @Path("appointmentId") appointmentId:String
+        @Header("Authorization") token: String,
+        @Path("appointmentId") appointmentId: String
     ): Response<PatientAppointmentData>
 
-   // get list Of Histories
+    // get list Of Histories
     @GET("api/v1/appointment/get-previous-patient-appointments/{patient}")
     suspend fun historiesList(
-        @Header("Authorization")token:String,
-        @Path("patient")patient:String,
-        @Query("page") page:Int =  1,
-        @Query("limit") limit : Int = 10,
+        @Header("Authorization") token: String,
+        @Path("patient") patient: String,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 10,
 //        @Query("sort") sort:String = "desc" // ignore for know
     ): Response<GetAllHistoryResponse>
 
     // get list of all medical documents.
     @GET("api/v1/patient/document/{patientId}")
     suspend fun getAllMedicalDocuments(
-        @Header("Authorization") token:String,
-        @Path("patientId") patientId:String
+        @Header("Authorization") token: String,
+        @Path("patientId") patientId: String
     ): Response<List<GetAllMedicalRecordsResponseItem>>
-   //------------------------update patient Consulting Screen-----------------------------------------
+
+    // upload the medical documents
+    @Multipart
+    @POST("api/v1/patient/upload-patient-document")
+    suspend fun uploadMedicalDocuments(
+        @Header("Authorization") token: String,
+        @Part("documentName") documentName: RequestBody,
+        @Part("documentType") documentType: RequestBody,
+        @Part("reportDate") reportDate: RequestBody,
+        @Part("appointmentId") appointmentId: RequestBody,
+        @Part("patientId") patientId: RequestBody,
+        @Part attachment: MultipartBody.Part
+    ):Response<UploadDocumentResponse>
+    //------------------------update patient Consulting Screen-----------------------------------------
 }
