@@ -428,6 +428,7 @@ fun ContactInfoOfPatient(
     }
 }
 
+@Suppress("ViewModelForwarding")
 @Composable
 fun PatientAppointmentInfoTabScreen(
     modifier: Modifier = Modifier,
@@ -490,7 +491,7 @@ fun PatientAppointmentInfoTabScreen(
                 3 -> LabResultScreen(token = token, patientId = patientId, startConsultingViewModel = startConsultingViewModel)
                 4 -> AllHistoryList(patient = patientId,token = token, startConsultingViewModel = startConsultingViewModel)
                 5 -> AllDocumentsScreen(token = token, patientId = patientId, startConsultingViewModel = startConsultingViewModel, navController = navController,appointmentId = appointmentId)
-                6 -> NotesScreen()
+                6 -> NotesScreen(startConsultingViewModel = startConsultingViewModel)
             }
         }
     }

@@ -52,3 +52,32 @@ data class UploadDocumentUpdate1(
     val attachmentURI: Uri? = null,
     val attachmentName:String = ""
 )
+
+// notes ui state
+data class ConsultationNotesUpdate1(
+    val chiefComplaint:String = "",
+    val historyOfPresentIllness:String = "",
+    val physicalExamination:String ="",
+    val assessmentAndDiagnosis:String = "",
+    val treatmentPlan:String = "",
+    val followUp:String = "",
+    val priority:String = "",
+
+    val medications:List<MedicationItem> = listOf(MedicationItem(id = 0)),
+
+    val labTest:String = "",
+    val imagingStudies:String = "",
+    val referrals:String = "",
+    val urgency:String = "",
+    val expectedTimeline:String = "",
+)
+
+data class MedicationItem(
+    val id: Int = 0,
+    val medicationName: String = "",
+    val dosage: String = "",
+    val frequency: String = "",
+    val duration: String = "",
+    val mealTime: String = "",
+    val specialInstructions: String = ""
+)

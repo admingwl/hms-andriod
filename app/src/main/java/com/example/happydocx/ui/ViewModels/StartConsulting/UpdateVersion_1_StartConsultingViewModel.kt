@@ -27,6 +27,8 @@ import com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Rep
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.uiStates.StartConsulting.AddLabResultManualUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.AddMedicationUpdated1
+import com.example.happydocx.ui.uiStates.StartConsulting.ConsultationNotesUpdate1
+import com.example.happydocx.ui.uiStates.StartConsulting.MedicationItem
 import com.example.happydocx.ui.uiStates.StartConsulting.StartConsultingUiStateUpdated1
 import com.example.happydocx.ui.uiStates.StartConsulting.UploadDocumentUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.UploadLabReportUpdate1
@@ -313,6 +315,179 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
+    // ui state for Consultation notes
+    private val consultationNotesState = MutableStateFlow(ConsultationNotesUpdate1())
+    val _consultationNotesState = consultationNotesState.asStateFlow()
+
+    fun onChiefComplaintChange(newComplaint:String){
+        consultationNotesState.update {
+            it.copy(
+                chiefComplaint = newComplaint
+            )
+        }
+    }
+
+    fun historyOfPresentIllnessChange(newHistory:String){
+        consultationNotesState.update {
+            it.copy(
+                historyOfPresentIllness = newHistory
+            )
+        }
+    }
+
+    fun onPhysicalExaminationChanged(newExamination:String){
+        consultationNotesState.update {
+            it.copy(
+                physicalExamination = newExamination
+            )
+        }
+    }
+
+    fun onAssessmentAndDiagnosisChanged(newDiagnosis:String){
+        consultationNotesState.update {
+            it.copy(
+                assessmentAndDiagnosis = newDiagnosis
+            )
+        }
+    }
+
+    fun onTreatmentPlanChanged(newPlan:String){
+        consultationNotesState.update {
+            it.copy(
+                treatmentPlan = newPlan
+            )
+        }
+    }
+
+    fun onFollowUpChanged(newFollowUp:String){
+        consultationNotesState.update {
+            it.copy(
+                followUp = newFollowUp
+            )
+        }
+    }
+
+    fun onPriorityChanged(newPriority:String) {
+        consultationNotesState.update {
+            it.copy(
+                priority = newPriority
+            )
+        }
+    }
+
+    // add new medication card
+    fun addMedication() {
+        consultationNotesState.update { state ->
+            val newId = (state.medications.maxOfOrNull { it.id } ?: 0) + 1
+            state.copy(medications = state.medications + MedicationItem(id = newId))
+        }
+    }
+
+    // Remove a medication card by id
+    fun removeMedication(id: Int) {
+        consultationNotesState.update { state ->
+            state.copy(medications = state.medications.filter { it.id != id })
+        }
+    }
+
+    // Update a specific medication field by id
+    fun updateMedication(id: Int, update: MedicationItem.() -> MedicationItem) {
+        consultationNotesState.update { state ->
+            state.copy(
+                medications = state.medications.map { item ->
+                    if (item.id == id) item.update() else item
+                }
+            )
+        }
+    }
+
+//    fun onNotesMedicationNameChanged(newMedication:String){
+//        consultationNotesState.update {
+//            it.copy(
+//                medicationName = newMedication
+//            )
+//        }
+//    }
+//
+//    fun onNotesDosageChanged(newDossage:String){
+//        consultationNotesState.update {
+//            it.copy(
+//                dosage = newDossage
+//            )
+//        }
+//    }
+//
+//    fun onNotesFrequencyChanged(newFrequency:String){
+//        consultationNotesState.update {
+//            it.copy(
+//                frequency = newFrequency
+//            )
+//        }
+//    }
+//
+//    fun onNotesDurationChanged(newDuration:String){
+//        consultationNotesState.update {
+//            it.copy(
+//                duration = newDuration
+//            )
+//        }
+//    }
+//
+//    fun mealTimeChanged(newMealTime:String) {
+//        consultationNotesState.update {
+//            it.copy(
+//                mealTime = newMealTime
+//            )
+//        }
+//    }
+//
+//    fun onSpecialInstructionsChanged(newInstructions:String){
+//        consultationNotesState.update {
+//            it.copy(
+//                specialInstructions = newInstructions
+//            )
+//        }
+//    }
+
+    fun onLabTestChanged(labTest:String){
+        consultationNotesState.update {
+            it.copy(
+                labTest = labTest
+            )
+        }
+    }
+
+    fun onImagingStudiesChanged(newStudies:String){
+        consultationNotesState.update {
+            it.copy(
+                imagingStudies = newStudies
+            )
+        }
+    }
+
+    fun onReferralsChanged(newReferrals:String){
+        consultationNotesState.update {
+            it.copy(
+                referrals = newReferrals
+            )
+        }
+    }
+
+    fun onUrgencyChanged(newUrgency:String){
+        consultationNotesState.update {
+            it.copy(
+                urgency = newUrgency
+            )
+        }
+    }
+
+    fun onExpectedTimeLineChanged(newTime:String){
+        consultationNotesState.update {
+            it.copy(
+                expectedTimeline = newTime
+            )
+        }
+    }
     // network state of medical Records
     private val medicalRecordState =
         MutableStateFlow<AllMedicalRecordUiState>(AllMedicalRecordUiState.Idle)

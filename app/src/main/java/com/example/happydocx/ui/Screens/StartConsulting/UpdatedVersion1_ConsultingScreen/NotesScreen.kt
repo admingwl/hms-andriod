@@ -48,12 +48,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.happydocx.R
+import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
+import com.example.happydocx.ui.uiStates.StartConsulting.ConsultationNotesUpdate1
+import com.example.happydocx.ui.uiStates.StartConsulting.MedicationItem
 
+@Suppress("ViewModelForwarding")
 @Composable
 fun NotesScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    startConsultingViewModel: StartConsultingViewModel
 ) {
+    val notesUi =
+        startConsultingViewModel._consultationNotesState.collectAsStateWithLifecycle().value
     var isExpanded by remember { mutableStateOf(false) }
     var isExpandedOne by remember { mutableStateOf(false) }
     var isExpandedTwo by remember { mutableStateOf(false) }
@@ -129,7 +137,10 @@ fun NotesScreen(
                     visible = isExpanded
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        ClinicalNoteContent()
+                        ClinicalNoteContent(
+                            viewModel = startConsultingViewModel,
+                            noteUiState = notesUi
+                        )
                     }
                 }
             }
@@ -173,7 +184,10 @@ fun NotesScreen(
                     visible = isExpandedOne
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Prescriptions()
+                        Prescriptions(
+                            viewModel = startConsultingViewModel,
+                            noteUiState = notesUi
+                        )
                     }
                 }
             }
@@ -216,7 +230,10 @@ fun NotesScreen(
                     visible = isExpandedTwo
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Orders()
+                        Orders(
+                            viewModel = startConsultingViewModel,
+                            noteUiState = notesUi
+                        )
                     }
                 }
             }
@@ -228,7 +245,11 @@ fun NotesScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClinicalNoteContent(modifier: Modifier = Modifier) {
+fun ClinicalNoteContent(
+    viewModel: StartConsultingViewModel,
+    noteUiState: ConsultationNotesUpdate1,
+    modifier: Modifier = Modifier,
+) {
     val followUpItem = listOf<String>(
         "1 Week",
         "2 Week",
@@ -239,6 +260,8 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
     val priorityItem = listOf<String>(
         "Routine", "Urgent", "Emergency", ""
     )
+    var followUpExpandState by remember { mutableStateOf(false) }
+    var priorityExpandState by remember { mutableStateOf(false) }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -254,13 +277,15 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.chiefComplaint,
+            onValueChange = { viewModel.onChiefComplaintChange(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Patient's primary reason for visit", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
         // two
@@ -272,13 +297,15 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.historyOfPresentIllness,
+            onValueChange = { viewModel.historyOfPresentIllnessChange(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Detailed Description", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
         // three
@@ -290,13 +317,15 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.physicalExamination,
+            onValueChange = { viewModel.onPhysicalExaminationChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Findings", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
         // four
@@ -308,13 +337,15 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.assessmentAndDiagnosis,
+            onValueChange = { viewModel.onAssessmentAndDiagnosisChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Clinical Assessment", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
         // five
@@ -326,13 +357,15 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.treatmentPlan,
+            onValueChange = { viewModel.onTreatmentPlanChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Recommended Treatment", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
 
@@ -345,11 +378,11 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         ExposedDropdownMenuBox(
-            expanded = false,
-            onExpandedChange = { },
+            expanded = followUpExpandState,
+            onExpandedChange = { followUpExpandState = !followUpExpandState },
         ) {
             OutlinedTextField(
-                value = "",
+                value = noteUiState.followUp,
                 onValueChange = {},
                 readOnly = true,
                 placeholder = { Text("Select Follow-Up Period", color = Color(0xffF5EEEF)) },
@@ -359,14 +392,16 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xffF8FAFC),
                     unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(),
             )
             ExposedDropdownMenu(
-                expanded = false,
-                onDismissRequest = {},
+                expanded = followUpExpandState,
+                onDismissRequest = { followUpExpandState = !followUpExpandState },
                 containerColor = Color(0xffF8FAFC),
                 matchTextFieldWidth = true,
             ) {
@@ -374,7 +409,8 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
                     DropdownMenuItem(
                         text = { Text(it, color = Color.Black) },
                         onClick = {
-
+                            viewModel.onFollowUpChanged(it)
+                            followUpExpandState = false
                         }
                     )
                 }
@@ -391,11 +427,11 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         ExposedDropdownMenuBox(
-            expanded = false,
-            onExpandedChange = { },
+            expanded = priorityExpandState,
+            onExpandedChange = { priorityExpandState = !priorityExpandState },
         ) {
             OutlinedTextField(
-                value = "",
+                value = noteUiState.priority,
                 onValueChange = {},
                 readOnly = true,
                 placeholder = { Text("Select Follow-Up Period", color = Color(0xffF5EEEF)) },
@@ -405,14 +441,16 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xffF8FAFC),
                     unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(),
             )
             ExposedDropdownMenu(
-                expanded = false,
-                onDismissRequest = {},
+                expanded = priorityExpandState,
+                onDismissRequest = { priorityExpandState = !priorityExpandState },
                 containerColor = Color(0xffF8FAFC),
                 matchTextFieldWidth = true,
             ) {
@@ -420,7 +458,8 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
                     DropdownMenuItem(
                         text = { Text(it, color = Color.Black) },
                         onClick = {
-
+                            viewModel.onPriorityChanged(it)
+                            priorityExpandState = false
                         }
                     )
                 }
@@ -430,12 +469,17 @@ fun ClinicalNoteContent(modifier: Modifier = Modifier) {
     }
 }
 
-@Preview
+@Suppress("ViewModelForwarding")
 @Composable
-fun Prescriptions(modifier: Modifier = Modifier) {
+fun Prescriptions(
+    viewModel: StartConsultingViewModel,
+    noteUiState: ConsultationNotesUpdate1,
+    modifier: Modifier = Modifier
+) {
+
     val dropDownLanguageItem = listOf<String>("Hindi", "English", "Punjabi", "Marathi", "Telugu")
-    val medicationList = remember { mutableStateListOf(0) }
     var nextId by remember { mutableIntStateOf(1) }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -508,17 +552,18 @@ fun Prescriptions(modifier: Modifier = Modifier) {
             }
 
             // render medication for each count
-            medicationList.forEachIndexed { index, id ->
+            noteUiState.medications.forEachIndexed { index, medicationItem ->
                 MedicationData(
+                    medicationItem = medicationItem,        //  pass individual item
                     medicationNumber = index + 1,
-                    showDelete = medicationList.size > 1,
-                    onDelete = { medicationList.remove(id) },
-                    onAddMedication = {
-                        medicationList.add(nextId)
-                        nextId++
+                    showDelete = noteUiState.medications.size > 1,
+                    onDelete = { viewModel.removeMedication(medicationItem.id) },
+                    onAddMedication = { viewModel.addMedication() },
+                    onFieldChange = { updated ->            //  single callback
+                        viewModel.updateMedication(medicationItem.id) { updated }
                     }
                 )
-                if (index < medicationList.size - 1) {
+                if (index < noteUiState.medications.size - 1) {
                     HorizontalDivider(
                         color = Color(0xffE2E8F0)
                     )
@@ -533,10 +578,12 @@ fun Prescriptions(modifier: Modifier = Modifier) {
 @Composable
 fun MedicationData(
     modifier: Modifier = Modifier,
+    medicationItem: MedicationItem,
     medicationNumber: Int = 1,
     showDelete: Boolean = false,
     onAddMedication: () -> Unit,
-    onDelete: () -> Unit = {}
+    onDelete: () -> Unit = {},
+    onFieldChange: (MedicationItem) -> Unit
 ) {
     val frequencyItem = listOf(
         "1 Week",
@@ -545,23 +592,36 @@ fun MedicationData(
         "3 Month",
         "At Bed Time"
     )
+    val mealTimeItem = listOf(
+        "Before Meal",
+        "After Meal",
+        "With Meal",
+        "Empty Stomach",
+        "At Bed Time"
+    )
+    var frequencyExpandState by remember { mutableStateOf(false) }
+    var mealTimeExpandState by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(color = Color(0xffF8FAFC))
             .padding(4.dp)
     ) {
+        // Header Row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xffF8FAFC))
         ) {
-            Text("Medication $medicationNumber", color = Color.Black, fontWeight = FontWeight.Bold)
+            Text(
+                "Medication $medicationNumber",
+                color = Color.Black,
+                fontWeight = FontWeight.Bold
+            )
             Spacer(Modifier.weight(1f))
             if (showDelete) {
-                IconButton(
-                    onClick = { onDelete() }
-                ) {
+                IconButton(onClick = { onDelete() }) {
                     Icon(
                         painter = painterResource(R.drawable.delete),
                         contentDescription = null,
@@ -572,6 +632,7 @@ fun MedicationData(
             }
         }
 
+        // Medication Name
         Text(
             text = "Medication Name",
             fontWeight = FontWeight.Bold,
@@ -580,15 +641,19 @@ fun MedicationData(
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = medicationItem.medicationName,
+            onValueChange = { onFieldChange(medicationItem.copy(medicationName = it)) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Clinical Assessment", color = Color(0xffF5EEEF)) },
+            placeholder = { Text("Enter medication name", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
+
+        // Dosage
         Text(
             text = "Dosage",
             fontWeight = FontWeight.Bold,
@@ -597,32 +662,19 @@ fun MedicationData(
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = medicationItem.dosage,
+            onValueChange = { onFieldChange(medicationItem.copy(dosage = it)) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Clinical Assessment", color = Color(0xffF5EEEF)) },
+            placeholder = { Text("e.g. 500mg", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
-        Text(
-            text = "Meal Timing",
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-            color = Color.Black,
-            modifier = Modifier.padding(8.dp)
-        )
-        OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Clinical Assessment", color = Color(0xffF5EEEF)) },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xffF8FAFC),
-                unfocusedContainerColor = Color(0xffF8FAFC),
-            )
-        )
+
+        // Duration
         Text(
             text = "Duration",
             fontWeight = FontWeight.Bold,
@@ -631,15 +683,19 @@ fun MedicationData(
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = medicationItem.duration,
+            onValueChange = { onFieldChange(medicationItem.copy(duration = it)) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Clinical Assessment", color = Color(0xffF5EEEF)) },
+            placeholder = { Text("e.g. 7 days", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
+
+        // Special Instructions
         Text(
             text = "Special Instructions (for this medication)",
             fontWeight = FontWeight.Bold,
@@ -648,16 +704,19 @@ fun MedicationData(
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = medicationItem.specialInstructions,
+            onValueChange = { onFieldChange(medicationItem.copy(specialInstructions = it)) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Clinical Assessment", color = Color(0xffF5EEEF)) },
+            placeholder = { Text("Any special instructions", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
 
+        // Frequency Dropdown
         Text(
             text = "Frequency",
             fontWeight = FontWeight.Bold,
@@ -666,41 +725,102 @@ fun MedicationData(
             modifier = Modifier.padding(8.dp)
         )
         ExposedDropdownMenuBox(
-            expanded = false,
-            onExpandedChange = { },
+            expanded = frequencyExpandState,
+            onExpandedChange = { frequencyExpandState = !frequencyExpandState },
         ) {
             OutlinedTextField(
-                value = "",
+                value = medicationItem.frequency,
                 onValueChange = {},
                 readOnly = true,
-                placeholder = { Text("Select Follow-Up Period", color = Color(0xffF5EEEF)) },
+                placeholder = { Text("Select Frequency", color = Color(0xffF5EEEF)) },
                 trailingIcon = {
-
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = Color.Black
+                    )
                 },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xffF8FAFC),
                     unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(),
             )
             ExposedDropdownMenu(
-                expanded = false,
-                onDismissRequest = {},
+                expanded = frequencyExpandState,
+                onDismissRequest = { frequencyExpandState = false },
                 containerColor = Color(0xffF8FAFC),
                 matchTextFieldWidth = true,
             ) {
-                frequencyItem.forEach { it ->
+                frequencyItem.forEach { item ->
                     DropdownMenuItem(
-                        text = { Text(it, color = Color.Black) },
+                        text = { Text(item, color = Color.Black) },
                         onClick = {
+                            onFieldChange(medicationItem.copy(frequency = item))
+                            frequencyExpandState = false
                         }
                     )
                 }
             }
-
         }
+
+        // Meal Timing Dropdown
+        Text(
+            text = "Meal Timing",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(8.dp)
+        )
+        ExposedDropdownMenuBox(
+            expanded = mealTimeExpandState,
+            onExpandedChange = { mealTimeExpandState = !mealTimeExpandState },
+        ) {
+            OutlinedTextField(
+                value = medicationItem.mealTime,
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Select Meal Timing", color = Color(0xffF5EEEF)) },
+                trailingIcon = {
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = Color.Black
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+            )
+            ExposedDropdownMenu(
+                expanded = mealTimeExpandState,
+                onDismissRequest = { mealTimeExpandState = false },
+                containerColor = Color(0xffF8FAFC),
+                matchTextFieldWidth = true,
+            ) {
+                mealTimeItem.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(item, color = Color.Black) },
+                        onClick = {
+                            onFieldChange(medicationItem.copy(mealTime = item))
+                            mealTimeExpandState = false
+                        }
+                    )
+                }
+            }
+        }
+
+        // Action Buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -715,13 +835,17 @@ fun MedicationData(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xffEFF6FF)
                 )
-            ) { Text("ADD MEDICATION", color = Color.Black) }
+            ) {
+                Text("ADD MEDICATION", color = Color.Black)
+            }
             Spacer(Modifier.width(4.dp))
             Button(
                 onClick = {},
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(4.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xff3B82F6))
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xff3B82F6)
+                )
             ) {
                 Text("Send To Pharmacy", color = Color.White)
             }
@@ -730,9 +854,13 @@ fun MedicationData(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
-fun Orders(modifier: Modifier = Modifier) {
+fun Orders(
+    viewModel: StartConsultingViewModel,
+    noteUiState: ConsultationNotesUpdate1,
+    modifier: Modifier = Modifier
+) {
+    var urgencyExpandState by remember { mutableStateOf(false) }
     val urgencyListItems = listOf(
         "Routine",
         "Urgent(ASAP)",
@@ -753,12 +881,14 @@ fun Orders(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.labTest,
+            onValueChange = { viewModel.onLabTestChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
         Text(
@@ -769,12 +899,14 @@ fun Orders(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.imagingStudies,
+            onValueChange = { viewModel.onImagingStudiesChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
         Text(
@@ -785,12 +917,14 @@ fun Orders(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.referrals,
+            onValueChange = { viewModel.onReferralsChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
         Text(
@@ -801,12 +935,14 @@ fun Orders(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = noteUiState.expectedTimeline,
+            onValueChange = { viewModel.onExpectedTimeLineChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xffF8FAFC),
                 unfocusedContainerColor = Color(0xffF8FAFC),
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             )
         )
         Text(
@@ -817,11 +953,11 @@ fun Orders(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
         ExposedDropdownMenuBox(
-            expanded = false,
-            onExpandedChange = { },
+            expanded = urgencyExpandState,
+            onExpandedChange = { urgencyExpandState = !urgencyExpandState },
         ) {
             OutlinedTextField(
-                value = "",
+                value = noteUiState.urgency,
                 onValueChange = {},
                 readOnly = true,
                 placeholder = { Text("Select Follow-Up Period", color = Color(0xffF5EEEF)) },
@@ -831,14 +967,16 @@ fun Orders(modifier: Modifier = Modifier) {
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xffF8FAFC),
                     unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(),
             )
             ExposedDropdownMenu(
-                expanded = false,
-                onDismissRequest = {},
+                expanded = urgencyExpandState,
+                onDismissRequest = { urgencyExpandState = !urgencyExpandState },
                 containerColor = Color(0xffF8FAFC),
                 matchTextFieldWidth = true,
             ) {
@@ -846,6 +984,8 @@ fun Orders(modifier: Modifier = Modifier) {
                     DropdownMenuItem(
                         text = { Text(it, color = Color.Black) },
                         onClick = {
+                            viewModel.onUrgencyChanged(it)
+                            urgencyExpandState = false
                         }
                     )
                 }
