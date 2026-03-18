@@ -18,6 +18,8 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.UploadNotesRequestBody
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Response.UploadNotesResponseBody
 import com.example.happydocx.Data.Network.ApiService
 import com.example.happydocx.Utils.RetrofitInstance
 import com.example.happydocx.ui.uiStates.StartConsulting.UploadDocumentUpdate1
@@ -317,4 +319,28 @@ class StartConsultingRepo {
         }
     }
 
+
+    // repo for the uploading notes
+    suspend fun uploadNotesRepo(
+        token:String,
+        appointmentId:String,
+        requestBody:UploadNotesRequestBody
+    ):Result<UploadNotesResponseBody>{
+        return try{
+            val result = apiService.uploadNotes(
+                token =  "Bearer $token",
+                appointmentId = appointmentId,
+                requestBody = requestBody
+            )
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e:Exception){
+            Result.failure(e)
+        }
+    }
 }

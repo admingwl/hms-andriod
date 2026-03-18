@@ -35,6 +35,8 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.UploadNotesRequestBody
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Response.UploadNotesResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
 import com.example.happydocx.Data.Model.StartConsulting.TestInvestigationResponse
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusRequestBody
@@ -299,5 +301,14 @@ interface ApiService {
         @Part("patientId") patientId: RequestBody,
         @Part attachment: MultipartBody.Part
     ):Response<UploadDocumentResponse>
+
+
+    // function for uploading notes.
+    @POST("api/v1/medical-record-v2/{appointmentId}")
+    suspend fun uploadNotes(
+        @Header("Authorization") token:String,
+        @Path("appointmentId") appointmentId:String,
+        @Body requestBody: UploadNotesRequestBody
+    ):Response<UploadNotesResponseBody>
     //------------------------update patient Consulting Screen-----------------------------------------
 }

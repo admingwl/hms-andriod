@@ -1,5 +1,6 @@
 package com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -22,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
@@ -34,15 +36,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,20 +56,41 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.happydocx.R
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.UploadNotesUiState
 import com.example.happydocx.ui.uiStates.StartConsulting.ConsultationNotesUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.MedicationItem
+import kotlinx.coroutines.launch
 
 @Suppress("ViewModelForwarding")
 @Composable
 fun NotesScreen(
     modifier: Modifier = Modifier,
-    startConsultingViewModel: StartConsultingViewModel
+    startConsultingViewModel: StartConsultingViewModel,
+    token:String,
+    appointmentId:String
 ) {
     val notesUi =
         startConsultingViewModel._consultationNotesState.collectAsStateWithLifecycle().value
+    val uploadNoteState = startConsultingViewModel._uploadNotes.collectAsStateWithLifecycle().value
+    val context = LocalContext.current
     var isExpanded by remember { mutableStateOf(false) }
     var isExpandedOne by remember { mutableStateOf(false) }
     var isExpandedTwo by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(uploadNoteState) {
+        when(uploadNoteState){
+            is UploadNotesUiState.Success -> {
+                Toast.makeText(context, "Notes saved successfully!", Toast.LENGTH_SHORT).show()
+                startConsultingViewModel.resetConsultationNotesState()  // clear fields
+                startConsultingViewModel.resetUploadNotesState()        // reset network state
+            }
+            is UploadNotesUiState.Error -> {
+                Toast.makeText(context, uploadNoteState.message, Toast.LENGTH_LONG).show()
+                startConsultingViewModel.resetUploadNotesState()        // reset network state
+            }
+            else -> {}
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -87,17 +113,29 @@ fun NotesScreen(
             )
             Spacer(Modifier.weight(1f))
             Button(
-                onClick = {},
+                onClick = {
+                    scope.launch {
+                        startConsultingViewModel.onUploadNotesClicked(
+                            token = token,
+                            appointmentId  = appointmentId
+                        )
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xff22C55E),
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(4.dp),
             ) {
-                Text(
-                    "Save",
-                    color = Color.White
-                )
+                if (uploadNoteState is UploadNotesUiState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Save", color = Color.White)
+                }
             }
         }
         // first card
@@ -230,7 +268,7 @@ fun NotesScreen(
                     visible = isExpandedTwo
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Orders(
+                        NotesOrders(
                             viewModel = startConsultingViewModel,
                             noteUiState = notesUi
                         )
@@ -257,8 +295,10 @@ fun ClinicalNoteContent(
         "3 Month",
         "PRN (AS NEEDED)"
     )
-    val priorityItem = listOf<String>(
-        "Routine", "Urgent", "Emergency", ""
+    val priorityItem = listOf(
+        "routine",
+        "urgent",
+        "emergency"
     )
     var followUpExpandState by remember { mutableStateOf(false) }
     var priorityExpandState by remember { mutableStateOf(false) }
@@ -855,16 +895,16 @@ fun MedicationData(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Orders(
+fun NotesOrders(
     viewModel: StartConsultingViewModel,
     noteUiState: ConsultationNotesUpdate1,
     modifier: Modifier = Modifier
 ) {
     var urgencyExpandState by remember { mutableStateOf(false) }
     val urgencyListItems = listOf(
-        "Routine",
-        "Urgent(ASAP)",
-        "Stat(Immediate) "
+        "routine",
+        "urgent",
+        "stat"
     )
     Column(
         modifier = modifier

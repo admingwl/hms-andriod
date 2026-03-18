@@ -2,20 +2,16 @@ package com.example.happydocx.ui.ViewModels.StartConsulting
 
 import android.content.Context
 import android.net.Uri
-import androidx.camera.core.impl.MutableStateObservable
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.happydocx.Data.Model.StartConsulting.PrescriptionRecord
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewLabResults.Manualy.ManualLabReportCreateRequestUpdate1
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewLabResults.Manualy.ManualLabReportCreateResponseUpdate1
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
-import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords.GetAllMedicalRecordsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords.GetAllMedicalRecordsResponseItem
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
-import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
@@ -23,8 +19,12 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.Notes
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.Orders
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.Prescription
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.UploadNotesRequestBody
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Response.UploadNotesResponseBody
 import com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Repo.StartConsultingRepo
-import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.uiStates.StartConsulting.AddLabResultManualUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.AddMedicationUpdated1
 import com.example.happydocx.ui.uiStates.StartConsulting.ConsultationNotesUpdate1
@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import us.zoom.proguard.bo
 import kotlin.math.ceil
 
 class StartConsultingViewModel : ViewModel() {
@@ -319,7 +318,7 @@ class StartConsultingViewModel : ViewModel() {
     private val consultationNotesState = MutableStateFlow(ConsultationNotesUpdate1())
     val _consultationNotesState = consultationNotesState.asStateFlow()
 
-    fun onChiefComplaintChange(newComplaint:String){
+    fun onChiefComplaintChange(newComplaint: String) {
         consultationNotesState.update {
             it.copy(
                 chiefComplaint = newComplaint
@@ -327,7 +326,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun historyOfPresentIllnessChange(newHistory:String){
+    fun historyOfPresentIllnessChange(newHistory: String) {
         consultationNotesState.update {
             it.copy(
                 historyOfPresentIllness = newHistory
@@ -335,7 +334,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onPhysicalExaminationChanged(newExamination:String){
+    fun onPhysicalExaminationChanged(newExamination: String) {
         consultationNotesState.update {
             it.copy(
                 physicalExamination = newExamination
@@ -343,7 +342,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onAssessmentAndDiagnosisChanged(newDiagnosis:String){
+    fun onAssessmentAndDiagnosisChanged(newDiagnosis: String) {
         consultationNotesState.update {
             it.copy(
                 assessmentAndDiagnosis = newDiagnosis
@@ -351,7 +350,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onTreatmentPlanChanged(newPlan:String){
+    fun onTreatmentPlanChanged(newPlan: String) {
         consultationNotesState.update {
             it.copy(
                 treatmentPlan = newPlan
@@ -359,7 +358,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onFollowUpChanged(newFollowUp:String){
+    fun onFollowUpChanged(newFollowUp: String) {
         consultationNotesState.update {
             it.copy(
                 followUp = newFollowUp
@@ -367,7 +366,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onPriorityChanged(newPriority:String) {
+    fun onPriorityChanged(newPriority: String) {
         consultationNotesState.update {
             it.copy(
                 priority = newPriority
@@ -449,7 +448,7 @@ class StartConsultingViewModel : ViewModel() {
 //        }
 //    }
 
-    fun onLabTestChanged(labTest:String){
+    fun onLabTestChanged(labTest: String) {
         consultationNotesState.update {
             it.copy(
                 labTest = labTest
@@ -457,7 +456,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onImagingStudiesChanged(newStudies:String){
+    fun onImagingStudiesChanged(newStudies: String) {
         consultationNotesState.update {
             it.copy(
                 imagingStudies = newStudies
@@ -465,7 +464,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onReferralsChanged(newReferrals:String){
+    fun onReferralsChanged(newReferrals: String) {
         consultationNotesState.update {
             it.copy(
                 referrals = newReferrals
@@ -473,7 +472,7 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onUrgencyChanged(newUrgency:String){
+    fun onUrgencyChanged(newUrgency: String) {
         consultationNotesState.update {
             it.copy(
                 urgency = newUrgency
@@ -481,13 +480,14 @@ class StartConsultingViewModel : ViewModel() {
         }
     }
 
-    fun onExpectedTimeLineChanged(newTime:String){
+    fun onExpectedTimeLineChanged(newTime: String) {
         consultationNotesState.update {
             it.copy(
                 expectedTimeline = newTime
             )
         }
     }
+
     // network state of medical Records
     private val medicalRecordState =
         MutableStateFlow<AllMedicalRecordUiState>(AllMedicalRecordUiState.Idle)
@@ -532,8 +532,90 @@ class StartConsultingViewModel : ViewModel() {
     val _medicalDocumentRecords = medicalDocumentRecords.asStateFlow()
 
 
-    private val uploadDocumentNetworkState: MutableStateFlow<UploadPatientDocumentUIState> = MutableStateFlow(UploadPatientDocumentUIState.Idle)
+    private val uploadDocumentNetworkState: MutableStateFlow<UploadPatientDocumentUIState> =
+        MutableStateFlow(UploadPatientDocumentUIState.Idle)
     val _uploadDocumentNetworkState = uploadDocumentNetworkState.asStateFlow()
+
+
+    // upload notes network state
+    private val uploadNotes: MutableStateFlow<UploadNotesUiState> =
+        MutableStateFlow(UploadNotesUiState.Idle)
+    val _uploadNotes = uploadNotes.asStateFlow()
+
+    suspend fun onUploadNotesClicked(
+        token: String,
+        appointmentId: String
+    ) {
+        viewModelScope.launch {
+            uploadNotes.value = UploadNotesUiState.Loading
+            try {
+                val consultationNotesState = consultationNotesState.value
+                val notes = Notes(
+                    chiefComplaint = consultationNotesState.chiefComplaint,
+                    diagnosis = consultationNotesState.assessmentAndDiagnosis,
+                    followupSelect = consultationNotesState.followUp,
+                    hpi = consultationNotesState.historyOfPresentIllness,
+                    physicalExamination = consultationNotesState.physicalExamination,
+                    priority = consultationNotesState.priority,
+                    treatment = consultationNotesState.treatmentPlan,
+                    treatmentPlan = consultationNotesState.treatmentPlan
+                )
+
+                val orders = Orders(
+                    expectedTimeline = consultationNotesState.expectedTimeline,
+                    imaging = consultationNotesState.imagingStudies,
+                    labTests = consultationNotesState.labTest,
+                    referrals = consultationNotesState.referrals,
+                    urgency = consultationNotesState.urgency,
+                )
+
+                val prescriptions = consultationNotesState.medications.map { med ->
+                    Prescription(
+                        dosage = med.dosage,
+                        duration = med.duration,
+                        frequency = med.frequency,
+                        medicationName = med.medicationName,
+                        specialInstructions = med.specialInstructions,
+                        mealTiming = med.mealTime
+                    )
+                }
+
+                val requestBody = UploadNotesRequestBody(
+                    followUpDate = null,
+                    notes = notes,
+                    orders = orders,
+                    prescription = prescriptions,
+                    prescriptionLanguage ="en",
+                    status = consultationNotesState.priority.ifBlank { "Completed" },
+                )
+                val result = repo.uploadNotesRepo(
+                    token = token,
+                    appointmentId = appointmentId,
+                    requestBody = requestBody
+                )
+                result.onSuccess { response ->
+                    uploadNotes.value = UploadNotesUiState.Success(data = response)
+                }.onFailure { error ->
+                    uploadNotes.value = UploadNotesUiState.Error(
+                        message = error.message ?: "Failed to upload notes"
+                    )
+                }
+            } catch (e: Exception) {
+                uploadNotes.value = UploadNotesUiState.Error(
+                    message = e.message ?: "An unexpected error occurred"
+                )
+            }
+        }
+    }
+    // reset consultation notes fields back to empty
+    fun resetConsultationNotesState() {
+        consultationNotesState.value = ConsultationNotesUpdate1()
+    }
+
+    // reset upload notes network state back to idle
+    fun resetUploadNotesState() {
+        uploadNotes.value = UploadNotesUiState.Idle
+    }
 
     private val _currentPageHistory = MutableStateFlow(1)
     val currentPageHistory = _currentPageHistory.asStateFlow()
@@ -1037,3 +1119,10 @@ sealed class UploadPatientDocumentUIState {
     data class Error(val message: String) : UploadPatientDocumentUIState()
 }
 
+// upload notes
+sealed class UploadNotesUiState {
+    object Idle : UploadNotesUiState()
+    object Loading : UploadNotesUiState()
+    data class Success(val data: UploadNotesResponseBody) : UploadNotesUiState()
+    data class Error(val message: String) : UploadNotesUiState()
+}
