@@ -586,7 +586,6 @@ class StartConsultingViewModel : ViewModel() {
                     orders = orders,
                     prescription = prescriptions,
                     prescriptionLanguage ="en",
-                    status = consultationNotesState.priority.ifBlank { "Completed" },
                 )
                 val result = repo.uploadNotesRepo(
                     token = token,

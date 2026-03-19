@@ -289,11 +289,11 @@ fun ClinicalNoteContent(
     modifier: Modifier = Modifier,
 ) {
     val followUpItem = listOf<String>(
-        "1 Week",
-        "2 Week",
-        "1 Month",
-        "3 Month",
-        "PRN (AS NEEDED)"
+        "1_week",
+        "2_weeks",
+        "1_month",
+        "3_months",
+        "prn"
     )
     val priorityItem = listOf(
         "routine",
@@ -517,7 +517,7 @@ fun Prescriptions(
     modifier: Modifier = Modifier
 ) {
 
-    val dropDownLanguageItem = listOf<String>("Hindi", "English", "Punjabi", "Marathi", "Telugu")
+    val dropDownLanguageItem = listOf<String>("en","hi","bn","ta","mr","gu","pa")
     var nextId by remember { mutableIntStateOf(1) }
 
     Column(
@@ -626,18 +626,22 @@ fun MedicationData(
     onFieldChange: (MedicationItem) -> Unit
 ) {
     val frequencyItem = listOf(
-        "1 Week",
-        "2 Week",
-        "1 Month",
-        "3 Month",
-        "At Bed Time"
+        "qd",
+        "bid",
+        "tid",
+        "qid",
+        "ac",
+        "pc",
+        "hs",
+        "prn"
     )
     val mealTimeItem = listOf(
-        "Before Meal",
-        "After Meal",
-        "With Meal",
-        "Empty Stomach",
-        "At Bed Time"
+        "empty_stomach",
+        "before_meals",
+        "after_meals",
+        "with_meals",
+        "at_bedtime",
+        "no_restriction"
     )
     var frequencyExpandState by remember { mutableStateOf(false) }
     var mealTimeExpandState by remember { mutableStateOf(false) }

@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.ViewModels.StartConsulting.CurrentMedicationListUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
@@ -37,7 +38,8 @@ fun AllMedicationList(
     modifier: Modifier = Modifier,
     startConsultingViewModel: StartConsultingViewModel,
     token:String,
-    appointmentId:String
+    appointmentId:String,
+    navController: NavController
 ) {
     val allMedicationListState = startConsultingViewModel._currentMedicationState.collectAsStateWithLifecycle().value
     LaunchedEffect(token){
@@ -74,7 +76,9 @@ fun AllMedicationList(
                     )
                     Spacer(Modifier.weight(1f))
                     Button(
-                        onClick = {},
+                        onClick = {
+                            navController.navigate("addMedication/$appointmentId/$token")
+                        },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xff1D4ED8),
                             contentColor = Color.White

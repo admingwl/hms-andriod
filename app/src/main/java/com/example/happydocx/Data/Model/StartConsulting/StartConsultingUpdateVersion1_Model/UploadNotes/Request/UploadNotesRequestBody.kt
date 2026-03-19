@@ -6,5 +6,5 @@ data class UploadNotesRequestBody(
     val orders: Orders,
     val prescription: List<Prescription>,
     val prescriptionLanguage: String,
-    val status: String
+//    val status: String
 )
