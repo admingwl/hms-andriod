@@ -17,6 +17,8 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UpdateAppointmentDetail.UpdateAppointmentDetailRequest
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UpdateAppointmentDetail.UpdateAppointmentDetailResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.UploadNotesRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Response.UploadNotesResponseBody
@@ -330,6 +332,28 @@ class StartConsultingRepo {
             val result = apiService.uploadNotes(
                 token =  "Bearer $token",
                 appointmentId = appointmentId,
+                requestBody = requestBody
+            )
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e:Exception){
+            Result.failure(e)
+        }
+    }
+
+
+    suspend fun updateAppointmentDetail(
+        token:String,
+        requestBody:UpdateAppointmentDetailRequest
+    ):Result<UpdateAppointmentDetailResponse>{
+        return try{
+            val result = apiService.updateAppointmentDetails(
+                token =  "Bearer $token",
                 requestBody = requestBody
             )
             if (result.isSuccessful && result.body() != null) {

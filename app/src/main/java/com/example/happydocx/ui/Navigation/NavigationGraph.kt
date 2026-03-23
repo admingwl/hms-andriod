@@ -44,6 +44,7 @@ import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_Consulti
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewOrderTestScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.AddNewVitalSignsScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.BasicInfoOfPatient
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.EditPatientInfoScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.ManualEntryScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.UploadDocumentScreen
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
@@ -334,6 +335,20 @@ fun NavigationGraph() {
             val appointmentId = backStackEntry.arguments?.getString("appointmentId")?:""
             UploadDocumentScreen(startConsultingViewModel = startConsultingViewModel,token = token, patientId = patientId, appointmentId = appointmentId)
         }
+
+        composable(route = "editAppointmentData/{token}",
+            arguments = listOf(
+                navArgument(name = "token") { type = NavType.StringType },
+                )
+        ) {backStackEntry->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            EditPatientInfoScreen(
+                navController = navController,
+                startConsultingViewModel = startConsultingViewModel,
+                token = token
+            )
+        }
+
         //--------------------new Consulting Screen-----------------------------------------------//
 
     }

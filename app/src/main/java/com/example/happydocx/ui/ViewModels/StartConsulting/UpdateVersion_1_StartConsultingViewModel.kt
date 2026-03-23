@@ -18,6 +18,9 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Request_Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UpdateAppointmentDetail.Data
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UpdateAppointmentDetail.UpdateAppointmentDetailRequest
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UpdateAppointmentDetail.UpdateAppointmentDetailResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.Notes
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.Orders
@@ -542,6 +545,62 @@ class StartConsultingViewModel : ViewModel() {
         MutableStateFlow(UploadNotesUiState.Idle)
     val _uploadNotes = uploadNotes.asStateFlow()
 
+    // update appointmentDetail network state
+    private val updateDetailState: MutableStateFlow<UpdateAppointmentDetailUiState> = MutableStateFlow(UpdateAppointmentDetailUiState.Idle)
+      val _updateDetailState = updateDetailState.asStateFlow()
+
+    suspend fun onSaveUpdateAppointmentDetailsClicked(
+        token: String,
+        patientId:String,
+        firstName: String,
+        lastName: String,
+        age: String,
+        gender: String,
+        bloodGroup: String,
+        phone: String,
+        email: String,
+        address: String,
+        allergies: String
+    ){
+        viewModelScope.launch {
+            updateDetailState.value = UpdateAppointmentDetailUiState.Loading
+
+            val requestBody = UpdateAppointmentDetailRequest(
+                patientId = patientId,         // top level
+                data = Data(
+                    patientId = patientId,     // also inside data
+                    firstName = firstName,
+                    lastName = lastName,
+                    age = age.toIntOrNull() ?: 0,  // String → Int, 0 if invalid
+                    gender = gender,
+                    bloodGroup = bloodGroup,
+                    phone = phone,
+                    email = email,
+                    address = address,
+                    allergies = allergies
+                        .split(",")            // "pollen, dust" → ["pollen", "dust"]
+                        .map { it.trim() }     // remove extra spaces
+                        .filter { it.isNotEmpty() } // remove empty strings
+                )
+            )
+
+            val result = repo.updateAppointmentDetail(
+                token = token,
+                requestBody = requestBody
+            )
+
+            result.fold(
+                onSuccess = {
+                    updateDetailState.value = UpdateAppointmentDetailUiState.Success(data = it)
+                },
+                onFailure = { exception ->
+                    updateDetailState.value = UpdateAppointmentDetailUiState.Error(
+                        exception.message ?: "Something went wrong"
+                    )
+                }
+            )
+        }
+    }
     suspend fun onUploadNotesClicked(
         token: String,
         appointmentId: String
@@ -1124,4 +1183,12 @@ sealed class UploadNotesUiState {
     object Loading : UploadNotesUiState()
     data class Success(val data: UploadNotesResponseBody) : UploadNotesUiState()
     data class Error(val message: String) : UploadNotesUiState()
+}
+
+// upload notes
+sealed class UpdateAppointmentDetailUiState {
+    object Idle : UpdateAppointmentDetailUiState()
+    object Loading : UpdateAppointmentDetailUiState()
+    data class Success(val data: UpdateAppointmentDetailResponse) : UpdateAppointmentDetailUiState()
+    data class Error(val message: String) : UpdateAppointmentDetailUiState()
 }

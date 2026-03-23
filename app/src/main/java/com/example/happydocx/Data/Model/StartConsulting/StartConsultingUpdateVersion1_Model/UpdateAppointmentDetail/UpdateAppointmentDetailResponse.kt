@@ -1,0 +1,31 @@
+package com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UpdateAppointmentDetail
+
+data class UpdateAppointmentDetailResponse(
+    val Age: String,
+    val __v: Int,
+    val _id: String,
+    val address: Address,
+    val age: Age,
+    val allergies: List<String>,
+    val bloodGroup: String,
+    val companyId: String,
+    val contactNumber: String,
+    val createdAt: String,
+    val createdBy: String,
+    val currentMedications: List<CurrentMedication>,
+    val dateOfBirth: String,
+    val email: String,
+    val first_name: String,
+    val gender: String,
+    val isDialysisPatient: Boolean,
+    val landlineNumber: String,
+    val last_name: String,
+    val maritalStatus: String,
+    val middle_name: String,
+    val patientId: String,
+    val prefix: String,
+    val previous_last_name: String,
+    val race: String,
+    val religion: String,
+    val updatedAt: String
+)

@@ -1,7 +1,9 @@
 package com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen
 
+import android.os.Build
 import android.text.format.DateUtils
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,6 +37,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -89,6 +92,7 @@ import com.example.happydocx.ui.ViewModels.StartConsulting.CreateNewMedicationUi
 import com.example.happydocx.ui.ViewModels.StartConsulting.ParticularPatientAppointmentDataUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVital_SignsUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
+import com.example.happydocx.ui.ViewModels.StartConsulting.UpdateAppointmentDetailUiState
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -106,21 +110,24 @@ fun BasicInfoOfPatient(
     doctorId: String
 ) {
 
-    val getParticularPatientAppointmentData = startConsultingViewModel._particularPatientAppointmentDataState.collectAsStateWithLifecycle().value
+    val getParticularPatientAppointmentData =
+        startConsultingViewModel._particularPatientAppointmentDataState.collectAsStateWithLifecycle().value
     LaunchedEffect(token) {
-      startConsultingViewModel.getParticularPatientAppointmentData(
-          token = token,
-          appointmentId = appointmentId
-      )
+        startConsultingViewModel.getParticularPatientAppointmentData(
+            token = token,
+            appointmentId = appointmentId
+        )
     }
     Scaffold(
         containerColor = Color(0xffF1F5F9),
         topBar = {
             ParticularPatientAppointmentInfoTopAppBar(
-                onArrowBackClicked = {
-                    navController.popBackStack()
-                },
-                onMenuBarIconClicked = {})
+                onArrowBackClicked = { navController.popBackStack() },
+                onEditClicked = {
+                    // navigate to edit screen
+                    navController.navigate("editAppointmentData/$token")
+                }
+            )
         },
     ) { paddingValues ->
         Column(
@@ -129,12 +136,13 @@ fun BasicInfoOfPatient(
                 .padding(paddingValues)
                 .background(Color(0xffF1F5F9)),
         ) {
-            when(getParticularPatientAppointmentData){
+            when (getParticularPatientAppointmentData) {
                 is ParticularPatientAppointmentDataUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
+
                 is ParticularPatientAppointmentDataUiState.Success -> {
                     val patient = getParticularPatientAppointmentData.data.message.patient
                     val appointment = getParticularPatientAppointmentData.data.message
@@ -175,7 +183,7 @@ fun BasicInfoOfPatient(
                         ContactInfoOfPatient(
                             phone = patient.contactNumber,
                             email = patient.email,
-                            address = patient.address?.addressLine1?:"N/A"
+                            address = patient.address?.addressLine1 ?: "N/A"
                         )
                         ActiveAllergiesSection(
                             allergies = patient.allergies
@@ -205,8 +213,13 @@ fun BasicInfoOfPatient(
 fun ParticularPatientAppointmentInfoTopAppBar(
     modifier: Modifier = Modifier,
     onArrowBackClicked: () -> Unit,
-    onMenuBarIconClicked: () -> Unit
-) {
+    onEditClicked: () -> Unit,
+
+    ) {
+    var menuExpandState by remember { mutableStateOf(false) }
+    val listOfMenuItems = listOf<String>(
+        "Edit"
+    )
     TopAppBar(
         title = { Text("Appointment Detail", color = Color.White) },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -224,14 +237,32 @@ fun ParticularPatientAppointmentInfoTopAppBar(
             }
         },
         actions = {
-            IconButton(
-                onClick = { onMenuBarIconClicked() },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "arrow back",
-                    tint = Color.White,
-                )
+            Box {
+                IconButton(
+                    onClick = { menuExpandState = !menuExpandState },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "arrow back",
+                        tint = Color.White,
+                    )
+                }
+                DropdownMenu(
+                    expanded = menuExpandState,
+                    onDismissRequest = { menuExpandState = false }
+                ) {
+                    listOfMenuItems.forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item) },
+                            onClick = {
+                                menuExpandState = false
+                                when (item) {
+                                    "Edit" -> onEditClicked()
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
     )
@@ -244,8 +275,8 @@ fun PatientImage(
     lastName: String = "Guleria"
 ) {
     // get first name first letter and last name first letter
-    val firstCharacter = firstName.firstOrNull()?:""
-    val secondCharacter = lastName.firstOrNull()?:""
+    val firstCharacter = firstName.firstOrNull() ?: ""
+    val secondCharacter = lastName.firstOrNull() ?: ""
 
     Box(
         modifier = modifier
@@ -263,6 +294,7 @@ fun PatientImage(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PatientInfoRow(
     modifier: Modifier = Modifier,
@@ -303,7 +335,11 @@ fun PatientInfoRow(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "${com.example.happydocx.Utils.DateUtils.formatAppointmentDate(appointmentDate)}",
+                text = "${
+                    com.example.happydocx.Utils.DateUtils.formatAppointmentDate(
+                        appointmentDate
+                    )
+                }",
                 fontSize = 12.sp,
                 color = Color(0xff64748B)
             )
@@ -348,7 +384,7 @@ fun BloodGroupComponent(
 @Composable
 fun ActiveAllergiesSection(
     modifier: Modifier = Modifier,
-    allergies:List<String>
+    allergies: List<String>
 ) {
     Row(
         modifier = modifier
@@ -381,9 +417,9 @@ fun ActiveAllergiesSection(
 @Composable
 fun ContactInfoOfPatient(
     modifier: Modifier = Modifier,
-    phone:String,
-    email:String,
-    address:String
+    phone: String,
+    email: String,
+    address: String
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -453,7 +489,10 @@ fun PatientAppointmentInfoTabScreen(
             containerColor = Color(0xffFFFFFF),
             contentColor = Color(0xff1E293B),
             edgePadding = 3.dp,
-            modifier = Modifier.background(color = Color(0xffFFFFFF),shape = RoundedCornerShape(8.dp))
+            modifier = Modifier.background(
+                color = Color(0xffFFFFFF),
+                shape = RoundedCornerShape(8.dp)
+            )
         ) {
             tabsOptions.forEachIndexed { index, title ->
                 Tab(
@@ -487,11 +526,38 @@ fun PatientAppointmentInfoTabScreen(
                 )
 
                 1 -> AllVitalsScreen()
-                2 -> AllMedicationList(token = token, appointmentId = appointmentId, startConsultingViewModel = startConsultingViewModel, navController = navController)
-                3 -> LabResultScreen(token = token, patientId = patientId, startConsultingViewModel = startConsultingViewModel)
-                4 -> AllHistoryList(patient = patientId,token = token, startConsultingViewModel = startConsultingViewModel)
-                5 -> AllDocumentsScreen(token = token, patientId = patientId, startConsultingViewModel = startConsultingViewModel, navController = navController,appointmentId = appointmentId)
-                6 -> NotesScreen(startConsultingViewModel = startConsultingViewModel,token = token, appointmentId = appointmentId)
+                2 -> AllMedicationList(
+                    token = token,
+                    appointmentId = appointmentId,
+                    startConsultingViewModel = startConsultingViewModel,
+                    navController = navController
+                )
+
+                3 -> LabResultScreen(
+                    token = token,
+                    patientId = patientId,
+                    startConsultingViewModel = startConsultingViewModel
+                )
+
+                4 -> AllHistoryList(
+                    patient = patientId,
+                    token = token,
+                    startConsultingViewModel = startConsultingViewModel
+                )
+
+                5 -> AllDocumentsScreen(
+                    token = token,
+                    patientId = patientId,
+                    startConsultingViewModel = startConsultingViewModel,
+                    navController = navController,
+                    appointmentId = appointmentId
+                )
+
+                6 -> NotesScreen(
+                    startConsultingViewModel = startConsultingViewModel,
+                    token = token,
+                    appointmentId = appointmentId
+                )
             }
         }
     }
@@ -1596,7 +1662,10 @@ fun ManualEntryScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UploadReportScreen(modifier: Modifier = Modifier,startConsultingViewModel: StartConsultingViewModel) {
+fun UploadReportScreen(
+    modifier: Modifier = Modifier,
+    startConsultingViewModel: StartConsultingViewModel
+) {
     val datePickerStateRemember = rememberDatePickerState()
     var datePickerSate by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -1606,8 +1675,9 @@ fun UploadReportScreen(modifier: Modifier = Modifier,startConsultingViewModel: S
         "culture",
         "Biopsy"
     )
-      var reportTypeExpandedState by remember { mutableStateOf(false) }
-      val uploadReportUiState = startConsultingViewModel._uploadLabReportState.collectAsStateWithLifecycle().value
+    var reportTypeExpandedState by remember { mutableStateOf(false) }
+    val uploadReportUiState =
+        startConsultingViewModel._uploadLabReportState.collectAsStateWithLifecycle().value
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -1673,7 +1743,7 @@ fun UploadReportScreen(modifier: Modifier = Modifier,startConsultingViewModel: S
                             val formattedDate =
                                 SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
                                     .format(Date(selectedMillis))
-                           startConsultingViewModel.onReportDateChanged(formattedDate)
+                            startConsultingViewModel.onReportDateChanged(formattedDate)
                         }
                         datePickerSate = false
                     }) { Text("OK", color = Color.Black) }
@@ -1713,7 +1783,7 @@ fun UploadReportScreen(modifier: Modifier = Modifier,startConsultingViewModel: S
         )
         ExposedDropdownMenuBox(
             expanded = reportTypeExpandedState,
-            onExpandedChange = { reportTypeExpandedState = !reportTypeExpandedState},
+            onExpandedChange = { reportTypeExpandedState = !reportTypeExpandedState },
         ) {
             OutlinedTextField(
                 value = uploadReportUiState.reportType,
@@ -1732,7 +1802,7 @@ fun UploadReportScreen(modifier: Modifier = Modifier,startConsultingViewModel: S
             )
             ExposedDropdownMenu(
                 expanded = reportTypeExpandedState,
-                onDismissRequest = {reportTypeExpandedState = !reportTypeExpandedState},
+                onDismissRequest = { reportTypeExpandedState = !reportTypeExpandedState },
                 containerColor = Color(0xffF8FAFC),
                 matchTextFieldWidth = true,
             ) {
@@ -1756,7 +1826,7 @@ fun UploadReportScreen(modifier: Modifier = Modifier,startConsultingViewModel: S
         )
         OutlinedTextField(
             value = uploadReportUiState.laboratoryName,
-            onValueChange = {startConsultingViewModel.onLaboratoryNameChanged(it)},
+            onValueChange = { startConsultingViewModel.onLaboratoryNameChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Name of Laboratory", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
@@ -1775,7 +1845,7 @@ fun UploadReportScreen(modifier: Modifier = Modifier,startConsultingViewModel: S
         )
         OutlinedTextField(
             value = uploadReportUiState.notes,
-            onValueChange = {startConsultingViewModel.onLaboratoryNotesChanged(it)},
+            onValueChange = { startConsultingViewModel.onLaboratoryNotesChanged(it) },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Any Special Instruction", color = Color(0xffF5EEEF)) },
             colors = TextFieldDefaults.colors(
@@ -1904,9 +1974,11 @@ fun AddNewOrderTestScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            Column(modifier = Modifier
-                .padding(8.dp)
-                .background(color = Color(0xffFFFFFF))) {
+            Column(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .background(color = Color(0xffFFFFFF))
+            ) {
                 Text(
                     text = "Other / Custom Tests",
                     fontWeight = FontWeight.Bold,
@@ -2141,6 +2213,422 @@ fun AddNewOrderTestScreenRadioButtonCard(
                 fontSize = 14.sp,
                 color = Color.Black,
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditPatientInfoScreen(
+    navController: NavController,
+    startConsultingViewModel: StartConsultingViewModel,
+    modifier: Modifier = Modifier,
+    token:String,
+) {
+    val genders = listOf<String>("male", "female", "other")
+    val bloodGroups = listOf<String>("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
+    val uiState = startConsultingViewModel._particularPatientAppointmentDataState.collectAsStateWithLifecycle().value
+    val patientData = (uiState as? ParticularPatientAppointmentDataUiState.Success)?.data?.message?.patient
+    val scope = rememberCoroutineScope()
+    // get the network state
+    val networkEditstate = startConsultingViewModel._updateDetailState.collectAsStateWithLifecycle().value
+
+    var genderExpandState by remember { mutableStateOf(false) }
+    var bloodGroupExpandState by remember { mutableStateOf(false) }
+
+
+
+    var firstName  by remember { mutableStateOf("") }
+    var lastName   by remember { mutableStateOf("") }
+    var patientId  by remember { mutableStateOf("") }
+    var age        by remember { mutableStateOf("") }
+    var gender     by remember { mutableStateOf("") }
+    var bloodGroup by remember { mutableStateOf("") }
+    var phone      by remember { mutableStateOf("") }
+    var email      by remember { mutableStateOf("") }
+    var address    by remember { mutableStateOf("") }
+    var allergies  by remember { mutableStateOf("") }
+
+    // Re-runs whenever a different patient is loaded
+    LaunchedEffect(patientData?.patientId) {
+        patientData?.let {
+            firstName  = it.first_name
+            lastName   = it.last_name
+            patientId  = it.patientId
+            age        = it.age.value.toString()
+            gender     = it.gender
+            bloodGroup = it.bloodGroup
+            phone      = it.contactNumber
+            email      = it.email
+            address    = it.address?.addressLine1 ?: ""
+            allergies  = it.allergies?.joinToString(", ") ?: ""
+        }
+    }
+val context = LocalContext.current
+    LaunchedEffect(networkEditstate) {
+        when(networkEditstate){
+            is UpdateAppointmentDetailUiState.Success ->{
+                Toast.makeText(context,"Updated successfully",Toast.LENGTH_SHORT).show()
+            }
+            is UpdateAppointmentDetailUiState.Error ->{
+                Toast.makeText(context,"Something went wrong",Toast.LENGTH_SHORT).show()
+            }
+
+            else -> {}
+        }
+    }
+    Scaffold(
+        containerColor = Color(
+            0xffFFFFFF
+        ),
+        topBar = {
+            TopAppBar(
+                title = { Text("Edit Patient Details") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xff2563EB),
+                    titleContentColor = Color.White
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() }
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(8.dp)
+                .background(color = Color(0xffFFFFFF))
+                .verticalScroll(rememberScrollState())
+        ) {
+
+            Text(
+                text = "First Name",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = firstName,
+                onValueChange = {firstName = it},
+                placeholder = { Text("First name", color = Color(0xffF5EEEF)) },
+                trailingIcon = {},
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+            Text(
+                text = "Last Name",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = lastName,
+                onValueChange = {lastName = it},
+                placeholder = { Text("Last name", color = Color(0xffF5EEEF)) },
+                trailingIcon = {},
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+            Text(
+                text = "Patient ID",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = patientId,
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Patient Id", color = Color(0xffF5EEEF)) },
+                trailingIcon = {},
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+            Text(
+                text = "Age",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = age,
+                onValueChange = {age = it},
+                readOnly = false,
+                placeholder = { Text("Age", color = Color(0xffF5EEEF)) },
+                trailingIcon = {},
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+            Text(
+                text = "Gender",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            ExposedDropdownMenuBox(
+                expanded = genderExpandState,
+                onExpandedChange = {genderExpandState = !genderExpandState},
+            ) {
+                OutlinedTextField(
+                    value = gender,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Age", color = Color(0xffF5EEEF)) },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                )
+                ExposedDropdownMenu(
+                    expanded = genderExpandState,
+                    onDismissRequest = {genderExpandState = false},
+                    containerColor = Color(0xffF8FAFC),
+                    matchTextFieldWidth = true,
+                ) {
+                    genders.forEach { it ->
+                        DropdownMenuItem(
+                            text = { Text(it, color = Color.Black) },
+                            onClick = {
+                                gender = it
+                                genderExpandState = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = "Blood Group",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            ExposedDropdownMenuBox(
+                expanded = bloodGroupExpandState,
+                onExpandedChange = { bloodGroupExpandState = !bloodGroupExpandState },
+            ) {
+                OutlinedTextField(
+                    value = bloodGroup,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Blood group", color = Color(0xffF5EEEF)) },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                )
+                ExposedDropdownMenu(
+                    expanded = bloodGroupExpandState,
+                    onDismissRequest = {bloodGroupExpandState = false},
+                    containerColor = Color(0xffF8FAFC),
+                    matchTextFieldWidth = true,
+                ) {
+                    bloodGroups.forEach { it ->
+                        DropdownMenuItem(
+                            text = { Text(it, color = Color.Black) },
+                            onClick = {
+                                bloodGroup = it
+                                bloodGroupExpandState = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = "Phone",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = phone,
+                onValueChange = {phone = it},
+                readOnly = false,
+                placeholder = { Text("Phone", color = Color(0xffF5EEEF)) },
+                trailingIcon = {},
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+            Text(
+                text = "Email",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = email,
+                onValueChange = {email = it},
+                readOnly = false,
+                placeholder = { Text("Email", color = Color(0xffF5EEEF)) },
+                trailingIcon = {},
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+            Text(
+                text = "Address",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = address,
+                onValueChange = {address = it},
+                readOnly = false,
+                placeholder = { Text("Address", color = Color(0xffF5EEEF)) },
+                trailingIcon = {},
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+
+            Text(
+                text = "Allergies",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(8.dp)
+            )
+            OutlinedTextField(
+                value = allergies,
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Allergies", color = Color(0xffF5EEEF)) },
+                trailingIcon = {},
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xffF8FAFC),
+                    unfocusedContainerColor = Color(0xffF8FAFC),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(10.dp)
+            ) {
+                Button(
+                    onClick = {},
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1D4ED8)
+                    )
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = Color.White
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                Button(
+                    onClick = {
+                        scope.launch {
+                            startConsultingViewModel.onSaveUpdateAppointmentDetailsClicked(
+                                token = token,
+                                patientId = patientId,
+                                firstName = firstName,
+                                lastName = lastName,
+                                age = age,
+                                gender = gender,
+                                bloodGroup = bloodGroup,
+                                phone = phone,
+                                email = email,
+                                address = address,
+                                allergies = allergies
+                            )
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff1D4ED8)
+                    )
+                ) {
+                    if(networkEditstate is UpdateAppointmentDetailUiState.Loading){
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }else {
+                        Text(
+                            text = "Save Changes",
+                            color = Color.White
+                        )
+                    }
+                }
+            }
         }
     }
 }
