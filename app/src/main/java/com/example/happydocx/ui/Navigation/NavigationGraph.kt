@@ -30,6 +30,8 @@ import androidx.navigation.navArgument
 import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.ui.Screens.Authentication.ForgotPasswordScreen
 import com.example.happydocx.ui.Screens.Authentication.LoginPage
+import com.example.happydocx.ui.Screens.Authentication.SignInWithPhone.EnterOtpScreen
+import com.example.happydocx.ui.Screens.Authentication.SignInWithPhone.EnterPhoneNumberScreen
 import com.example.happydocx.ui.Screens.Authentication.SignUpPage
 import com.example.happydocx.ui.Screens.Authentication.UpdatePasswordScreen
 import com.example.happydocx.ui.Screens.CreatePatient.AddNewPatientScreen
@@ -349,6 +351,14 @@ fun NavigationGraph() {
                 startConsultingViewModel = startConsultingViewModel,
                 token = token
             )
+        }
+
+        composable(route = "enterNumberScreen") {
+            EnterPhoneNumberScreen(navController = navController)
+        }
+
+        composable(route = "enterOtpScreen") {
+            EnterOtpScreen(navController = navController)
         }
 
         //--------------------new Consulting Screen-----------------------------------------------//

@@ -194,7 +194,7 @@ fun LoginPage(
             onClick = {viewModel.loginClicked(userViewModel = userViewModel)},
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp),
+                .padding(horizontal = 10.dp, vertical = 8.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xff4f61e3),
                 contentColor = Color.Black
@@ -216,6 +216,26 @@ fun LoginPage(
                     color = Color.White
                 )
             }
+        }
+        FilledTonalButton(
+            onClick = {
+                navController.navigate("enterNumberScreen")
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xff4f61e3),
+                contentColor = Color.Black
+            ),
+            shape = RoundedCornerShape(8.dp),
+        ) {
+                Text(
+                    "SignIn with phone",
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(8.dp),
+                    color = Color.White
+                )
         }
         Spacer(Modifier.height(20.dp))
         Text(
