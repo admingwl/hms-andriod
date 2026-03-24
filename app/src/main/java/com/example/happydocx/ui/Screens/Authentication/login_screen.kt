@@ -64,12 +64,13 @@ fun LoginPage(
     val passwordState = viewModel._passwordState.collectAsStateWithLifecycle().value
     val eyeToggleState = viewModel._eyeToggleState.collectAsStateWithLifecycle().value
     val loginUiState = viewModel._loginUiState.collectAsStateWithLifecycle().value
+    val autoLoginToken = viewModel.autoLoginToken.collectAsStateWithLifecycle()
 
     // Check if user is already logged in on first launch
-    LaunchedEffect(Unit) {
-        if (viewModel.isUserLoggedIn()) {
-            val savedToken = TokenManager(context).getToken()
-            navController.navigate("AppointmentsScreen/${savedToken}") {
+    LaunchedEffect(autoLoginToken) {
+        if (autoLoginToken.value!=null) {
+//            val savedToken = TokenManager(context).getToken()
+            navController.navigate("AppointmentsScreen") {
                 popUpTo("Login") { inclusive = true }
                 launchSingleTop = true
             }
@@ -78,11 +79,8 @@ fun LoginPage(
     // handle the login success
     LaunchedEffect(loginUiState.isSuccess) {
         if(loginUiState.isSuccess){
-            val savedToken = TokenManager(context).getToken()
-            Log.d("LOGIN_DEBUG", "Login successful, token: $savedToken")
-            if (savedToken != null) {
                 // Navigate with token as argument
-                navController.navigate("AppointmentsScreen/${savedToken}") {
+                navController.navigate("AppointmentsScreen") {
                     // Clear the back stack up to and including the login screen
                     popUpTo("Login") { inclusive = true }
                     // Ensure only one instance exists
@@ -92,7 +90,6 @@ fun LoginPage(
                 Log.e("LOGIN_DEBUG", "Login successful but token is null!")
             }
         }
-    }
 
     Column(
         modifier = Modifier

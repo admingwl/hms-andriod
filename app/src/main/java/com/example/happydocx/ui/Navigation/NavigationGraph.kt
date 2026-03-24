@@ -15,6 +15,7 @@ import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -26,6 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.happydocx.Data.TokenManager
 import com.example.happydocx.ui.Screens.Authentication.ForgotPasswordScreen
 import com.example.happydocx.ui.Screens.Authentication.LoginPage
 import com.example.happydocx.ui.Screens.Authentication.SignUpPage
@@ -73,12 +75,19 @@ fun NavigationGraph() {
     // Create viewModel at navigation graph level so it survives between screens
     val sharedViewModel: formViewModel = viewModel(factory = FormViewModelFactory(context))
     val doctorAppointmentViewModel: DoctorAppointmentsViewModel = viewModel(factory = DoctorAppointmentsViewModelFactory(context))
-    val documentUploadViewModel: PatientDocumentUploadViewModel = viewModel()
     val SavePatientGeneralViewModel: SavePatientViewModel = viewModel()
     val getTimeSlotsViewModel: GetTimeSlotsForAppointmentViewModel = viewModel()
     // update version
     val startConsultingViewModel: StartConsultingViewModel = viewModel()
-    NavHost(startDestination = "Login", navController = navController) {
+    val tokenManager = TokenManager(context)
+    val startDestination = remember {
+        if(tokenManager.getToken()!=null){
+            "AppointmentsScreen"
+        }  else {
+            "Login"
+        }
+    }
+    NavHost(startDestination = startDestination, navController = navController) {
 
         composable(route = "Login") {
             LoginPage(navController = navController, userViewModel = userViewModel)
@@ -108,15 +117,8 @@ fun NavigationGraph() {
                 viewModel = sharedViewModel
             )
         }
-        composable(
-            "AppointmentsScreen/{token}",
-            arguments = listOf(
-                navArgument("token") {
-                    type = NavType.StringType
-                    nullable = false
-                }
-            )) { backStackEntry ->
-            val token_one = backStackEntry.arguments?.getString("token") ?: ""
+        composable("AppointmentsScreen") { backStackEntry ->
+            val token_one = remember { tokenManager.getToken() }
             Log.d("DEBUG_NAV", "Navigation: Token = $token_one")
             DoctorAppointmentScreen(
                 token = token_one,

@@ -10,6 +10,7 @@ import com.example.happydocx.ui.uiStates.EyeToggleState
 import com.example.happydocx.ui.uiStates.LoginUiState
 import com.example.happydocx.ui.uiStates.PasswordState
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -64,8 +65,8 @@ class LoginScreenViewModel(
             result.onSuccess { response ->
                 response.token?.let {
                     tokenManager.saveToken(it)
-                    userViewModel.saveLoginData(response = response)
-                    loginUiState.value = LoginUiState(isLoading = false, isSuccess = true)
+                   // userViewModel.saveLoginData(response = response)
+                    loginUiState.value = LoginUiState(isSuccess = true,token = it)
                 }
             }
 
@@ -81,4 +82,8 @@ class LoginScreenViewModel(
     fun logOut() {
         tokenManager.clearToken()
     }
+
+    val autoLoginToken: StateFlow<String?> = MutableStateFlow(
+        tokenManager.getToken()
+    ).asStateFlow()
 }

@@ -14,5 +14,6 @@ data class EyeToggleState(
 data class LoginUiState(
   val isLoading:Boolean = false,
   val isSuccess:Boolean = false,
+  val token:String? = null,
   val errorMessage:String?=null
 )

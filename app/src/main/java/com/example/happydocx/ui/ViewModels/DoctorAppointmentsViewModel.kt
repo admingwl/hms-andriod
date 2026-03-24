@@ -66,7 +66,7 @@ class DoctorAppointmentsViewModel(private val connectivityObserver: Connectivity
     }
 
     // create helper function for pagination
-    fun loadNextPage(token:String){
+    fun loadNextPage(token:String?){
      val currentState = uiState.value
         if(currentState is AppointmentUiState.Success){
             val totalpage = ceil(currentState.total.toDouble() / (currentState.limit ?: 10)).toInt()
@@ -78,7 +78,7 @@ class DoctorAppointmentsViewModel(private val connectivityObserver: Connectivity
     }
 
     // create helper function for load previous page
-    fun loadPreviousPage(token:String){
+    fun loadPreviousPage(token:String?){
         val currentState = uiState.value
         if(currentState is AppointmentUiState.Success){
             val prevPage = (currentState.page ?: 1) - 1

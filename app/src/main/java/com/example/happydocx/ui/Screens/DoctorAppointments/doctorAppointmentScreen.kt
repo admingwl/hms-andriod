@@ -102,7 +102,7 @@ val gradient_colors = Brush.linearGradient(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorAppointmentScreen(
-    token: String,
+    token: String?,
     navController: NavController,
     modifier: Modifier = Modifier,
     viewModel: DoctorAppointmentsViewModel,
@@ -168,7 +168,7 @@ fun DoctorAppointmentScreen(
     // Fetch on compose (same as before)
     LaunchedEffect(Unit) {
         Log.d("DEBUG_SCREEN", "Token received in screen: $token")
-        if (token.isNotBlank()) {
+        if (token?.isNotBlank() ?: false ) {
             viewModel.getDoctorAppointments(token, page = 1, showCompleted = false)
         } else {
             Log.e("DEBUG_SCREEN", "Invalid token—setting error")
@@ -677,7 +677,7 @@ fun DoctorAppointmentScreen(
 fun DoctorAppointmentCard(
     modifier: Modifier = Modifier,
     appointment: Appointment,
-    token: String,
+    token: String?,
     navController: NavController,
     patientId: String,
     appointmentId: String,
