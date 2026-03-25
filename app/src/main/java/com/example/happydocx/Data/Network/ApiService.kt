@@ -5,6 +5,10 @@ import com.example.happydocx.Data.Model.DoctorAppointment.AppointmentResponse
 import com.example.happydocx.Data.Model.FormModel.DoctorProfileResponse
 import com.example.happydocx.Data.Model.LoginModel.LoginRequest
 import com.example.happydocx.Data.Model.LoginModel.LoginResponse
+import com.example.happydocx.Data.Model.OtpAuthMdodel.SendOtp.SendOtpRequestBody
+import com.example.happydocx.Data.Model.OtpAuthMdodel.SendOtp.SendOtpResponseBody
+import com.example.happydocx.Data.Model.OtpAuthMdodel.VerifyOtp.VerifyOtpRequest
+import com.example.happydocx.Data.Model.OtpAuthMdodel.VerifyOtp.VerifyOtpResponse
 import com.example.happydocx.Data.Model.PatientScreen.PatientListResponse
 import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientRequestBody
 import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePatientResponseBody
@@ -65,6 +69,17 @@ interface ApiService {
         @Body loginRequest: LoginRequest
     ): Response<LoginResponse>
 
+    // function for getOtp
+    @POST("api/v1/patient/auth/send-otp")
+    suspend fun getOtp(
+        @Body requestBody: SendOtpRequestBody
+    ): Response<SendOtpResponseBody>
+
+    // function to verify the otp
+    @POST("api/v1/patient/auth/verify-otp")
+    suspend fun verifyOtp(
+        @Body requestBody: VerifyOtpRequest
+    ): Response<VerifyOtpResponse>
     // here is the end point in the post(parameter)
     // api end point for signup user
     @POST("api/v1/user/sign-up-new")

@@ -10,8 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -23,25 +23,42 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.NavOptionsDsl
 import com.example.happydocx.R
+import com.example.happydocx.ui.ViewModels.OtpBasedSignedInViewModel.EnterPhoneNumberViewModel
+import com.example.happydocx.ui.ViewModels.OtpBasedSignedInViewModel.GettingOtpUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
 fun EnterPhoneNumberScreen(
     modifier: Modifier = Modifier,
-    navController: NavController
+    navController: NavController,
+    enterPhoneNumberViewModel: EnterPhoneNumberViewModel
 ) {
+    val enterPhoneNumberUiState = enterPhoneNumberViewModel._enterPhoneNumber.collectAsStateWithLifecycle().value
+    val scope = rememberCoroutineScope()
+    // network state of viewModel
+    val enterPhoneNumberUiStateNetwork = enterPhoneNumberViewModel._gettingOtpNetworkState.collectAsStateWithLifecycle().value
+
+    LaunchedEffect(enterPhoneNumberUiStateNetwork) {
+        when(enterPhoneNumberUiStateNetwork) {
+            is GettingOtpUiState.Success -> {
+                navController.navigate("enterOtpScreen")
+            }
+            else -> {}
+        }
+
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -90,8 +107,8 @@ fun EnterPhoneNumberScreen(
                 modifier = Modifier.padding(8.dp)
             )
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
+                value = enterPhoneNumberUiState.phoneNumber,
+                onValueChange = {enterPhoneNumberViewModel.onPhoneNumberChanged(it)},
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
@@ -119,7 +136,13 @@ fun EnterPhoneNumberScreen(
 
             FilledTonalButton(
                 onClick = {
-                    navController.navigate("enterOtpScreen")
+                    if(enterPhoneNumberUiState.phoneNumber.isEmpty()){
+                        return@FilledTonalButton
+                    }else {
+                        enterPhoneNumberViewModel.onGetOtpClicked(
+                            phone = enterPhoneNumberUiState.phoneNumber
+                        )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -130,12 +153,21 @@ fun EnterPhoneNumberScreen(
                 ),
                 shape = RoundedCornerShape(8.dp),
             ) {
-                Text(
-                    "Get OTP",
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(8.dp),
-                    color = Color.White
-                )
+                if(enterPhoneNumberUiStateNetwork is GettingOtpUiState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White
+                    )
+                }else{
+                    Text(
+                        "Get OTP",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(8.dp),
+                        color = Color.White
+                    )
+
+                }
+
             }
         }
     }

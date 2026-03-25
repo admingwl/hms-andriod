@@ -83,7 +83,8 @@ class LoginScreenViewModel(
         tokenManager.clearToken()
     }
 
-    val autoLoginToken: StateFlow<String?> = MutableStateFlow(
+    var autoLoginToken: StateFlow<String?>? = MutableStateFlow(
         tokenManager.getToken()
     ).asStateFlow()
+
 }

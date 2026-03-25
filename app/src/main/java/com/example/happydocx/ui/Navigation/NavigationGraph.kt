@@ -54,6 +54,9 @@ import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_Consulti
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
+import com.example.happydocx.ui.ViewModels.OtpBasedSignedInViewModel.EnterOtpViewModel
+import com.example.happydocx.ui.ViewModels.OtpBasedSignedInViewModel.EnterOtpViewModelFactory
+import com.example.happydocx.ui.ViewModels.OtpBasedSignedInViewModel.EnterPhoneNumberViewModel
 import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 import com.example.happydocx.ui.ViewModels.PatientListViewModelFactory
 import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppointmentViewModel
@@ -69,6 +72,7 @@ import com.example.happydocx.ui.ViewModels.formViewModel
 fun NavigationGraph() {
 
     val context = LocalContext.current
+    val tokenManager = TokenManager(context)
     val navController = rememberNavController()
     val userViewModel: ParticularUserSignInViewModel = viewModel()
     val BasicPatientInformationViewModel: BasicInformationViewModel = viewModel()
@@ -79,9 +83,10 @@ fun NavigationGraph() {
     val doctorAppointmentViewModel: DoctorAppointmentsViewModel = viewModel(factory = DoctorAppointmentsViewModelFactory(context))
     val SavePatientGeneralViewModel: SavePatientViewModel = viewModel()
     val getTimeSlotsViewModel: GetTimeSlotsForAppointmentViewModel = viewModel()
+    val enterPhoneNumberViewModel: EnterPhoneNumberViewModel = viewModel()
+    val enterOtpViewModel: EnterOtpViewModel = viewModel(factory = EnterOtpViewModelFactory(tokenManager = tokenManager))
     // update version
     val startConsultingViewModel: StartConsultingViewModel = viewModel()
-    val tokenManager = TokenManager(context)
     val startDestination = remember {
         if(tokenManager.getToken()!=null){
             "AppointmentsScreen"
@@ -354,11 +359,11 @@ fun NavigationGraph() {
         }
 
         composable(route = "enterNumberScreen") {
-            EnterPhoneNumberScreen(navController = navController)
+            EnterPhoneNumberScreen(navController = navController, enterPhoneNumberViewModel = enterPhoneNumberViewModel)
         }
 
         composable(route = "enterOtpScreen") {
-            EnterOtpScreen(navController = navController)
+            EnterOtpScreen(navController = navController, enterOtpViewModel = enterOtpViewModel, enterPhoneNumberViewModel = enterPhoneNumberViewModel)
         }
 
         //--------------------new Consulting Screen-----------------------------------------------//
