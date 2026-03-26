@@ -4,6 +4,10 @@ import android.os.Build
 import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,11 +20,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,6 +71,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -73,8 +82,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -118,6 +132,23 @@ fun BasicInfoOfPatient(
             appointmentId = appointmentId
         )
     }
+
+
+    var showCard by rememberSaveable { mutableStateOf(true) }
+    // NestedScrollConnection intercepts scroll events from ANY nested
+    // scrollable child (verticalScroll, LazyColumn, etc.) without wrapping
+    // them — so there is no double-scroll / infinite-height problem.
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                // available.y < 0  → finger dragging UP   → hide card
+                // available.y > 0  → finger dragging DOWN → show card
+                if (available.y < -5f) showCard = false
+                if (available.y > 5f)  showCard = true
+                return Offset.Zero   // don't consume — let child scroll normally
+            }
+        }
+    }
     Scaffold(
         containerColor = Color(0xffF1F5F9),
         topBar = {
@@ -134,64 +165,74 @@ fun BasicInfoOfPatient(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xffF1F5F9)),
+                .background(Color(0xffF1F5F9))
+                .nestedScroll(nestedScrollConnection)
         ) {
-            when (getParticularPatientAppointmentData) {
-                is ParticularPatientAppointmentDataUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is ParticularPatientAppointmentDataUiState.Success -> {
-                    val patient = getParticularPatientAppointmentData.data.message.patient
-                    val appointment = getParticularPatientAppointmentData.data.message
-
-                    ElevatedCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xffFFFFFF)
-                        ),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+            AnimatedVisibility(
+                visible = showCard,
+                enter = expandVertically(animationSpec = tween(durationMillis = 800)),
+                exit = shrinkVertically(animationSpec = tween(durationMillis = 800))
+            ) {
+                when (getParticularPatientAppointmentData) {
+                    is ParticularPatientAppointmentDataUiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            PatientImage(
-                                firstName = patient.first_name,
-                                lastName = patient.last_name
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    is ParticularPatientAppointmentDataUiState.Success -> {
+                        val patient = getParticularPatientAppointmentData.data.message.patient
+                        val appointment = getParticularPatientAppointmentData.data.message
+
+                        ElevatedCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xffFFFFFF)
+                            ),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 6.dp
                             )
-                            Spacer(Modifier.width(4.dp))
-                            PatientInfoRow(
-                                name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}".trim(),
-                                patientId = patient.patientId,
-                                gender = patient.gender,
-                                appointmentDate = appointment.appointmentDate,
-                                age = "${patient.age.value} ${patient.age.unit}"
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                PatientImage(
+                                    firstName = patient.first_name,
+                                    lastName = patient.last_name
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                PatientInfoRow(
+                                    name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}".trim(),
+                                    patientId = patient.patientId,
+                                    gender = patient.gender,
+                                    appointmentDate = appointment.appointmentDate,
+                                    age = "${patient.age.value} ${patient.age.unit}"
+                                )
+                                Spacer(Modifier.weight(1f))
+                                BloodGroupComponent(
+                                    bloodGroup = patient.bloodGroup
+                                )
+                            }
+                            ContactInfoOfPatient(
+                                phone = patient.contactNumber,
+                                email = patient.email,
+                                address = patient.address?.addressLine1 ?: "N/A"
                             )
-                            Spacer(Modifier.weight(1f))
-                            BloodGroupComponent(
-                                bloodGroup = patient.bloodGroup
+                            ActiveAllergiesSection(
+                                allergies = patient.allergies
                             )
                         }
-                        ContactInfoOfPatient(
-                            phone = patient.contactNumber,
-                            email = patient.email,
-                            address = patient.address?.addressLine1 ?: "N/A"
-                        )
-                        ActiveAllergiesSection(
-                            allergies = patient.allergies
-                        )
                     }
-                }
 
-                else -> {}
+                    else -> {}
+                }
             }
             Spacer(Modifier.height(8.dp))
             PatientAppointmentInfoTabScreen(
@@ -200,7 +241,7 @@ fun BasicInfoOfPatient(
                 startConsultingViewModel = startConsultingViewModel,
                 navController = navController,
                 patientId = patientId,
-                doctorId = doctorId
+                doctorId = doctorId,
             )
         }
     }
@@ -464,6 +505,8 @@ fun ContactInfoOfPatient(
     }
 }
 
+// Updated PatientAppointmentInfoTabScreen
+// Accepts an external LazyListState so the parent can observe scroll position.
 @Suppress("ViewModelForwarding")
 @Composable
 fun PatientAppointmentInfoTabScreen(
@@ -473,13 +516,16 @@ fun PatientAppointmentInfoTabScreen(
     startConsultingViewModel: StartConsultingViewModel,
     navController: NavController,
     patientId: String,
-    doctorId: String
+    doctorId: String,
 ) {
-
-    val tabsOptions = listOf<String>(
+    val tabsOptions = listOf(
         "Overview", "Vitals", "Medications", "LabResult", "History", "Documents", "Notes"
     )
+    // Get screen height so the tab content always fills the visible area.
+    // This gives inner scrollable containers a bounded (non-infinite) height.
+    val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
     var tabIndex by rememberSaveable { mutableStateOf(0) }
+    val tabScrollState = rememberScrollState()
     var showFullScreen by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     Column(modifier = modifier.fillMaxSize()) {
@@ -514,50 +560,52 @@ fun PatientAppointmentInfoTabScreen(
                 )
             }
         }
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (tabIndex) {
-                0 -> OverViewScreen(
-                    token = token,
-                    appointmentId = appointmentId,
-                    startConsultingViewModel = startConsultingViewModel,
-                    navController = navController,
-                    patientId = patientId,
-                    doctorId = doctorId
-                )
 
-                1 -> AllVitalsScreen()
-                2 -> AllMedicationList(
-                    token = token,
-                    appointmentId = appointmentId,
-                    startConsultingViewModel = startConsultingViewModel,
-                    navController = navController
-                )
 
-                3 -> LabResultScreen(
-                    token = token,
-                    patientId = patientId,
-                    startConsultingViewModel = startConsultingViewModel
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when (tabIndex) {
+                        0 -> OverViewScreen(
+                            token = token,
+                            appointmentId = appointmentId,
+                            startConsultingViewModel = startConsultingViewModel,
+                            navController = navController,
+                            patientId = patientId,
+                            doctorId = doctorId
+                        )
 
-                4 -> AllHistoryList(
-                    patient = patientId,
-                    token = token,
-                    startConsultingViewModel = startConsultingViewModel
-                )
+                        1 -> AllVitalsScreen()
+                        2 -> AllMedicationList(
+                            token = token,
+                            appointmentId = appointmentId,
+                            startConsultingViewModel = startConsultingViewModel,
+                            navController = navController
+                        )
 
-                5 -> AllDocumentsScreen(
-                    token = token,
-                    patientId = patientId,
-                    startConsultingViewModel = startConsultingViewModel,
-                    navController = navController,
-                    appointmentId = appointmentId
-                )
+                        3 -> LabResultScreen(
+                            token = token,
+                            patientId = patientId,
+                            startConsultingViewModel = startConsultingViewModel
+                        )
 
-                6 -> NotesScreen(
-                    startConsultingViewModel = startConsultingViewModel,
-                    token = token,
-                    appointmentId = appointmentId
-                )
+                        4 -> AllHistoryList(
+                            patient = patientId,
+                            token = token,
+                            startConsultingViewModel = startConsultingViewModel
+                        )
+
+                        5 -> AllDocumentsScreen(
+                            token = token,
+                            patientId = patientId,
+                            startConsultingViewModel = startConsultingViewModel,
+                            navController = navController,
+                            appointmentId = appointmentId
+                        )
+
+                        6 -> NotesScreen(
+                            startConsultingViewModel = startConsultingViewModel,
+                            token = token,
+                            appointmentId = appointmentId
+                        )
             }
         }
     }
@@ -2223,55 +2271,58 @@ fun EditPatientInfoScreen(
     navController: NavController,
     startConsultingViewModel: StartConsultingViewModel,
     modifier: Modifier = Modifier,
-    token:String,
+    token: String,
 ) {
     val genders = listOf<String>("male", "female", "other")
     val bloodGroups = listOf<String>("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
-    val uiState = startConsultingViewModel._particularPatientAppointmentDataState.collectAsStateWithLifecycle().value
-    val patientData = (uiState as? ParticularPatientAppointmentDataUiState.Success)?.data?.message?.patient
+    val uiState =
+        startConsultingViewModel._particularPatientAppointmentDataState.collectAsStateWithLifecycle().value
+    val patientData =
+        (uiState as? ParticularPatientAppointmentDataUiState.Success)?.data?.message?.patient
     val scope = rememberCoroutineScope()
     // get the network state
-    val networkEditstate = startConsultingViewModel._updateDetailState.collectAsStateWithLifecycle().value
+    val networkEditstate =
+        startConsultingViewModel._updateDetailState.collectAsStateWithLifecycle().value
 
     var genderExpandState by remember { mutableStateOf(false) }
     var bloodGroupExpandState by remember { mutableStateOf(false) }
 
 
-
-    var firstName  by remember { mutableStateOf("") }
-    var lastName   by remember { mutableStateOf("") }
-    var patientId  by remember { mutableStateOf("") }
-    var age        by remember { mutableStateOf("") }
-    var gender     by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var patientId by remember { mutableStateOf("") }
+    var age by remember { mutableStateOf("") }
+    var gender by remember { mutableStateOf("") }
     var bloodGroup by remember { mutableStateOf("") }
-    var phone      by remember { mutableStateOf("") }
-    var email      by remember { mutableStateOf("") }
-    var address    by remember { mutableStateOf("") }
-    var allergies  by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var allergies by remember { mutableStateOf("") }
 
     // Re-runs whenever a different patient is loaded
     LaunchedEffect(patientData?.patientId) {
         patientData?.let {
-            firstName  = it.first_name
-            lastName   = it.last_name
-            patientId  = it.patientId
-            age        = it.age.value.toString()
-            gender     = it.gender
+            firstName = it.first_name
+            lastName = it.last_name
+            patientId = it.patientId
+            age = it.age.value.toString()
+            gender = it.gender
             bloodGroup = it.bloodGroup
-            phone      = it.contactNumber
-            email      = it.email
-            address    = it.address?.addressLine1 ?: ""
-            allergies  = it.allergies?.joinToString(", ") ?: ""
+            phone = it.contactNumber
+            email = it.email
+            address = it.address?.addressLine1 ?: ""
+            allergies = it.allergies?.joinToString(", ") ?: ""
         }
     }
-val context = LocalContext.current
+    val context = LocalContext.current
     LaunchedEffect(networkEditstate) {
-        when(networkEditstate){
-            is UpdateAppointmentDetailUiState.Success ->{
-                Toast.makeText(context,"Updated successfully",Toast.LENGTH_SHORT).show()
+        when (networkEditstate) {
+            is UpdateAppointmentDetailUiState.Success -> {
+                Toast.makeText(context, "Updated successfully", Toast.LENGTH_SHORT).show()
             }
-            is UpdateAppointmentDetailUiState.Error ->{
-                Toast.makeText(context,"Something went wrong",Toast.LENGTH_SHORT).show()
+
+            is UpdateAppointmentDetailUiState.Error -> {
+                Toast.makeText(context, "Something went wrong", Toast.LENGTH_SHORT).show()
             }
 
             else -> {}
@@ -2319,7 +2370,7 @@ val context = LocalContext.current
             )
             OutlinedTextField(
                 value = firstName,
-                onValueChange = {firstName = it},
+                onValueChange = { firstName = it },
                 placeholder = { Text("First name", color = Color(0xffF5EEEF)) },
                 trailingIcon = {},
                 colors = TextFieldDefaults.colors(
@@ -2340,7 +2391,7 @@ val context = LocalContext.current
             )
             OutlinedTextField(
                 value = lastName,
-                onValueChange = {lastName = it},
+                onValueChange = { lastName = it },
                 placeholder = { Text("Last name", color = Color(0xffF5EEEF)) },
                 trailingIcon = {},
                 colors = TextFieldDefaults.colors(
@@ -2383,7 +2434,7 @@ val context = LocalContext.current
             )
             OutlinedTextField(
                 value = age,
-                onValueChange = {age = it},
+                onValueChange = { age = it },
                 readOnly = false,
                 placeholder = { Text("Age", color = Color(0xffF5EEEF)) },
                 trailingIcon = {},
@@ -2405,7 +2456,7 @@ val context = LocalContext.current
             )
             ExposedDropdownMenuBox(
                 expanded = genderExpandState,
-                onExpandedChange = {genderExpandState = !genderExpandState},
+                onExpandedChange = { genderExpandState = !genderExpandState },
             ) {
                 OutlinedTextField(
                     value = gender,
@@ -2424,7 +2475,7 @@ val context = LocalContext.current
                 )
                 ExposedDropdownMenu(
                     expanded = genderExpandState,
-                    onDismissRequest = {genderExpandState = false},
+                    onDismissRequest = { genderExpandState = false },
                     containerColor = Color(0xffF8FAFC),
                     matchTextFieldWidth = true,
                 ) {
@@ -2468,7 +2519,7 @@ val context = LocalContext.current
                 )
                 ExposedDropdownMenu(
                     expanded = bloodGroupExpandState,
-                    onDismissRequest = {bloodGroupExpandState = false},
+                    onDismissRequest = { bloodGroupExpandState = false },
                     containerColor = Color(0xffF8FAFC),
                     matchTextFieldWidth = true,
                 ) {
@@ -2493,7 +2544,7 @@ val context = LocalContext.current
             )
             OutlinedTextField(
                 value = phone,
-                onValueChange = {phone = it},
+                onValueChange = { phone = it },
                 readOnly = false,
                 placeholder = { Text("Phone", color = Color(0xffF5EEEF)) },
                 trailingIcon = {},
@@ -2515,7 +2566,7 @@ val context = LocalContext.current
             )
             OutlinedTextField(
                 value = email,
-                onValueChange = {email = it},
+                onValueChange = { email = it },
                 readOnly = false,
                 placeholder = { Text("Email", color = Color(0xffF5EEEF)) },
                 trailingIcon = {},
@@ -2537,7 +2588,7 @@ val context = LocalContext.current
             )
             OutlinedTextField(
                 value = address,
-                onValueChange = {address = it},
+                onValueChange = { address = it },
                 readOnly = false,
                 placeholder = { Text("Address", color = Color(0xffF5EEEF)) },
                 trailingIcon = {},
@@ -2575,7 +2626,8 @@ val context = LocalContext.current
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(10.dp)
             ) {
                 Button(
@@ -2616,12 +2668,12 @@ val context = LocalContext.current
                         containerColor = Color(0xff1D4ED8)
                     )
                 ) {
-                    if(networkEditstate is UpdateAppointmentDetailUiState.Loading){
+                    if (networkEditstate is UpdateAppointmentDetailUiState.Loading) {
                         CircularProgressIndicator(
                             color = Color.White,
                             modifier = Modifier.size(20.dp)
                         )
-                    }else {
+                    } else {
                         Text(
                             text = "Save Changes",
                             color = Color.White
