@@ -68,18 +68,15 @@ fun OverViewScreen(
 ) {
     val startConsultingState =
         startConsultingViewModel._medicalRecordState.collectAsStateWithLifecycle().value
-    LaunchedEffect(token) {
-        startConsultingViewModel.getAllMedicalRecords(token, appointmentId)
-    }
     val state = startConsultingViewModel._currentMedicationState.collectAsStateWithLifecycle().value
-    LaunchedEffect(token) {
-        startConsultingViewModel.getCurrentMedications(token, appointmentId)
-    }
     val labResultState =
         startConsultingViewModel._labResultState.collectAsStateWithLifecycle().value
     LaunchedEffect(token) {
+        startConsultingViewModel.getAllMedicalRecords(token, appointmentId)
+        startConsultingViewModel.getCurrentMedications(token, appointmentId)
         startConsultingViewModel.getAllLabResults(token, patientId)
     }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -117,9 +114,17 @@ fun OverViewScreen(
         }
         when (val state = startConsultingState) {
 
-            is AllMedicalRecordUiState.Idle -> {}
+            is AllMedicalRecordUiState.Idle -> {
+                Text("State: IDLE", color = Color.Red) //  debug
+            }
 
-            is AllMedicalRecordUiState.Loading -> {}
+            is AllMedicalRecordUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
+            }
 
             is AllMedicalRecordUiState.Success -> {
                 val vitals = state.data.data.vitals
@@ -265,8 +270,9 @@ fun OverViewScreen(
                     }
                 }
             }
-
-            else -> {}
+            is AllMedicalRecordUiState.Error -> {
+                Text("Error: ${state.message}", color = Color.Red)
+            }
         }
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column {

@@ -521,8 +521,7 @@ class StartConsultingViewModel : ViewModel() {
     val _createLabResultManuallyState = createLabResultManuallyState.asStateFlow()
 
     // particular patient appointment data network state
-    private val particularPatientAppointmentDataState: MutableStateFlow<ParticularPatientAppointmentDataUiState> =
-        MutableStateFlow(ParticularPatientAppointmentDataUiState.Idle)
+    private val particularPatientAppointmentDataState: MutableStateFlow<ParticularPatientAppointmentDataUiState> = MutableStateFlow(ParticularPatientAppointmentDataUiState.Idle)
     val _particularPatientAppointmentDataState = particularPatientAppointmentDataState.asStateFlow()
 
     // network state for histories
@@ -680,7 +679,7 @@ class StartConsultingViewModel : ViewModel() {
 
 
     // function to get the medical records
-    suspend fun getAllMedicalRecords(
+     fun getAllMedicalRecords(
         token: String,
         appointmentId: String
     ) {
@@ -943,7 +942,7 @@ class StartConsultingViewModel : ViewModel() {
         appointmentId: String
     ) {
         viewModelScope.launch {
-            labResultState.value = CurrentLabResultUiState.Loading
+            particularPatientAppointmentDataState.value = ParticularPatientAppointmentDataUiState.Loading
 
             try {
                 val result = repo.particularPatientAppointmentDataRepo(

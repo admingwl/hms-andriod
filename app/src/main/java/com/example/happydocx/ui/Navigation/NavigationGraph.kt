@@ -89,7 +89,7 @@ fun NavigationGraph() {
     val startConsultingViewModel: StartConsultingViewModel = viewModel()
     val startDestination = remember {
         if(tokenManager.getToken()!=null){
-            "AppointmentsScreen"
+            "AppointmentsScreen/${tokenManager.getToken()}"
         }  else {
             "Login"
         }
@@ -124,11 +124,13 @@ fun NavigationGraph() {
                 viewModel = sharedViewModel
             )
         }
-        composable("AppointmentsScreen") { backStackEntry ->
-            val token_one = remember { tokenManager.getToken() }
-            Log.d("DEBUG_NAV", "Navigation: Token = $token_one")
+        composable("AppointmentsScreen/{token}",
+            arguments = listOf(navArgument("token") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            Log.d("DEBUG_NAV", "Navigation: Token = $token")
             DoctorAppointmentScreen(
-                token = token_one,
+                token = token,
                 navController = navController,
                 viewModel = doctorAppointmentViewModel
             )

@@ -54,7 +54,7 @@ import com.example.happydocx.ui.ViewModels.ParticularUserSignInViewModel
 @Composable
 fun LoginPage(
     viewModel: LoginScreenViewModel = viewModel(
-        factory = LoginViewModelFactory(LocalContext.current)),
+    factory = LoginViewModelFactory(LocalContext.current)),
     userViewModel: ParticularUserSignInViewModel,
     navController: NavController
 ) {
@@ -64,13 +64,13 @@ fun LoginPage(
     val passwordState = viewModel._passwordState.collectAsStateWithLifecycle().value
     val eyeToggleState = viewModel._eyeToggleState.collectAsStateWithLifecycle().value
     val loginUiState = viewModel._loginUiState.collectAsStateWithLifecycle().value
-    val autoLoginToken = viewModel.autoLoginToken.collectAsStateWithLifecycle()
+    val autoLoginToken = viewModel.autoLoginToken?.collectAsStateWithLifecycle()
 
     // Check if user is already logged in on first launch
     LaunchedEffect(autoLoginToken) {
-        if (autoLoginToken.value!=null) {
-//            val savedToken = TokenManager(context).getToken()
-            navController.navigate("AppointmentsScreen") {
+        if (autoLoginToken?.value !=null) {
+            val savedToken = TokenManager(context).getToken()
+            navController.navigate("AppointmentsScreen/${savedToken}") {
                 popUpTo("Login") { inclusive = true }
                 launchSingleTop = true
             }
@@ -80,7 +80,8 @@ fun LoginPage(
     LaunchedEffect(loginUiState.isSuccess) {
         if(loginUiState.isSuccess){
                 // Navigate with token as argument
-                navController.navigate("AppointmentsScreen") {
+            val savedToken = TokenManager(context).getToken()
+                navController.navigate("AppointmentsScreen/${savedToken}") {
                     // Clear the back stack up to and including the login screen
                     popUpTo("Login") { inclusive = true }
                     // Ensure only one instance exists

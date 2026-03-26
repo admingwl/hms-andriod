@@ -10,7 +10,7 @@ data class Doctor(
     val clinicAddresses: List<Any>,
     val companyId: String,
     val contact_address: ContactAddress,
-    val contact_no: Int,
+    val contact_no:Long,
     val createdAt: String,
     val date_of_joinning: String,
     val dateofbirth: String,
