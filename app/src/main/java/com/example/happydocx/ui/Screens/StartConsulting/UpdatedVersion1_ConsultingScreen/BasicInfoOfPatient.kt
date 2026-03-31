@@ -590,7 +590,8 @@ fun PatientAppointmentInfoTabScreen(
                         4 -> AllHistoryList(
                             patient = patientId,
                             token = token,
-                            startConsultingViewModel = startConsultingViewModel
+                            startConsultingViewModel = startConsultingViewModel,
+                            navController = navController
                         )
 
                         5 -> AllDocumentsScreen(

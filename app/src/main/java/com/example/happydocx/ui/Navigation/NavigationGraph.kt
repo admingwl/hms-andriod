@@ -51,6 +51,7 @@ import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_Consulti
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.EditPatientInfoScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.ManualEntryScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.UploadDocumentScreen
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.VisitHistoryScreen
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
 import com.example.happydocx.ui.ViewModels.FormViewModelFactory
@@ -368,6 +369,9 @@ fun NavigationGraph() {
             EnterOtpScreen(navController = navController, enterOtpViewModel = enterOtpViewModel, enterPhoneNumberViewModel = enterPhoneNumberViewModel)
         }
 
+        composable(route = "visitHistoryScreen") {
+            VisitHistoryScreen()
+        }
         //--------------------new Consulting Screen-----------------------------------------------//
 
     }
