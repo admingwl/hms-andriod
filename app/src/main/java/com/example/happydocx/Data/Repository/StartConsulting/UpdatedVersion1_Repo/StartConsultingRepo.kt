@@ -2,19 +2,17 @@ package com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Re
 
 import android.content.Context
 import android.util.Log
-import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsAndSymptomsRequestBody
-import com.example.happydocx.Data.Model.StartConsulting.SaveSendVitalSignsResponseBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewLabResults.Manualy.ManualLabReportCreateRequestUpdate1
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewLabResults.Manualy.ManualLabReportCreateResponseUpdate1
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationRequest
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.CreateNewMedication.CreateMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllLabResultResponse.LabResultResponse
-import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords.GetAllMedicalRecordsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllMedicalRecords.GetAllMedicalRecordsResponseItem
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.PatientHistory.PatientHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UpdateAppointmentDetail.UpdateAppointmentDetailRequest
@@ -28,7 +26,6 @@ import com.example.happydocx.ui.uiStates.StartConsulting.UploadDocumentUpdate1
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 
 class StartConsultingRepo {
 
@@ -348,8 +345,8 @@ class StartConsultingRepo {
 
 
     suspend fun updateAppointmentDetail(
-        token:String,
-        requestBody:UpdateAppointmentDetailRequest
+        token: String?,
+        requestBody: UpdateAppointmentDetailRequest
     ):Result<UpdateAppointmentDetailResponse>{
         return try{
             val result = apiService.updateAppointmentDetails(
@@ -367,4 +364,28 @@ class StartConsultingRepo {
             Result.failure(e)
         }
     }
+
+    // get patient's all  visit history
+    suspend fun getPatientHistory(
+        token:String,
+        appointmentId:String
+    ): Result<PatientHistoryResponse>{
+            return try{
+                val result = apiService.GetPatientAllVisitHistory(
+                    token =  "Bearer $token",
+                    appointmentId = appointmentId,
+                )
+                if (result.isSuccessful && result.body() != null) {
+                    Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                    Result.success(result.body()!!)
+                } else {
+                    val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                    Log.e("PatientHistory", "Failed for AppointmentId: $appointmentId. Error: $errorMessage")
+                    Result.failure(Exception(errorMessage))
+                }
+            }catch (e:Exception){
+                Result.failure(e)
+            }
+        }
 }
+

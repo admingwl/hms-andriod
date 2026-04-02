@@ -2,5 +2,5 @@ package com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVe
 
 data class UpdateAppointmentDetailRequest(
     val data: Data,
-    val patientId: String
+    val patientId: String?
 )

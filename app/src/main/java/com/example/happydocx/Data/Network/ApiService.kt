@@ -36,6 +36,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.PatientHistory.PatientHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UpdateAppointmentDetail.UpdateAppointmentDetailRequest
@@ -296,7 +297,7 @@ interface ApiService {
         @Path("patient") patient: String,
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 10,
-//        @Query("sort") sort:String = "desc" // ignore for know
+//      @Query("sort") sort:String = "desc" // ignore for know
     ): Response<GetAllHistoryResponse>
 
     // get list of all medical documents.
@@ -334,5 +335,13 @@ interface ApiService {
         @Header("Authorization") token:String,
         @Body requestBody: UpdateAppointmentDetailRequest
     ): Response<UpdateAppointmentDetailResponse>
+
+    // get all history of patient visits.
+    @GET("api/v1/record/by-appointment/{appointmentId}")
+    suspend fun GetPatientAllVisitHistory(
+        @Header("Authorization") token:String,
+        @Path("appointmentId") appointmentId:String
+    ): Response<PatientHistoryResponse>
+
     //------------------------update patient Consulting Screen-----------------------------------------
 }

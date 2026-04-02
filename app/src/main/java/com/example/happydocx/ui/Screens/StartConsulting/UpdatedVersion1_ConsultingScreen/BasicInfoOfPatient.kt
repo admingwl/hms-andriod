@@ -1,7 +1,6 @@
 package com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen
 
 import android.os.Build
-import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
@@ -9,7 +8,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -20,15 +18,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -67,11 +61,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -81,13 +73,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -100,7 +90,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.happydocx.R
 import com.example.happydocx.ui.Screens.SignUpForms.MyDashedBox
-import com.example.happydocx.ui.Screens.StartConsulting.sharePdf
 import com.example.happydocx.ui.ViewModels.StartConsulting.CreateLabResultManuallyUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.CreateNewMedicationUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.ParticularPatientAppointmentDataUiState
@@ -108,6 +97,7 @@ import com.example.happydocx.ui.ViewModels.StartConsulting.SaveVital_SignsUiStat
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.UpdateAppointmentDetailUiState
 import kotlinx.coroutines.launch
+import okhttp3.internal.filterList
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -124,8 +114,7 @@ fun BasicInfoOfPatient(
     doctorId: String
 ) {
 
-    val getParticularPatientAppointmentData =
-        startConsultingViewModel._particularPatientAppointmentDataState.collectAsStateWithLifecycle().value
+    val getParticularPatientAppointmentData = startConsultingViewModel._particularPatientAppointmentDataState.collectAsStateWithLifecycle().value
     LaunchedEffect(token) {
         startConsultingViewModel.getParticularPatientAppointmentData(
             token = token,
@@ -209,15 +198,15 @@ fun BasicInfoOfPatient(
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 PatientInfoRow(
-                                    name = "${patient.first_name} ${patient.middle_name} ${patient.last_name}".trim(),
+                                    name = "${patient.first_name ?: ""} ${patient.middle_name ?: ""} ${patient.last_name ?: ""}".trim(),
                                     patientId = patient.patientId,
                                     gender = patient.gender,
-                                    appointmentDate = appointment.appointmentDate,
-                                    age = "${patient.age.value} ${patient.age.unit}"
+                                    appointmentDate = appointment.appointmentDate ?: "",
+                                    age = "${patient.age?.value ?: "-"} ${patient.age?.unit ?: ""}"
                                 )
                                 Spacer(Modifier.weight(1f))
                                 BloodGroupComponent(
-                                    bloodGroup = patient.bloodGroup
+                                    bloodGroup = patient.bloodGroup ?: "N/A"
                                 )
                             }
                             ContactInfoOfPatient(
@@ -226,7 +215,7 @@ fun BasicInfoOfPatient(
                                 address = patient.address?.addressLine1 ?: "N/A"
                             )
                             ActiveAllergiesSection(
-                                allergies = patient.allergies
+                                allergies = patient.allergies?. filterNotNull() ?: emptyList()
                             )
                         }
                     }
@@ -312,12 +301,12 @@ fun ParticularPatientAppointmentInfoTopAppBar(
 @Composable
 fun PatientImage(
     modifier: Modifier = Modifier,
-    firstName: String = "Deepak",
-    lastName: String = "Guleria"
+    firstName: String? = "Deepak",
+    lastName: String? = "Guleria"
 ) {
     // get first name first letter and last name first letter
-    val firstCharacter = firstName.firstOrNull() ?: ""
-    val secondCharacter = lastName.firstOrNull() ?: ""
+    val firstCharacter = firstName?.firstOrNull() ?: ""
+    val secondCharacter = lastName?.firstOrNull() ?: ""
 
     Box(
         modifier = modifier
@@ -340,9 +329,9 @@ fun PatientImage(
 fun PatientInfoRow(
     modifier: Modifier = Modifier,
     name: String = "",
-    patientId: String = "",
+    patientId: String? = "",
     age: String = "",
-    gender: String = "",
+    gender: String? = "",
     appointmentDate: String = ""
 ) {
     Column(
@@ -359,11 +348,13 @@ fun PatientInfoRow(
 //            shape = RoundedCornerShape(16.dp),
 //            color = Color(0xffF1F5F9)
 //        ) {
-        Text(
-            text = patientId,
-            fontSize = 12.sp,
-            color = Color(0xff47556E)
-        )
+        if (patientId != null) {
+            Text(
+                text = patientId,
+                fontSize = 12.sp,
+                color = Color(0xff47556E)
+            )
+        }
 //        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -458,8 +449,8 @@ fun ActiveAllergiesSection(
 @Composable
 fun ContactInfoOfPatient(
     modifier: Modifier = Modifier,
-    phone: String,
-    email: String,
+    phone: String?,
+    email: String?,
     address: String
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -478,7 +469,9 @@ fun ContactInfoOfPatient(
                     tint = Color(0xffB1BCCB)
                 )
                 Spacer(Modifier.width(4.dp))
-                Text(phone, color = Color.Black)
+                if (phone != null) {
+                    Text(phone, color = Color.Black)
+                }
             }
             Spacer(Modifier.width(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -489,7 +482,9 @@ fun ContactInfoOfPatient(
                     tint = Color(0xffB1BCCB)
                 )
                 Spacer(Modifier.width(4.dp))
-                Text(email, color = Color.Black)
+                if (email != null) {
+                    Text(email, color = Color.Black)
+                }
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(6.dp)) {
@@ -591,7 +586,8 @@ fun PatientAppointmentInfoTabScreen(
                             patient = patientId,
                             token = token,
                             startConsultingViewModel = startConsultingViewModel,
-                            navController = navController
+                            navController = navController,
+                            appointmentId = appointmentId
                         )
 
                         5 -> AllDocumentsScreen(
@@ -2289,14 +2285,14 @@ fun EditPatientInfoScreen(
     var bloodGroupExpandState by remember { mutableStateOf(false) }
 
 
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var patientId by remember { mutableStateOf("") }
+    var firstName: String? by remember { mutableStateOf("") }
+    var lastName: String? by remember { mutableStateOf("") }
+    var patientId: String? by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    var bloodGroup by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
+    var gender: String? by remember { mutableStateOf("") }
+    var bloodGroup: String? by remember { mutableStateOf("") }
+    var phone: String? by remember { mutableStateOf("") }
+    var email: String? by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var allergies by remember { mutableStateOf("") }
 
@@ -2306,7 +2302,7 @@ fun EditPatientInfoScreen(
             firstName = it.first_name
             lastName = it.last_name
             patientId = it.patientId
-            age = it.age.value.toString()
+            age = it.age?.value.toString()
             gender = it.gender
             bloodGroup = it.bloodGroup
             phone = it.contactNumber
@@ -2369,20 +2365,22 @@ fun EditPatientInfoScreen(
                 color = Color.Black,
                 modifier = Modifier.padding(8.dp)
             )
-            OutlinedTextField(
-                value = firstName,
-                onValueChange = { firstName = it },
-                placeholder = { Text("First name", color = Color(0xffF5EEEF)) },
-                trailingIcon = {},
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xffF8FAFC),
-                    unfocusedContainerColor = Color(0xffF8FAFC),
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-            )
+            firstName?.let { it1 ->
+                OutlinedTextField(
+                    value = it1,
+                    onValueChange = { firstName = it },
+                    placeholder = { Text("First name", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
             Text(
                 text = "Last Name",
                 fontWeight = FontWeight.Bold,
@@ -2390,20 +2388,22 @@ fun EditPatientInfoScreen(
                 color = Color.Black,
                 modifier = Modifier.padding(8.dp)
             )
-            OutlinedTextField(
-                value = lastName,
-                onValueChange = { lastName = it },
-                placeholder = { Text("Last name", color = Color(0xffF5EEEF)) },
-                trailingIcon = {},
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xffF8FAFC),
-                    unfocusedContainerColor = Color(0xffF8FAFC),
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-            )
+            lastName?.let { it1 ->
+                OutlinedTextField(
+                    value = it1,
+                    onValueChange = { lastName = it },
+                    placeholder = { Text("Last name", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
             Text(
                 text = "Patient ID",
                 fontWeight = FontWeight.Bold,
@@ -2411,21 +2411,23 @@ fun EditPatientInfoScreen(
                 color = Color.Black,
                 modifier = Modifier.padding(8.dp)
             )
-            OutlinedTextField(
-                value = patientId,
-                onValueChange = {},
-                readOnly = true,
-                placeholder = { Text("Patient Id", color = Color(0xffF5EEEF)) },
-                trailingIcon = {},
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xffF8FAFC),
-                    unfocusedContainerColor = Color(0xffF8FAFC),
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-            )
+            patientId?.let {
+                OutlinedTextField(
+                    value = it,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("Patient Id", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
             Text(
                 text = "Age",
                 fontWeight = FontWeight.Bold,
@@ -2459,21 +2461,23 @@ fun EditPatientInfoScreen(
                 expanded = genderExpandState,
                 onExpandedChange = { genderExpandState = !genderExpandState },
             ) {
-                OutlinedTextField(
-                    value = gender,
-                    onValueChange = {},
-                    readOnly = true,
-                    placeholder = { Text("Age", color = Color(0xffF5EEEF)) },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xffF8FAFC),
-                        unfocusedContainerColor = Color(0xffF8FAFC),
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                )
+                gender?.let {
+                    OutlinedTextField(
+                        value = it,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = { Text("Age", color = Color(0xffF5EEEF)) },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xffF8FAFC),
+                            unfocusedContainerColor = Color(0xffF8FAFC),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                    )
+                }
                 ExposedDropdownMenu(
                     expanded = genderExpandState,
                     onDismissRequest = { genderExpandState = false },
@@ -2503,21 +2507,23 @@ fun EditPatientInfoScreen(
                 expanded = bloodGroupExpandState,
                 onExpandedChange = { bloodGroupExpandState = !bloodGroupExpandState },
             ) {
-                OutlinedTextField(
-                    value = bloodGroup,
-                    onValueChange = {},
-                    readOnly = true,
-                    placeholder = { Text("Blood group", color = Color(0xffF5EEEF)) },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xffF8FAFC),
-                        unfocusedContainerColor = Color(0xffF8FAFC),
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                )
+                bloodGroup?.let {
+                    OutlinedTextField(
+                        value = it,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = { Text("Blood group", color = Color(0xffF5EEEF)) },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xffF8FAFC),
+                            unfocusedContainerColor = Color(0xffF8FAFC),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                    )
+                }
                 ExposedDropdownMenu(
                     expanded = bloodGroupExpandState,
                     onDismissRequest = { bloodGroupExpandState = false },
@@ -2543,21 +2549,23 @@ fun EditPatientInfoScreen(
                 color = Color.Black,
                 modifier = Modifier.padding(8.dp)
             )
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                readOnly = false,
-                placeholder = { Text("Phone", color = Color(0xffF5EEEF)) },
-                trailingIcon = {},
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xffF8FAFC),
-                    unfocusedContainerColor = Color(0xffF8FAFC),
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-            )
+            phone?.let { it1 ->
+                OutlinedTextField(
+                    value = it1,
+                    onValueChange = { phone = it },
+                    readOnly = false,
+                    placeholder = { Text("Phone", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
             Text(
                 text = "Email",
                 fontWeight = FontWeight.Bold,
@@ -2565,21 +2573,23 @@ fun EditPatientInfoScreen(
                 color = Color.Black,
                 modifier = Modifier.padding(8.dp)
             )
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                readOnly = false,
-                placeholder = { Text("Email", color = Color(0xffF5EEEF)) },
-                trailingIcon = {},
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xffF8FAFC),
-                    unfocusedContainerColor = Color(0xffF8FAFC),
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-            )
+            email?.let {
+                OutlinedTextField(
+                    value = it,
+                    onValueChange = { email = it },
+                    readOnly = false,
+                    placeholder = { Text("Email", color = Color(0xffF5EEEF)) },
+                    trailingIcon = {},
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xffF8FAFC),
+                        unfocusedContainerColor = Color(0xffF8FAFC),
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
             Text(
                 text = "Address",
                 fontWeight = FontWeight.Bold,

@@ -15,6 +15,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetCurrentMedicationResponse.CurrentMedicationResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetParticularPatientAppointmentData.GetParticularPatientAppointemntDataResponse.PatientAppointmentData
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.HistoryResponse.GetAllHistoryResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.PatientHistory.PatientHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Request_Vitals
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Request.Save_Vital_Signs_RequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.SavePatientsVitalSigns.Response.Save_vitalSigns_Response_Body
@@ -548,18 +549,49 @@ class StartConsultingViewModel : ViewModel() {
     private val updateDetailState: MutableStateFlow<UpdateAppointmentDetailUiState> = MutableStateFlow(UpdateAppointmentDetailUiState.Idle)
       val _updateDetailState = updateDetailState.asStateFlow()
 
+
+    // get the patient visit history network state
+    private val patientHistoryState: MutableStateFlow<PatientHistoryUiState> = MutableStateFlow(PatientHistoryUiState.Idle)
+    val _patientHistoryState = patientHistoryState.asStateFlow()
+
+
+    fun getPatientHistoryDetail(
+        token:String,
+        appointmentId:String
+    ){
+        viewModelScope.launch {
+            patientHistoryState.value = PatientHistoryUiState.Loading
+            try {
+                val result = repo.getPatientHistory(
+                    token = token,
+                    appointmentId = appointmentId
+                )
+                result.onSuccess { response ->
+                    patientHistoryState.value = PatientHistoryUiState.Success(data = response)
+                }.onFailure { errorMessage ->
+                    patientHistoryState.value = PatientHistoryUiState.Error(
+                        message = errorMessage.message ?: "Failed to load patient's history...."
+                    )
+                }
+            } catch (e: Exception) {
+                patientHistoryState.value = PatientHistoryUiState.Error(
+                    message = e.message ?: "An Unexpected error occurred"
+                )
+            }
+        }
+    }
     suspend fun onSaveUpdateAppointmentDetailsClicked(
-        token: String,
-        patientId:String,
-        firstName: String,
-        lastName: String,
-        age: String,
-        gender: String,
-        bloodGroup: String,
-        phone: String,
-        email: String,
-        address: String,
-        allergies: String
+        token: String?,
+        patientId: String?,
+        firstName: String?,
+        lastName: String?,
+        age: String?,
+        gender: String?,
+        bloodGroup: String?,
+        phone: String?,
+        email: String?,
+        address: String?,
+        allergies: String?
     ){
         viewModelScope.launch {
             updateDetailState.value = UpdateAppointmentDetailUiState.Loading
@@ -570,16 +602,16 @@ class StartConsultingViewModel : ViewModel() {
                     patientId = patientId,     // also inside data
                     firstName = firstName,
                     lastName = lastName,
-                    age = age.toIntOrNull() ?: 0,  // String → Int, 0 if invalid
+                    age = age?.toIntOrNull() ?: 0,  // String → Int, 0 if invalid
                     gender = gender,
                     bloodGroup = bloodGroup,
                     phone = phone,
                     email = email,
                     address = address,
                     allergies = allergies
-                        .split(",")            // "pollen, dust" → ["pollen", "dust"]
-                        .map { it.trim() }     // remove extra spaces
-                        .filter { it.isNotEmpty() } // remove empty strings
+                        ?.split(",")            // "pollen, dust" → ["pollen", "dust"]
+                        ?.map { it.trim() }     // remove extra spaces
+                        ?.filter { it.isNotEmpty() } ?: emptyList()  // remove empty strings
                 )
             )
 
@@ -1190,4 +1222,11 @@ sealed class UpdateAppointmentDetailUiState {
     object Loading : UpdateAppointmentDetailUiState()
     data class Success(val data: UpdateAppointmentDetailResponse) : UpdateAppointmentDetailUiState()
     data class Error(val message: String) : UpdateAppointmentDetailUiState()
+}
+// upload notes
+sealed class PatientHistoryUiState {
+    object Idle : PatientHistoryUiState()
+    object Loading : PatientHistoryUiState()
+    data class Success(val data: PatientHistoryResponse) : PatientHistoryUiState()
+    data class Error(val message: String) : PatientHistoryUiState()
 }

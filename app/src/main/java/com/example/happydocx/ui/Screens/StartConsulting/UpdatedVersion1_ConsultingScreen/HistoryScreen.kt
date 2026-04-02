@@ -8,15 +8,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
@@ -31,23 +29,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.PatientHistory.PatientHistoryResponseItem
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.ViewModels.StartConsulting.HistoriesUiState
+import com.example.happydocx.ui.ViewModels.StartConsulting.PatientHistoryUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 import kotlinx.coroutines.launch
-import us.zoom.proguard.strategy
 import kotlin.math.ceil
 
 @Composable
@@ -56,7 +50,8 @@ fun AllHistoryList(
     patient: String,
     modifier: Modifier = Modifier,
     startConsultingViewModel: StartConsultingViewModel,
-    navController: NavController
+    navController: NavController,
+    appointmentId: String
 ) {
     val historyState = startConsultingViewModel._historiesState.collectAsStateWithLifecycle().value
     val scrollState = rememberScrollState()
@@ -133,7 +128,10 @@ fun AllHistoryList(
                             doctorSpecialization = it.department.departmentName,
                             date = DateUtils.gettingOnlyDate(it.appointmentDate),
                             status = it.status,
-                            navController = navController
+                            navController = navController,
+                            token = token,
+                            appointmentId = appointmentId,
+                            _id = it._id
                         )
                     }
                 }
@@ -223,10 +221,13 @@ fun HistoryItem(
     doctorSpecialization: String,
     date: String,
     status: String,
-    navController: NavController
+    navController: NavController,
+    token: String,
+    appointmentId: String,
+    _id:String,
 ) {
     var expandActions by rememberSaveable { mutableStateOf(false) }
-    val actionDropDownItem = listOf("View Past History","Edit","Delete")
+    val actionDropDownItem = listOf("View Past History", "Edit", "Delete")
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -288,13 +289,19 @@ fun HistoryItem(
                         ) {
                             actionDropDownItem.forEach { item ->
                                 DropdownMenuItem(
-                                    text = { Text(item , color = Color.Black) },
+                                    text = { Text(item, color = Color.Black) },
                                     onClick = {
                                         expandActions = false
-                                        when(item){
-                                            "View Past History" -> {navController.navigate("visitHistoryScreen")}
-                                            "Edit"             ->  { /* handle edit */ }
-                                            "Delete"           ->  { /* handle delete */ }
+                                        when (item) {
+                                            "View Past History" -> {
+                                                navController.navigate("visitHistoryScreen/$token/$_id")
+                                            }
+
+                                            "Edit" -> { /* handle edit */
+                                            }
+
+                                            "Delete" -> { /* handle delete */
+                                            }
                                         }
                                     }
                                 )
@@ -382,19 +389,34 @@ fun HistoryItem(
     }
 }
 
-@Preview
 @OptIn(ExperimentalMaterial3Api::class)
 //@Preview
 @Composable
 fun VisitHistoryScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    token: String,
+    appointmentId: String,
+    startConsultingViewModel: StartConsultingViewModel
 ) {
     val scrollState = rememberLazyListState()
+    // get network state
+    val historyState =
+        startConsultingViewModel._patientHistoryState.collectAsStateWithLifecycle().value
+
+    // launched effect to load the histories
+    LaunchedEffect(
+        appointmentId
+    ) {
+        startConsultingViewModel.getPatientHistoryDetail(
+            token = token,
+            appointmentId = appointmentId
+        )
+    }
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = {Text("Visit History",color = Color.White)},
+                title = { Text("Visit History", color = Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xff2563EB)
                 ),
@@ -402,80 +424,102 @@ fun VisitHistoryScreen(
                     IconButton(
                         onClick = {}
                     ) {
-                       Icon(
-                           Icons.AutoMirrored.Filled.ArrowBack,
-                           contentDescription = null,
-                           tint =Color.White
-                       )
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
                     }
                 }
             )
         },
-    ) {
-        paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(color = Color(0xffFFFFFF))
-        ) {
-           LazyColumn(
-               modifier = Modifier.fillMaxSize(),
-               verticalArrangement = Arrangement.spacedBy(6.dp),
-               state = scrollState
-           ) {
-               items(3){
-                   HistoryCard()
-               }
-           }
+    ) { paddingValues ->
+        when (val state = historyState) {
+            is PatientHistoryUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues).background(color = Color.White),   //  respect scaffold padding
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xff2563EB))
+                }
+            }
+
+            is PatientHistoryUiState.Success -> {
+                val patientHistory = state.data
+                if (patientHistory.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No visit history found.", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .background(Color(0xffFFFFFF)),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        state = scrollState
+                    ) {
+                        itemsIndexed(patientHistory) { index, item ->
+                            HistoryCard(patientHistory = item)
+                        }
+                    }
+                }
+            }
+
+            is PatientHistoryUiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .background(color = Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = state.message,
+                        color = Color.Red,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+            is PatientHistoryUiState.Idle -> {}
         }
     }
 }
 
 @Composable
-fun HistoryCard(modifier: Modifier = Modifier) {
-    var visibility by rememberSaveable { mutableStateOf(false) }
-    Card(
-        modifier = Modifier.fillMaxWidth()
-            .background(color = Color(0xffF8FAFC)).padding(4.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().background(Color(0xffF8FAFC)),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-           Text(
-               "Visit History 3 of 3",
-               color = Color.Black,
-               fontWeight = FontWeight.Bold
-           )
-            Spacer(Modifier.weight(1f))
-            IconButton(
-                onClick = {visibility = !visibility}
-            ) {
-                Icon(
-                    Icons.Default.ArrowDropDown,
-                    tint = Color.Black,
-                    contentDescription = null
-                )
-            }
-        }
-        AnimatedVisibility(
-            visible = visibility
-        ) {
-            VisitHistoryCard()
-        }
-    }
+fun HistoryCard(
+    modifier: Modifier = Modifier,
+    patientHistory: PatientHistoryResponseItem,
+    visitNumber: Int = 0,
+    totalVisit: Int = 0
+) {
+            VisitHistoryCard(patientHistory = patientHistory)
 }
+
 @Composable
-fun VisitHistoryCard(modifier: Modifier = Modifier) {
+fun VisitHistoryCard(
+    modifier: Modifier = Modifier,
+    patientHistory: PatientHistoryResponseItem
+) {
+
+    val latestVital= patientHistory.patientVitalSigns.firstOrNull()
     ElevatedCard(
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxSize(),
 //            .padding(8.dp),
         colors = CardDefaults.cardColors(Color(0xffF8FAFC))
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
         ) {
 
             // first heading
@@ -493,7 +537,7 @@ fun VisitHistoryCard(modifier: Modifier = Modifier) {
                 fontSize = 14.sp,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
-           Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(4.dp))
             // second heading
             Text(
                 text = "Patient",
@@ -503,7 +547,7 @@ fun VisitHistoryCard(modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(4.dp)
             )
             Text(
-                text = "Deepak Guleria",
+                text = "${patientHistory.patient.first_name} ${patientHistory.patient.last_name}".trim(),
                 color = Color.Black,
                 fontWeight = FontWeight.W400,
                 fontSize = 14.sp,
@@ -520,7 +564,7 @@ fun VisitHistoryCard(modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(4.dp)
             )
             Text(
-                text = "Dr. Brian Kamau",
+                text = "${patientHistory.physician.first_name} ${patientHistory.physician.last_name}".trim(),
                 color = Color.Black,
                 fontWeight = FontWeight.W400,
                 fontSize = 14.sp,
@@ -537,7 +581,7 @@ fun VisitHistoryCard(modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(4.dp)
             )
             Text(
-                text = "sdfsd",
+                text = patientHistory.appointment.reason ?: "NA",
                 color = Color.Black,
                 fontWeight = FontWeight.W400,
                 fontSize = 14.sp,
@@ -553,7 +597,9 @@ fun VisitHistoryCard(modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(4.dp)
             )
             Text(
-                text = "N/A",
+                text = patientHistory.investigation.symptoms
+                    .mapNotNull { it.symptom } // extract symptom string, skip nulls
+                    .joinToString(", "),
                 color = Color.Black,
                 fontWeight = FontWeight.W400,
                 fontSize = 14.sp,
@@ -574,17 +620,46 @@ fun VisitHistoryCard(modifier: Modifier = Modifier) {
                     fontWeight = FontWeight.W600,
                     fontSize = 16.sp
                 )
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    maxItemsInEachRow = 3
-                ) {
-                    VitalSignsSurfaceItem()
-                    VitalSignsSurfaceItem()
-                    VitalSignsSurfaceItem()
-                    VitalSignsSurfaceItem()
-                    VitalSignsSurfaceItem()
+                if (latestVital!=null) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        maxItemsInEachRow = 3
+                    ) {
+
+                            VitalSignsSurfaceItem(
+                                title = "Blood Pressure",
+                                value = latestVital.bloodPressure  ?: "NA",
+                                unit = "mmHg"
+                            )
+                            VitalSignsSurfaceItem(
+                                title = "Heart Rate",
+                                value = latestVital.heartRate  ?: "NA",
+                                unit = "bpm"
+                            )
+                            VitalSignsSurfaceItem(
+                                title = "Temperature",
+                                value = latestVital.temperature  ?: "NA",
+                                unit = "°F"
+                            )
+                            VitalSignsSurfaceItem(
+                                title = "SpO₂",
+                                value = latestVital.oxigenSaturation ?: "NA",
+                                unit = "%"
+                            )
+                            VitalSignsSurfaceItem(title = "Height", value = latestVital.height ?: "NA", unit = "cm")
+                            VitalSignsSurfaceItem(title = "Weight", value = latestVital.weight  ?: "NA", unit = "kg")
+
+                    }
+                } else {
+                    Text(
+                        text = "No vital signs available.",
+                        color = Color.Black,
+                        fontWeight = FontWeight.W400,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
                 }
             }
             Spacer(Modifier.height(4.dp))
@@ -596,33 +671,56 @@ fun VisitHistoryCard(modifier: Modifier = Modifier) {
                 fontSize = 16.sp,
                 modifier = Modifier.padding(4.dp)
             )
-            Text(
-                text = "No diagnosis details available.",
-                color = Color.Black,
-                fontWeight = FontWeight.W400,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
-
-            )
+            if (patientHistory.investigation.problemDiagnosis.isNotEmpty()) {
+                patientHistory.investigation.problemDiagnosis.forEach { diagnosis ->
+                    Text(
+                        text = "• ${diagnosis.diagnosis}",
+                        color = Color.Black,
+                        fontWeight = FontWeight.W400,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
+            } else {
+                Text(
+                    text = "No diagnosis details available.",
+                    color = Color.Black,
+                    fontWeight = FontWeight.W400,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            }
             Spacer(Modifier.height(4.dp))
             // Eighth heading
-            Text(
-                text = "Medications",
-                color = Color.Black,
-                fontWeight = FontWeight.W600,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(4.dp)
-            )
-            Text(
-                text = "list of all medications.",
-                color = Color.Black,
-                fontWeight = FontWeight.W400,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
+            if (patientHistory.medicationOrders.isNotEmpty()) {
+                Text(
+                    text = "Medications",
+                    color = Color.Black,
+                    fontWeight = FontWeight.W600,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(4.dp)
+                )
+                patientHistory.medicationOrders.forEach { med ->
+                    Text(
+                        text = "• ${med.genericName ?: "Unknown"} — ${med.strength ?: ""}".trim(),
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
+            } else {
 
-            )
+                Text(
+                    text = "No medications prescribed.",
+                    color = Color.Black,
+                    fontWeight = FontWeight.W400,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            }
             Spacer(Modifier.height(4.dp))
             // ninth heading
+
             Text(
                 text = "Tests Ordered",
                 color = Color.Black,
@@ -630,39 +728,54 @@ fun VisitHistoryCard(modifier: Modifier = Modifier) {
                 fontSize = 16.sp,
                 modifier = Modifier.padding(4.dp)
             )
-            Text(
-                text = "list of test ordered",
-                color = Color.Black,
-                fontWeight = FontWeight.W400,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
+            if (patientHistory.investigationOrders.isNotEmpty()) {
+                patientHistory.investigationOrders.forEach { test ->
+                    Text(
+                        text = "• ${test.testName} (${test.reason})",
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
+            } else {
+                Text(
+                    text = "No tests ordered.",
+                    color = Color.Black,
+                    fontWeight = FontWeight.W400,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp)
 
-            )
-            Spacer(Modifier.height(4.dp))
-             // tenth heading
+                )
+            }
+
+            // tenth heading
             Text(
                 text = "Notes",
                 color = Color.Black,
                 fontWeight = FontWeight.W600,
                 fontSize = 16.sp,
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(8.dp)
             )
-            Text(
-                text = "no notes available",
-                color = Color.Black,
-                fontWeight = FontWeight.W400,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
+            patientHistory.investigation.notes?.let {
+                Text(
+                    text = it,
+                    color = Color.Black,
+                    fontWeight = FontWeight.W400,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
         }
+        Spacer(Modifier.height(4.dp))
     }
 }
+
 
 @Composable
 fun VitalSignsSurfaceItem(
     modifier: Modifier = Modifier,
     title: String = "title",
-    value: String = "val",
+    value: String? = "val",
     unit: String = "Un"
 ) {
     Card(
@@ -675,7 +788,7 @@ fun VitalSignsSurfaceItem(
             modifier = Modifier.padding(8.dp)
         ) {
             Text(
-                text = "Blood Pressure",
+                text = title,
                 fontSize = 12.sp,
                 color = Color.Gray,
                 fontWeight = FontWeight.Normal
@@ -684,15 +797,17 @@ fun VitalSignsSurfaceItem(
             Row(
                 verticalAlignment = Alignment.Bottom
             ) {
-                Text(
-                    text = "44",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
+                if (value != null) {
+                    Text(
+                        text = value,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "mmHg",
+                    text = unit,
                     fontSize = 14.sp,
                     color = Color.Gray,
                     modifier = Modifier.padding(bottom = 2.dp)
