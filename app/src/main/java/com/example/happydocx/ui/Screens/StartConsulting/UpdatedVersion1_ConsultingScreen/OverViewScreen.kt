@@ -126,18 +126,18 @@ fun OverViewScreen(
                 ) {
 
                     val oxygenCondition =
-                        startConsultingViewModel.getOxygenCondition(vitals.oxygenSaturation)
+                        startConsultingViewModel.getOxygenCondition(vitals?.oxygenSaturation)
                     val temperatureCondition =
-                        startConsultingViewModel.getCondition(vitals.temperature, 97, 99)
+                        startConsultingViewModel.getCondition(vitals?.temperature, 97, 99)
                     val respiratoryCondition =
-                        startConsultingViewModel.getCondition(vitals.respiratoryRate, 12, 20)
+                        startConsultingViewModel.getCondition(vitals?.respiratoryRate, 12, 20)
                     val weightCondition =
-                        startConsultingViewModel.getCondition(vitals.weight, 50, 80)
+                        startConsultingViewModel.getCondition(vitals?.weight, 50, 80)
                     val hrCondition =
-                        startConsultingViewModel.getCondition(vitals.heartRate, 60, 100)
+                        startConsultingViewModel.getCondition(vitals?.heartRate, 60, 100)
                     val bpCondition = startConsultingViewModel.getBloodPressureCondition(
-                        vitals.bpSystolic,
-                        vitals.bpDiastolic
+                        vitals?.bpSystolic,
+                        vitals?.bpDiastolic
                     )
 
                     Row(
@@ -152,9 +152,9 @@ fun OverViewScreen(
                                 .weight(1f)
                                 .padding(4.dp),
                             conditionColor = startConsultingViewModel.getConditionColor(hrCondition),
-                            cardValue = "${vitals.heartRate ?: 0} bpm",
+                            cardValue = "${vitals?.heartRate ?: 0} bpm",
                             condition = startConsultingViewModel.getCondition(
-                                vitals.heartRate,
+                                vitals?.heartRate,
                                 60,
                                 100
                             ),
@@ -166,10 +166,10 @@ fun OverViewScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(4.dp),
-                            cardValue = "${vitals.bpSystolic ?: 0}/${vitals.bpDiastolic ?: 0} mmHg",
+                            cardValue = "${vitals?.bpSystolic ?: 0}/${vitals?.bpDiastolic ?: 0} mmHg",
                             condition = startConsultingViewModel.getBloodPressureCondition(
-                                vitals.bpSystolic,
-                                vitals.bpDiastolic
+                                vitals?.bpSystolic,
+                                vitals?.bpDiastolic
                             ),
                             conditionColor = startConsultingViewModel.getConditionColor(bpCondition),
                             normalRange = "120/80",
@@ -187,12 +187,12 @@ fun OverViewScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(4.dp),
-                            cardValue = "${vitals.temperature ?: 0} °C",
+                            cardValue = "${vitals?.temperature ?: 0} °C",
                             conditionColor = startConsultingViewModel.getConditionColor(
                                 temperatureCondition
                             ),
                             condition = startConsultingViewModel.getCondition(
-                                vitals.temperature,
+                                vitals?.temperature,
                                 97,
                                 99
                             ),
@@ -207,9 +207,9 @@ fun OverViewScreen(
                             conditionColor = startConsultingViewModel.getConditionColor(
                                 respiratoryCondition
                             ),
-                            cardValue = "${vitals.respiratoryRate ?: 0} /min",
+                            cardValue = "${vitals?.respiratoryRate ?: 0} /min",
                             condition = startConsultingViewModel.getCondition(
-                                vitals.respiratoryRate,
+                                vitals?.respiratoryRate,
                                 12,
                                 20
                             ),
@@ -229,8 +229,8 @@ fun OverViewScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(4.dp),
-                            cardValue = "${vitals.oxygenSaturation ?: 0}%",
-                            condition = startConsultingViewModel.getOxygenCondition(vitals.oxygenSaturation),
+                            cardValue = "${vitals?.oxygenSaturation ?: 0}%",
+                            condition = startConsultingViewModel.getOxygenCondition(vitals?.oxygenSaturation),
                             normalRange = ">95",
                             cardName = "OxygenSaturation",
                             conditionColor = startConsultingViewModel.getConditionColor(
@@ -242,9 +242,9 @@ fun OverViewScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(4.dp),
-                            cardValue = "${vitals.weight ?: 0} Kg",
+                            cardValue = "${vitals?.weight ?: 0} Kg",
                             condition = startConsultingViewModel.getCondition(
-                                vitals.weight,
+                                vitals?.weight,
                                 50,
                                 80
                             ),

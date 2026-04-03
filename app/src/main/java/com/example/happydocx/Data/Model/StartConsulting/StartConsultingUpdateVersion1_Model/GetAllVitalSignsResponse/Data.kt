@@ -16,5 +16,5 @@ data class Data(
     val prescriptionLanguage: String,
     val status: String,
     val updatedAt: String,
-    val vitals: Vitals
+    val vitals: Vitals?
 )

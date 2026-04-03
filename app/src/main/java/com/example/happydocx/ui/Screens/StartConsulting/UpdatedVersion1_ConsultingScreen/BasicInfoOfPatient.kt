@@ -193,29 +193,29 @@ fun BasicInfoOfPatient(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 PatientImage(
-                                    firstName = patient.first_name,
-                                    lastName = patient.last_name
+                                    firstName = patient?.first_name,
+                                    lastName = patient?.last_name
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 PatientInfoRow(
-                                    name = "${patient.first_name ?: ""} ${patient.middle_name ?: ""} ${patient.last_name ?: ""}".trim(),
-                                    patientId = patient.patientId,
-                                    gender = patient.gender,
+                                    name = "${patient?.first_name ?: ""} ${patient?.middle_name ?: ""} ${patient?.last_name ?: ""}".trim(),
+                                    patientId = patient?.patientId,
+                                    gender = patient?.gender,
                                     appointmentDate = appointment.appointmentDate ?: "",
-                                    age = "${patient.age?.value ?: "-"} ${patient.age?.unit ?: ""}"
+                                    age = "${patient?.age?.value ?: "-"} ${patient?.age?.unit ?: ""}"
                                 )
                                 Spacer(Modifier.weight(1f))
                                 BloodGroupComponent(
-                                    bloodGroup = patient.bloodGroup ?: "N/A"
+                                    bloodGroup = patient?.bloodGroup ?: "N/A"
                                 )
                             }
                             ContactInfoOfPatient(
-                                phone = patient.contactNumber,
-                                email = patient.email,
-                                address = patient.address?.addressLine1 ?: "N/A"
+                                phone = patient?.contactNumber,
+                                email = patient?.email,
+                                address = patient?.address?.addressLine1 ?: "N/A"
                             )
                             ActiveAllergiesSection(
-                                allergies = patient.allergies?. filterNotNull() ?: emptyList()
+                                allergies = patient?.allergies?. filterNotNull() ?: emptyList()
                             )
                         }
                     }

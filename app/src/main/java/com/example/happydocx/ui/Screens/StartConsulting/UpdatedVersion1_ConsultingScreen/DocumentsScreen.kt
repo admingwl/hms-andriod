@@ -165,7 +165,7 @@ fun AllDocumentsScreen(
                             testName = it.documentName,
                             date = it.uploadedAt,
                             documentType = it.documentType,
-                            doctorName = "${it.uploadedBy.salutation} ${it.uploadedBy.first_name} ${it.uploadedBy.last_name}"
+                            doctorName = "${it.uploadedBy?.salutation} ${it.uploadedBy?.first_name} ${it.uploadedBy?.last_name}"
                         )
                     }
                 }

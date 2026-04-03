@@ -12,7 +12,7 @@ data class Department(
     val departmentNoticeText: String?,
     val isActive: String?,
     val isAppointmentApplicable: String?,
-    val parentDepartmentName: Any?,
+    val parentDepartmentName: Any? = null,
     val roomNumber: String?,
     val updatedAt: String?
 )

@@ -9,12 +9,12 @@ data class Message(
     val companyId: String?,
     val createdAt: String?,
     val createdBy: String?,
-    val department: Department,
-    val doctor: Doctor,
-    val nextAppointmentDateTime: Any,
+    val department: Department?,
+    val doctor: Doctor?,
+    val nextAppointmentDateTime: String?,
     val nextAppointmentReminderSent: Boolean?,
-    val patient: Patient,
+    val patient: Patient?,
     val status: String?,
-    val tokenNumber: Any?,
+    val tokenNumber: Any? = null,
     val visitType: String?
 )
