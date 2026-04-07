@@ -50,6 +50,7 @@ import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_Consulti
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.BasicInfoOfPatient
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.EditPatientInfoScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.ManualEntryScreen
+import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.ShowCompleteDocumentImage
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.UploadDocumentScreen
 import com.example.happydocx.ui.Screens.StartConsulting.UpdatedVersion1_ConsultingScreen.VisitHistoryScreen
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
@@ -415,6 +416,16 @@ fun NavigationGraph() {
                 token = token,
                 appointmentId = appointmentId,
                 startConsultingViewModel = startConsultingViewModel
+            )
+        }
+
+        // show document Image Screen
+        composable("documentImage/{imageUrl}", arguments = listOf(
+            navArgument(name = "imageUrl") { type = NavType.StringType },
+        )){backStackEntry->
+            val imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
+            ShowCompleteDocumentImage(
+                imageUrl = imageUrl
             )
         }
         //--------------------new Consulting Screen-----------------------------------------------//

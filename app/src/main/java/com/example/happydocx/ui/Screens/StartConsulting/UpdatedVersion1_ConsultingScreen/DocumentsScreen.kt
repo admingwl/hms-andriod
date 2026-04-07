@@ -4,11 +4,12 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
@@ -42,7 +42,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -68,20 +67,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.ViewModels.StartConsulting.MedicalDocumentListUiState
@@ -163,9 +167,11 @@ fun AllDocumentsScreen(
                     items(data) { it ->
                         DocumentItem(
                             testName = it.documentName,
-                            date = it.uploadedAt,
                             documentType = it.documentType,
-                            doctorName = "${it.uploadedBy?.salutation} ${it.uploadedBy?.first_name} ${it.uploadedBy?.last_name}"
+                            doctorName = "${it.uploadedBy?.salutation} ${it.uploadedBy?.first_name} ${it.uploadedBy?.last_name}",
+                            imageUrl = it.signedUrl,
+                            navController = navController,
+                            date = it.reportDate
                         )
                     }
                 }
@@ -579,17 +585,19 @@ fun Modifier.dashedBorder(width: Dp, color: Color, cornerRadius: Dp) = drawBehin
     drawRoundRect(
         color = color,
         style = stroke,
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx())
+        cornerRadius = CornerRadius(cornerRadius.toPx())
     )
 }
 
 
 @Composable
 fun DocumentItem(
-    testName: String,
-    date: String,
-    doctorName:String,
-    documentType: String
+    testName: String?,
+    doctorName: String?,
+    documentType: String?,
+    imageUrl: String?,
+    navController: NavController,
+    date: String?,
 ) {
     Card(
         modifier = Modifier
@@ -621,36 +629,44 @@ fun DocumentItem(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = testName,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color.Blue,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
+                    if (testName != null) {
+                        Text(
+                            text = testName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = Color.Blue,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(4.dp))
                     Surface(
                         shape = RoundedCornerShape(4.dp),
                         color = Color(0xFFEFF6FF), // light blue background,
                     ) {
-                        Text(
-                            text = documentType,
-                            color = Color.Gray,
-                            fontSize = 14.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(0.5f).padding(4.dp)
-                        )
+                        if (documentType != null) {
+                            Text(
+                                text = documentType,
+                                color = Color.Gray,
+                                fontSize = 14.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .weight(0.5f)
+                                    .padding(4.dp)
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = doctorName,
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
+                if (doctorName != null) {
+                    Text(
+                        text = doctorName,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = DateUtils.gettingOnlyDate(date),
@@ -659,7 +675,12 @@ fun DocumentItem(
                 )
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = {
+                    // navigate to show image screen.
+                    val encodedUrl = Uri.encode(imageUrl)
+                    navController.navigate("documentImage/$encodedUrl")
+
+                }) {
                     Icon(
                         painter = painterResource(R.drawable.eye),
                         contentDescription = "View Document",
@@ -684,4 +705,101 @@ fun DocumentItem(
     }
 }
 
+@Composable
+fun ShowCompleteDocumentImage(
+    modifier: Modifier = Modifier,
+    imageUrl:String,
+) {
+
+    // mutable state for holding the offset and scale values.
+    var scale by remember{
+        mutableStateOf(1f)
+    }
+    var offSetX by remember {
+        mutableStateOf(0f)
+    }
+    var offSetY by remember {
+        mutableStateOf(0f)
+    }
+
+    val minScale = 1f
+    val maxScale = 4f
+
+    // remember initial offSet
+    var initialOffSet by remember {
+        mutableStateOf(Offset(0f,0f))
+    }
+
+    // Coefficient for slowing down movement
+    val slowMovement = 0.5f
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .pointerInput(Unit){
+               detectTransformGestures { _, pan, zoom, _ ->
+            // update the scale with the zoom
+              val newScale = scale * zoom
+                   scale = newScale.coerceIn(minScale,maxScale)
+                   // Calculate new offsets based on zoom and pan
+                   val centerX = size.width/2
+                   val centerY = size.height / 2
+                   val offsetXChange = (centerX - offSetX) * (newScale / scale - 1)
+                   val offsetYChange = (centerY - offSetY) * (newScale / scale - 1)
+
+                   // Calculate min and max offsets
+                   val maxOffsetX = (size.width / 2) * (scale - 1)
+                   val minOffsetX = -maxOffsetX
+                   val maxOffsetY = (size.height / 2) * (scale - 1)
+                   val minOffsetY = -maxOffsetY
+
+                   // Update offsets while ensuring they stay within bounds
+                   if (scale * zoom <= maxScale) {
+                       offSetX = (offSetX + pan.x * scale * slowMovement + offsetXChange)
+                           .coerceIn(minOffsetX, maxOffsetX)
+                       offSetY = (offSetY + pan.y * scale * slowMovement + offsetYChange)
+                           .coerceIn(minOffsetY, maxOffsetY)
+                   }
+                   // Store initial offset on pan
+                   if (pan != Offset(0f, 0f) && initialOffSet == Offset(0f, 0f)) {
+                       initialOffSet = Offset(offSetX, offSetY)
+                   }
+               }
+            }
+            .pointerInput(
+                Unit
+            ){
+                detectTapGestures(
+                    onDoubleTap = {
+                        // Reset scale and offset on double tap
+                        if (scale != 1f) {
+                            scale = 1f
+                            offSetX= initialOffSet.x
+                            offSetY = initialOffSet.y
+                        } else {
+                            scale = 2f
+                        }
+                    }
+                )
+            }
+            .graphicsLayer{
+                scaleX = scale
+                scaleY = scale
+                translationX = offSetX
+                translationY = offSetY
+            }
+        ,
+      //  contentAlignment = Alignment.Center
+    ){
+        AsyncImage(
+            model  = ImageRequest.Builder(LocalContext.current)
+                .data(imageUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = "Document Image",
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.Crop,
+        )
+    }
+}
 
