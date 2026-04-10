@@ -1,6 +1,5 @@
 package com.example.happydocx.ui.Screens.DoctorAppointments
 
-import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -75,7 +74,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.happydocx.Data.Model.DoctorAppointment.Appointment
 import com.example.happydocx.Data.Network.ConnectivityObserver
@@ -85,9 +83,6 @@ import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.Navigation.AppointmentSearchBar
 import com.example.happydocx.ui.ViewModels.AppointmentUiState
 import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModel
-import com.example.happydocx.ui.ViewModels.DoctorAppointmentsViewModelFactory
-import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
-import com.example.happydocx.ui.ViewModels.StartConsulting.UpdateAppointmentStatusUiState
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
@@ -447,7 +442,7 @@ fun DoctorAppointmentScreen(
                         } else {
                             successState.appointments.filter { appointment ->
                                 val fullName =
-                                    "${appointment.patient.first_name} ${appointment.patient.last_name}"
+                                    "${appointment.patient?.first_name} ${appointment.patient?.last_name}"
                                 fullName.contains(searchQuery, ignoreCase = true)
                             }
                         }
@@ -563,13 +558,13 @@ fun DoctorAppointmentScreen(
                                                 // Here, `it.id` is a perfect candidate for a key as it's a unique identifier
                                                 // for each appointment.
                                                 key = { it ->
-                                                    it.id
+                                                    it.id!!
                                                 }) { appointment ->
                                                 DoctorAppointmentCard(
                                                     appointment = appointment,
                                                     token = token,
                                                     navController = navController,
-                                                    patientId = appointment.patient._id,
+                                                    patientId = appointment.patient?._id,
                                                     appointmentId = appointment.id,
                                                     doctorId = appointment.doctor
                                                 )
@@ -679,9 +674,9 @@ fun DoctorAppointmentCard(
     appointment: Appointment,
     token: String?,
     navController: NavController,
-    patientId: String,
-    appointmentId: String,
-    doctorId:String
+    patientId: String?,
+    appointmentId: String?,
+    doctorId: String?
 
 ) {
     val scope = rememberCoroutineScope()
@@ -753,16 +748,18 @@ fun DoctorAppointmentCard(
             ) {
                 Column(modifier = modifier) {
                     Text(
-                        text = "${appointment.patient.first_name} ${appointment.patient.middle_name} ${appointment.patient.last_name}".trim(),
+                        text = "${appointment.patient?.first_name} ${appointment.patient?.middle_name} ${appointment.patient?.last_name}".trim(),
                         fontSize = 20.sp,
                         color = Color(0xff1F7BF6)
                     )
                     Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = appointment.patient.gender,
-                        fontSize = 15.sp,
-                        color = Color(0xff8E9AA9)
-                    )
+                    appointment.patient?.gender?.let {
+                        Text(
+                            text = it,
+                            fontSize = 15.sp,
+                            color = Color(0xff8E9AA9)
+                        )
+                    }
                 }
                 Spacer(Modifier.weight(1f))
                 Column {
@@ -898,11 +895,13 @@ fun DoctorAppointmentCard(
                         color = Color(0xff93A3B8)
                     )
                     Spacer(Modifier.height(3.dp))
-                    Text(
-                        appointment.patient.contactNumber,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
+                    appointment.patient?.contactNumber?.let {
+                        Text(
+                            it,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
                 }
                 Column(modifier = modifier.weight(1f)) {
                     Text(
@@ -912,7 +911,7 @@ fun DoctorAppointmentCard(
                         color = Color(0xff93A3B8)
                     )
                     Spacer(Modifier.height(3.dp))
-                    Text(appointment.visitType, fontWeight = FontWeight.Bold, color = Color.Black)
+                    appointment.visitType?.let { Text(it, fontWeight = FontWeight.Bold, color = Color.Black) }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -933,11 +932,13 @@ fun DoctorAppointmentCard(
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xff93A3B8)
                     )
-                    Text(
-                        appointment.appointmentTime,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
+                    appointment.appointmentTime?.let {
+                        Text(
+                            it,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
                 }
                 Column(modifier = modifier.weight(1f)) {
                     Surface(
@@ -969,7 +970,7 @@ fun DoctorAppointmentCard(
                     modifier = modifier.size(15.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                DateUtils.formatAppointmentDate(appointment.patient.updatedAt)?.let {
+                DateUtils.formatAppointmentDate(appointment.patient?.updatedAt)?.let {
                     Text(
                         text = "Last Visit: $it",
                         fontWeight = FontWeight.SemiBold,

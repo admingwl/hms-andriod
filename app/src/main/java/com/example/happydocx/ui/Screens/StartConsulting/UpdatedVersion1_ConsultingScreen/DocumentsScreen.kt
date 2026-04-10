@@ -78,16 +78,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
+import com.example.happydocx.Utils.DownloadStatus
+import com.example.happydocx.Utils.handleDownloadWithPermission
+import com.example.happydocx.Utils.startDownload
 import com.example.happydocx.ui.ViewModels.StartConsulting.MedicalDocumentListUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.UploadPatientDocumentUIState
@@ -101,7 +107,7 @@ fun AllDocumentsScreen(
     modifier: Modifier = Modifier,
     token: String,
     patientId: String,
-    appointmentId:String,
+    appointmentId: String,
     startConsultingViewModel: StartConsultingViewModel,
     navController: NavController
 ) {
@@ -201,7 +207,8 @@ fun UploadDocumentScreen(
     var documentTypeExpandState by rememberSaveable { mutableStateOf(false) }
     val documentUploadUiState =
         startConsultingViewModel._uploadDocumentState.collectAsStateWithLifecycle().value
-    val uploadState = startConsultingViewModel._uploadDocumentNetworkState.collectAsStateWithLifecycle().value
+    val uploadState =
+        startConsultingViewModel._uploadDocumentNetworkState.collectAsStateWithLifecycle().value
     val documentTypeList = listOf<String>(
         "Lab Report",
         "Prescription",
@@ -217,23 +224,25 @@ fun UploadDocumentScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         uri?.let {
-          val fileName = context.contentResolver.query(uri,null,null,null,null)
-              ?.use {cursor->
-                  val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                  cursor.moveToFirst()
-                  cursor.getString(nameIndex)
-              }?:"attachment"
-            startConsultingViewModel.onAttachmentChange(uri,fileName)
+            val fileName = context.contentResolver.query(uri, null, null, null, null)
+                ?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    cursor.getString(nameIndex)
+                } ?: "attachment"
+            startConsultingViewModel.onAttachmentChange(uri, fileName)
         }
     }
-    when(uploadState){
+    when (uploadState) {
         is UploadPatientDocumentUIState.Loading -> {
             CircularProgressIndicator()
         }
+
         is UploadPatientDocumentUIState.Success -> {
             // show toast or navigate back
             Toast.makeText(context, uploadState.data.message, Toast.LENGTH_SHORT).show()
         }
+
         is UploadPatientDocumentUIState.Error -> {
             Toast.makeText(context, uploadState.message, Toast.LENGTH_SHORT).show()
         }
@@ -430,7 +439,7 @@ fun UploadDocumentScreen(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                if(documentUploadUiState.attachmentURI!=null){
+                if (documentUploadUiState.attachmentURI != null) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Surface(
                             shape = CircleShape,
@@ -463,7 +472,7 @@ fun UploadDocumentScreen(
                             color = Color(0xFF94A3B8)
                         )
                     }
-                }else {
+                } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Surface(
                             shape = CircleShape,
@@ -599,6 +608,69 @@ fun DocumentItem(
     navController: NavController,
     date: String?,
 ) {
+
+    var showDownloadDialog by remember { mutableStateOf(false) }
+    var downloadStatus by remember { mutableStateOf<DownloadStatus>(DownloadStatus.Idle) }
+    val context = LocalContext.current
+
+    // Permission launcher (only triggers on Android < 10)
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Permission granted — proceed with download
+            startDownload(
+                context = context,
+                url = imageUrl,
+                fileName = testName,
+                onStatusChange = { downloadStatus = it }
+            )
+        } else {
+            downloadStatus = DownloadStatus.Error("Storage permission denied")
+        }
+    }
+
+    // Show a brief toast when status changes
+    LaunchedEffect(downloadStatus) {
+        when (downloadStatus) {
+            is DownloadStatus.Started -> {
+                Toast.makeText(
+                    context,
+                    "Download started. Check notifications.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                // Reset after showing
+                downloadStatus = DownloadStatus.Idle
+            }
+            is DownloadStatus.Error -> {
+                Toast.makeText(
+                    context,
+                    (downloadStatus as DownloadStatus.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
+                downloadStatus = DownloadStatus.Idle
+            }
+            else -> {}
+        }
+    }
+
+    // ---- Download Confirmation Dialog ----
+    if (showDownloadDialog) {
+        DownloadConfirmationDialog(
+            fileName = testName,
+            onDismiss = { showDownloadDialog = false },
+            onConfirm = {
+                showDownloadDialog = false
+                handleDownloadWithPermission(
+                    context = context,
+                    url = imageUrl,
+                    fileName = testName,
+                    permissionLauncher = permissionLauncher,
+                    onStatusChange = { downloadStatus = it }
+                )
+            }
+        )
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -689,7 +761,7 @@ fun DocumentItem(
                     )
                 }
                 IconButton(
-                    onClick = { /*TODO*/ },
+                    onClick = {showDownloadDialog = true},
                     modifier = Modifier.background(color = Color.White, shape = CircleShape)
                 ) {
                     Icon(
@@ -708,11 +780,11 @@ fun DocumentItem(
 @Composable
 fun ShowCompleteDocumentImage(
     modifier: Modifier = Modifier,
-    imageUrl:String,
+    imageUrl: String,
 ) {
 
     // mutable state for holding the offset and scale values.
-    var scale by remember{
+    var scale by remember {
         mutableStateOf(1f)
     }
     var offSetX by remember {
@@ -727,7 +799,7 @@ fun ShowCompleteDocumentImage(
 
     // remember initial offSet
     var initialOffSet by remember {
-        mutableStateOf(Offset(0f,0f))
+        mutableStateOf(Offset(0f, 0f))
     }
 
     // Coefficient for slowing down movement
@@ -736,45 +808,45 @@ fun ShowCompleteDocumentImage(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .pointerInput(Unit){
-               detectTransformGestures { _, pan, zoom, _ ->
-            // update the scale with the zoom
-              val newScale = scale * zoom
-                   scale = newScale.coerceIn(minScale,maxScale)
-                   // Calculate new offsets based on zoom and pan
-                   val centerX = size.width/2
-                   val centerY = size.height / 2
-                   val offsetXChange = (centerX - offSetX) * (newScale / scale - 1)
-                   val offsetYChange = (centerY - offSetY) * (newScale / scale - 1)
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, zoom, _ ->
+                    // update the scale with the zoom
+                    val newScale = scale * zoom
+                    scale = newScale.coerceIn(minScale, maxScale)
+                    // Calculate new offsets based on zoom and pan
+                    val centerX = size.width / 2
+                    val centerY = size.height / 2
+                    val offsetXChange = (centerX - offSetX) * (newScale / scale - 1)
+                    val offsetYChange = (centerY - offSetY) * (newScale / scale - 1)
 
-                   // Calculate min and max offsets
-                   val maxOffsetX = (size.width / 2) * (scale - 1)
-                   val minOffsetX = -maxOffsetX
-                   val maxOffsetY = (size.height / 2) * (scale - 1)
-                   val minOffsetY = -maxOffsetY
+                    // Calculate min and max offsets
+                    val maxOffsetX = (size.width / 2) * (scale - 1)
+                    val minOffsetX = -maxOffsetX
+                    val maxOffsetY = (size.height / 2) * (scale - 1)
+                    val minOffsetY = -maxOffsetY
 
-                   // Update offsets while ensuring they stay within bounds
-                   if (scale * zoom <= maxScale) {
-                       offSetX = (offSetX + pan.x * scale * slowMovement + offsetXChange)
-                           .coerceIn(minOffsetX, maxOffsetX)
-                       offSetY = (offSetY + pan.y * scale * slowMovement + offsetYChange)
-                           .coerceIn(minOffsetY, maxOffsetY)
-                   }
-                   // Store initial offset on pan
-                   if (pan != Offset(0f, 0f) && initialOffSet == Offset(0f, 0f)) {
-                       initialOffSet = Offset(offSetX, offSetY)
-                   }
-               }
+                    // Update offsets while ensuring they stay within bounds
+                    if (scale * zoom <= maxScale) {
+                        offSetX = (offSetX + pan.x * scale * slowMovement + offsetXChange)
+                            .coerceIn(minOffsetX, maxOffsetX)
+                        offSetY = (offSetY + pan.y * scale * slowMovement + offsetYChange)
+                            .coerceIn(minOffsetY, maxOffsetY)
+                    }
+                    // Store initial offset on pan
+                    if (pan != Offset(0f, 0f) && initialOffSet == Offset(0f, 0f)) {
+                        initialOffSet = Offset(offSetX, offSetY)
+                    }
+                }
             }
             .pointerInput(
                 Unit
-            ){
+            ) {
                 detectTapGestures(
                     onDoubleTap = {
                         // Reset scale and offset on double tap
                         if (scale != 1f) {
                             scale = 1f
-                            offSetX= initialOffSet.x
+                            offSetX = initialOffSet.x
                             offSetY = initialOffSet.y
                         } else {
                             scale = 2f
@@ -782,17 +854,16 @@ fun ShowCompleteDocumentImage(
                     }
                 )
             }
-            .graphicsLayer{
+            .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
                 translationX = offSetX
                 translationY = offSetY
-            }
-        ,
-      //  contentAlignment = Alignment.Center
-    ){
+            },
+        //  contentAlignment = Alignment.Center
+    ) {
         AsyncImage(
-            model  = ImageRequest.Builder(LocalContext.current)
+            model = ImageRequest.Builder(LocalContext.current)
                 .data(imageUrl)
                 .crossfade(true)
                 .build(),
@@ -802,4 +873,120 @@ fun ShowCompleteDocumentImage(
         )
     }
 }
+
+// Confirmation Dialog for download file
+@Composable
+fun DownloadConfirmationDialog(
+    fileName: String?,
+    modifier: Modifier = Modifier,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+
+    Dialog(
+        onDismissRequest = { onDismiss() },
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFFEFF6FF),
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(R.drawable.download),
+                            contentDescription = "Download Icon",
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // --- Title ---
+                Text(
+                    text = "Download Document",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color(0xFF1E293B)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // --- Subtitle ---
+                Text(
+                    text = "Do you want to download",
+                    fontSize = 14.sp,
+                    color = Color(0xFF64748B),
+                    textAlign = TextAlign.Center
+                )
+
+                // --- File Name ---
+                Text(
+                    text = "File Name",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF2563EB),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // --- Action Buttons ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Cancel
+                    OutlinedButton(
+                        onClick = { onDismiss() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp, Color(0xFFCBD5E1)
+                        )
+                    ) {
+                        Text("Cancel", color = Color(0xFF475569), fontWeight = FontWeight.Medium)
+                    }
+
+                    // Download
+                    OutlinedButton(
+                        onClick = {onConfirm()},
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp, Color(0xFFCBD5E1)
+                        )
+                    ) {
+                        Text("Download", color = Color(0xFF475569), fontWeight = FontWeight.Medium)
+                    }
+                }
+                }
+            }
+        }
+    }
+
+
 

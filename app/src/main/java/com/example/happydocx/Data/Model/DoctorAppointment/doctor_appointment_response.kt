@@ -21,7 +21,7 @@ import java.io.Serial
 data class AppointmentResponse(
     @SerializedName("success")
     val success: Boolean,
-    val mode:String,
+    val mode:String?,
     val total:Int,
     @SerializedName("page")
     val page: Int? = null,
@@ -30,80 +30,80 @@ data class AppointmentResponse(
 )
 data class Appointment(
     @SerializedName("_id")  // Maps JSON "_id" to your "id" field
-    val id: String,
-    val status:String,
-    val patient:Patient,
+    val id: String?,
+    val status:String?,
+    val patient:Patient?,
     @SerializedName("appointmentDate") // slot
-    val date:String,
-    val appointmentTime:String,
-    val nextAppointmentReminderSent:Boolean,
+    val date:String?,
+    val appointmentTime:String?,
+    val nextAppointmentReminderSent:Boolean?,
     val nextAppointmentDateTime:String?,
-    val department:String,
-    val doctor:String,
-    val createdBy:String,
-    val createdAt:String,
-    val appointmentId:String,
-    val companyId: String,
+    val department:String?,
+    val doctor:String?,
+    val createdBy:String?,
+    val createdAt:String?,
+    val appointmentId:String?,
+    val companyId: String?,
     @SerializedName("visitType")
-    val visitType:String = "",
+    val visitType:String? = "",
     val reason:String? = null
 )
 
 data class Patient(
-    val age: PatientAge,
+    val age: PatientAge?,
     val address: PatientAddress?,
     @SerializedName("_id")
-    val _id: String,
+    val _id: String?,
     @SerializedName("first_name")
-    val first_name : String,
-    val middle_name:String,
-    val last_name:String,
-    val previous_last_name:String,
-    val prefix:String,
-    val Age:String,
-    val dateOfBirth:String,
-    val maritalStatus:String,
-    val religion:String,
-    val race:String,
-    val bloodGroup:String,
-    val landlineNumber:String,
+    val first_name : String?,
+    val middle_name:String?,
+    val last_name:String?,
+    val previous_last_name:String?,
+    val prefix:String?,
+    val Age:String?,
+    val dateOfBirth:String?,
+    val maritalStatus:String?,
+    val religion:String?,
+    val race:String?,
+    val bloodGroup:String?,
+    val landlineNumber:String?,
     val allergies:List<String> = emptyList(),
-    val email:String,
-    val createdBy:String,
-    val companyId:String,
+    val email:String?,
+    val createdBy:String?,
+    val companyId:String?,
     val currentMedications:List<CurrentMedicationsDoctorAppointments> = emptyList(),
-    val isDialysisPatient:Boolean,
+    val isDialysisPatient:Boolean?,
     @SerializedName("gender")
-    val gender:String,
+    val gender:String?,
     @SerializedName("contactNumber")
-    val contactNumber:String,
+    val contactNumber:String?,
     @SerializedName("createdAt")
-    val createdAt :String,
-    val updatedAt:String,
-    val patientId:String,
+    val createdAt :String?,
+    val updatedAt:String?,
+    val patientId:String?,
     val userv2Id: String? = null
 )
-// patient created at -> is last visit
+// patient created at -> is last visit?
 
 data class PatientAge(
     val value:Int?=null,
-    val unit:String
+    val unit:String?
 )
 
 data class PatientAddress(
-    val addressType:String,
-    val addressLine1:String
+    val addressType:String?,
+    val addressLine1:String?
 )
 
 data class CurrentMedicationsDoctorAppointments(
-    val name:String,
-    val dosage:String,
-    val frequency:String,
-    val duration:String,
-    val instructions:String,
-    val route:String,
-    val timing:String,
-    val startDate:String,
-    val active:Boolean,
-    val _id:String
+    val name:String?,
+    val dosage:String?,
+    val frequency:String?,
+    val duration:String?,
+    val instructions:String?,
+    val route:String?,
+    val timing:String?,
+    val startDate:String?,
+    val active:Boolean?,
+    val _id:String?
 )
