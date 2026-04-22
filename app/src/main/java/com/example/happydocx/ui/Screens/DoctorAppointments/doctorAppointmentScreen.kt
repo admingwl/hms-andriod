@@ -253,7 +253,8 @@ fun DoctorAppointmentScreen(
                             scope.launch {
                                 drawerState.close()
                             }
-                        })
+                        }
+                    )
                     NavigationDrawerItem(
                         label = { Text("Patients") }, selected = false, icon = {
                             Icon(
@@ -271,7 +272,28 @@ fun DoctorAppointmentScreen(
                                 }
                                 drawerState.close()
                             }
-                        })
+                        }
+                    )
+
+                    NavigationDrawerItem(
+                        label = { Text("Queue") }, selected = false, icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.user_avatar),
+                                contentDescription = null,
+                                modifier = Modifier.size(25.dp),
+                                tint = Color.Black
+                            )
+                        }, colors = NavigationDrawerItemDefaults.colors(
+                            selectedTextColor = Color.Black, unselectedTextColor = Color.Black
+                        ), onClick = {
+                            scope.launch {
+                                navController.navigate("") {
+                                    launchSingleTop = true
+                                }
+                                drawerState.close()
+                            }
+                        }
+                    )
 
 
 //                    Text(

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.happydocx.Data.ZoomMeetingManager.ZoomJWTGenerator
 import com.example.happydocx.ui.Navigation.NavigationGraph
+import com.example.happydocx.ui.Screens.QueueScreen
 import com.example.happydocx.ui.theme.HappyDocxTheme
 import us.zoom.sdk.MeetingError
 import us.zoom.sdk.MeetingParameter
@@ -77,7 +78,7 @@ class MainActivity : ComponentActivity(){
         enableEdgeToEdge()
         setContent {
             HappyDocxTheme {
-                HappyDocx()
+                QueueScreen()
             }
         }
     }
