@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity(){
         enableEdgeToEdge()
         setContent {
             HappyDocxTheme {
-                QueueScreen()
+                HappyDocx()
             }
         }
     }

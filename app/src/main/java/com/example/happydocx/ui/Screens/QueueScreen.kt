@@ -3,10 +3,14 @@ package com.example.happydocx.ui.Screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,12 +25,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.happydocx.ui.ViewModels.Queue.GetTodayQueueUiState
+import com.example.happydocx.ui.ViewModels.Queue.QueueViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
-fun QueueScreen(modifier: Modifier = Modifier) {
+fun QueueScreen(
+    modifier: Modifier = Modifier,
+    queueViewModel: QueueViewModel,
+    token:String
+) {
+    val queueViewModelState = queueViewModel._QueueNetworkState.collectAsStateWithLifecycle().value
     var searchText by remember { mutableStateOf("") }
+
+    LaunchedEffect(token) {
+        queueViewModel.getTodayQueue(token = token)
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -50,7 +65,7 @@ fun QueueScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
         // Filter and Sort Buttons
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp,end = 20.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp),
             horizontalArrangement = Arrangement.Center
         ) {
             FilterSortButton(text = "Filter")
@@ -74,24 +89,97 @@ fun QueueScreen(modifier: Modifier = Modifier) {
         // Status Cards
         QueueStatusCards()
         Spacer(modifier = Modifier.height(32.dp))
-        // Patient Card Example
-        QueuePatientCard(
-            number = "1",
-            name = "sdfghjk",
-            patientId = "7676111095",
-            status = "In Consultation",
-            statusColor = Color(0xFF1A9E9E),
-            statusBg = Color(0xFFE6FAFB),
-            checkedIn = "08:50 am",
-            type = "Appointment",
-            estWait = "Now",
-            estWaitColor = Color(0xFF1A9E9E),
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-        // Empty State
-        QueueEmptyState()
+
+        when (val state = queueViewModelState) {
+
+            is GetTodayQueueUiState.Idle -> {
+                // Nothing to show yet
+            }
+
+            is GetTodayQueueUiState.Loading -> {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFF1A9E9E))
+                }
+            }
+
+            is GetTodayQueueUiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFFFECEC))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = state.message,
+                        color = Color(0xFFE05C5C),
+                        fontSize = 15.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            is GetTodayQueueUiState.Success -> {
+                val queueList = state.data
+
+                // Filter by search text (adjust field names to match your model)
+//                val filteredList = queueList.filter { patient ->
+//                    searchText.isBlank() ||
+//                            patient.name.contains(searchText, ignoreCase = true) ||
+//                            patient.patientId.contains(searchText, ignoreCase = true)
+//                }
+
+                if (state.data.data.isEmpty()) {
+                    QueueEmptyState()
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        itemsIndexed(state.data.data) { index, patient ->
+                            QueuePatientCard(
+                                number = (index + 1).toString(),
+                                name = patient.patient.first_name,
+                                status = patient.status,
+                                statusColor = when (patient.status.lowercase()) {
+                                    "in consultation" -> Color(0xFF1A9E9E)
+                                    "waiting" -> Color(0xFFF5A623)
+                                    "completed" -> Color(0xFF4CAF50)
+                                    else -> Color(0xFF6B7683)
+                                },
+                                statusBg = when (patient.status.lowercase()) {
+                                    "in consultation" -> Color(0xFFE6FAFB)
+                                    "waiting" -> Color(0xFFFFF3E0)
+                                    "completed" -> Color(0xFFE8F5E9)
+                                    else -> Color(0xFFF0F0F0)
+                                },
+                                checkedIn = patient.appointment.appointmentTime,
+                                type = patient.appointment.visitType,
+                                estWait = patient.estimatedStartTime,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                        }
+                    }
+//        // Patient Card Example
+//        QueuePatientCard(
+//            number = "1",
+//            name = "sdfghjk",
+//            patientId = "7676111095",
+//            status = "In Consultation",
+//            statusColor = Color(0xFF1A9E9E),
+//            statusBg = Color(0xFFE6FAFB),
+//            checkedIn = "08:50 am",
+//            type = "Appointment",
+//            estWait = "Now",
+//            estWaitColor = Color(0xFF1A9E9E),
+//            modifier = Modifier.padding(bottom = 24.dp)
+//        )
+//        // Empty State
+//        QueueEmptyState()
+                }
+            }
+        }
     }
-}
+    }
+
 
 @Composable
 fun FilterSortButton(text: String, modifier: Modifier = Modifier) {
@@ -220,14 +308,12 @@ fun QueueEmptyState(modifier: Modifier = Modifier) {
 fun QueuePatientCard(
     number: String,
     name: String,
-    patientId: String,
     status: String,
     statusColor: Color,
     statusBg: Color,
     checkedIn: String,
     type: String,
     estWait: String,
-    estWaitColor: Color,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -262,11 +348,11 @@ fun QueuePatientCard(
                         fontSize = 18.sp,
                         color = Color(0xFF1A2A4B)
                     )
-                    Text(
-                        text = patientId,
-                        fontSize = 14.sp,
-                        color = Color(0xFF6B7683)
-                    )
+//                    Text(
+//                        text = patientId,
+//                        fontSize = 14.sp,
+//                        color = Color(0xFF6B7683)
+//                    )
                 }
                 // Status pill
                 Box(
@@ -307,7 +393,7 @@ fun QueuePatientCard(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("EST. WAIT", fontSize = 12.sp, color = Color(0xFFB0B8C1))
-                    Text(estWait, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = estWaitColor)
+                    Text(estWait, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
             }
         }

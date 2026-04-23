@@ -38,6 +38,7 @@ import com.example.happydocx.ui.Screens.CreatePatient.AddNewPatientScreen
 import com.example.happydocx.ui.Screens.CreatePatient.PatientListScreen
 import com.example.happydocx.ui.Screens.CreatePatient.ScheduleAppointmentScreen
 import com.example.happydocx.ui.Screens.DoctorAppointments.DoctorAppointmentScreen
+import com.example.happydocx.ui.Screens.QueueScreen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_One_Screen
 import com.example.happydocx.ui.Screens.SignUpForms.Form_Two_Screen
 import com.example.happydocx.ui.Screens.StartConsulting.AddSymptomScreen
@@ -64,10 +65,12 @@ import com.example.happydocx.ui.ViewModels.PatientListViewModelFactory
 import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppointmentViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
 import com.example.happydocx.ui.ViewModels.PatientViewModel.SavePatientViewModel
+import com.example.happydocx.ui.ViewModels.Queue.QueueViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.BasicInformationViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.PatientDocumentUploadViewModel
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 import com.example.happydocx.ui.ViewModels.formViewModel
+import java.util.Queue
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -91,6 +94,7 @@ fun NavigationGraph() {
         viewModel(factory = EnterOtpViewModelFactory(tokenManager = tokenManager))
     // update version
     val startConsultingViewModel: StartConsultingViewModel = viewModel()
+    val queueViewModel: QueueViewModel = viewModel()
     val startDestination = remember {
         if (tokenManager.getToken() != null) {
             "AppointmentsScreen/${tokenManager.getToken()}"
@@ -426,6 +430,17 @@ fun NavigationGraph() {
             val imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
             ShowCompleteDocumentImage(
                 imageUrl = imageUrl
+            )
+        }
+
+        // queue screen
+        composable("queueScreen/{token}", arguments = listOf(
+            navArgument(name = "token") { type = NavType.StringType },
+        )){backStackEntry->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            QueueScreen(
+                token = token,
+                queueViewModel = queueViewModel
             )
         }
         //--------------------new Consulting Screen-----------------------------------------------//

@@ -287,7 +287,7 @@ fun DoctorAppointmentScreen(
                             selectedTextColor = Color.Black, unselectedTextColor = Color.Black
                         ), onClick = {
                             scope.launch {
-                                navController.navigate("") {
+                                navController.navigate("queueScreen/$token") {
                                     launchSingleTop = true
                                 }
                                 drawerState.close()

@@ -15,6 +15,7 @@ import com.example.happydocx.Data.Model.PatientScreen.GeneralSavePatient.SavePat
 import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.ScheduleAppointmentRequest
 import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.ScheduleAppointmentResponse
 import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.scheduleAppointmentTimeResponse
+import com.example.happydocx.Data.Model.Queue.TodayQueueResponse
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
@@ -344,4 +345,11 @@ interface ApiService {
     ): Response<PatientHistoryResponse>
 
     //------------------------update patient Consulting Screen-----------------------------------------
+
+    // getting list of all the patients in the queue
+    //Returns the full queue for the logged-in doctor for the current day
+    @GET("api/v1/queue/today")
+    suspend fun getTodayQueue(
+        @Header("Authorization") token:String,
+    ): Response<TodayQueueResponse>
 }
