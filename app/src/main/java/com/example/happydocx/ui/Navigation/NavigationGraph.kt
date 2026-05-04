@@ -160,7 +160,8 @@ fun NavigationGraph() {
             PatientListScreen(
                 viewModel = patientListViewModel,
                 token = tokenOne,
-                navController = navController
+                navController = navController,
+                queueViewModel = queueViewModel
             )
         }
         composable(

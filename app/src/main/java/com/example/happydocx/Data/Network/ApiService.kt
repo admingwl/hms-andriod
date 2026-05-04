@@ -16,6 +16,8 @@ import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.Schedu
 import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.ScheduleAppointmentResponse
 import com.example.happydocx.Data.Model.PatientScreen.ScheduleAppointment.scheduleAppointmentTimeResponse
 import com.example.happydocx.Data.Model.Queue.TodayQueueResponse
+import com.example.happydocx.Data.Model.Queue.walkInRequestBody
+import com.example.happydocx.Data.Model.Queue.walkInResponseBody
 import com.example.happydocx.Data.Model.SignUpModel.SignUpRequest
 import com.example.happydocx.Data.Model.SignUpModel.SignUpResponse
 import com.example.happydocx.Data.Model.StartConsulting.AppointmentApiResponse
@@ -344,6 +346,7 @@ interface ApiService {
         @Path("appointmentId") appointmentId:String
     ): Response<PatientHistoryResponse>
 
+
     //------------------------update patient Consulting Screen-----------------------------------------
 
     // getting list of all the patients in the queue
@@ -352,4 +355,13 @@ interface ApiService {
     suspend fun getTodayQueue(
         @Header("Authorization") token:String,
     ): Response<TodayQueueResponse>
+
+    // put the patient in the queue when user click the walkIn
+    @POST("api/v1/appointment/walkin")
+    suspend fun putPatientInQueue(
+        @Header("Authorization") token:String,
+        @Body requestBody: walkInRequestBody
+    ): Response<walkInResponseBody>
+
+
 }

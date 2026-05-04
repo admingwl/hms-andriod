@@ -64,6 +64,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -104,6 +105,8 @@ import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsForAppoi
 import com.example.happydocx.ui.ViewModels.PatientViewModel.GetTimeSlotsUiState
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListUiState
 import com.example.happydocx.ui.ViewModels.PatientViewModel.PatientListViewModel
+import com.example.happydocx.ui.ViewModels.Queue.AddPatientToQueue
+import com.example.happydocx.ui.ViewModels.Queue.QueueViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -119,7 +122,8 @@ fun PatientListScreen(
     modifier: Modifier = Modifier,
     viewModel: PatientListViewModel,
     token: String,
-    navController: NavController
+    navController: NavController,
+    queueViewModel: QueueViewModel
 ) {
 
     val listState = viewModel._listState.collectAsStateWithLifecycle().value
@@ -140,20 +144,20 @@ fun PatientListScreen(
                 ConnectivityObserver.Status.Available -> {
                     snackBarHostState.showSnackbar(
                         message = "✓ Internet Connected",
-                        duration = androidx.compose.material3.SnackbarDuration.Short
+                        duration = SnackbarDuration.Short
                     )
                 }
                 ConnectivityObserver.Status.Lost,
                 ConnectivityObserver.Status.Unavailable -> {
                     snackBarHostState.showSnackbar(
                         message = "⚠ No Internet Connection",
-                        duration = androidx.compose.material3.SnackbarDuration.Short
+                        duration = SnackbarDuration.Short
                     )
                 }
                 ConnectivityObserver.Status.Losing -> {
                     snackBarHostState.showSnackbar(
                         message = "⚠ Connection Unstable",
-                        duration = androidx.compose.material3.SnackbarDuration.Short
+                        duration = SnackbarDuration.Short
                     )
                 }
             }
@@ -464,7 +468,8 @@ fun PatientListScreen(
                                                 perfectPatientId =patient.patientId,
                                                 firstName = patient.first_name,
                                                 middleName = patient.middle_name,
-                                                lastName = patient.last_name
+                                                lastName = patient.last_name,
+                                                viewModel = queueViewModel
                                             )
                                         }
                                     }
@@ -631,9 +636,32 @@ fun PatientCard(
     perfectPatientId:String?,
     firstName:String?,
     middleName:String?,
-    lastName:String?
+    lastName:String?,
+    viewModel: QueueViewModel
 ) {
     var isMenuOpen by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val queueViewModelNetworkState = viewModel._addPatientToQueue.collectAsStateWithLifecycle()
+    LaunchedEffect(queueViewModelNetworkState) {
+        when (queueViewModelNetworkState) {
+            is AddPatientToQueue.Success -> {
+                Toast.makeText(
+                    context,
+                    "Patient added to queue successfully",
+                    Toast.LENGTH_LONG
+                ).show()
+
+            }
+            is AddPatientToQueue.Error -> {
+                Toast.makeText(
+                    context,
+                    "Unable to add patient to queue.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            else -> {}
+        }
+    }
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -695,6 +723,25 @@ fun PatientCard(
                             leadingIcon = {
                                 Icon(
                                     painter = painterResource(R.drawable.schedule),
+                                    contentDescription = null,
+                                    tint = Color(0xff42A5F5),
+                                    modifier = modifier.size(18.dp)
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("WalkIn", color = Color.Black) },
+                            onClick = {
+                                // here i call the api to add patient in queue
+                                viewModel.addPatientToQueue(
+                                    token = token,
+                                    patientID = patientId
+                                )
+                                isMenuOpen = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.stethoscope_medical_tool),
                                     contentDescription = null,
                                     tint = Color(0xff42A5F5),
                                     modifier = modifier.size(18.dp)
