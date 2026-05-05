@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -32,6 +33,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -47,16 +49,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.GetAllVitalSignsResponse.AllVitalSignsResponse
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.VitalHistory.Data
 import com.example.happydocx.R
 import com.example.happydocx.Utils.DateUtils
 import com.example.happydocx.ui.ViewModels.StartConsulting.AllMedicalRecordUiState
+import com.example.happydocx.ui.ViewModels.StartConsulting.PatientVitalHistoryUiState
 import com.example.happydocx.ui.ViewModels.StartConsulting.StartConsultingViewModel
 
 
 @Composable
 fun AllVitalsScreen(
     modifier: Modifier = Modifier,
-    startConsultingViewModel: StartConsultingViewModel
+    startConsultingViewModel: StartConsultingViewModel,
+    token:String,
+    patientId:String
 ) {
     var selectedIndex by remember {
         mutableIntStateOf(0)
@@ -68,6 +74,14 @@ fun AllVitalsScreen(
                 "History",
                 "Trends"
             )
+        )
+    }
+
+    val patientHistoryState  = startConsultingViewModel._patientVitalHistory.collectAsStateWithLifecycle().value
+    LaunchedEffect(token) {
+        startConsultingViewModel.getPatientVitalHistory(
+            token = token,
+            patientId = patientId
         )
     }
     Column(
@@ -131,19 +145,62 @@ fun AllVitalsScreen(
 
             when(selectedIndex){
                 0 -> VitalCard(startConsultingViewModel)
-                1 -> Text("History")
+                1 ->VitalHistorySection(patientHistoryState = patientHistoryState)
                 2 -> Text("Trends ")
             }
-//            LazyColumn(
-//                modifier = Modifier.fillMaxSize(),
-//                contentPadding = PaddingValues(bottom = 16.dp)
-//            ) {
-//                items(10) {
-//                    VitalCard()
-//                }
-//            }
         }
 
+    }
+}
+
+
+@Composable
+fun VitalHistorySection(patientHistoryState: PatientVitalHistoryUiState) {
+    when (patientHistoryState) {
+
+        is PatientVitalHistoryUiState.Idle,
+        is PatientVitalHistoryUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color(0xff1D4ED8))
+            }
+        }
+
+        is PatientVitalHistoryUiState.Error -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = patientHistoryState.message, color = Color.Red)
+            }
+        }
+
+        is PatientVitalHistoryUiState.Success -> {
+            val historyList = patientHistoryState.data.data
+
+            if (historyList.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "No vital history found", color = Color.Gray)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(
+                        items = historyList,
+                        key = { it._id } //  prevents the remember recycling bug
+                    ) { data ->
+                            VitalHistoryCard(data = data)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -195,7 +252,7 @@ fun VitalCard(
                         Spacer(Modifier.weight(1f))
                         IconButton(
                             onClick = { isExpanded = !isExpanded }
-                        ) {
+                        ){
                             Icon(
                                 Icons.Default.ArrowDropDown,
                                 contentDescription = null,
@@ -267,3 +324,114 @@ fun PatientVitalSignsInsideCard(
 }
 
 
+@Composable
+fun VitalHistoryCard(data: Data) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+        ) {
+
+            // Header — date + expand toggle
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                DateUtils.formatAppointmentDate(data.recordedAt)?.let { //  recordedAt not date
+                    Text(
+                        text = it,
+                        color = Color.Black,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { isExpanded = !isExpanded }) {
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            // Expandable vitals grid
+            AnimatedVisibility(visible = isExpanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        CurrentVitalCard(
+                            modifier = Modifier.weight(1f),
+                            cardIcon = R.drawable.heart,
+                            cardName = "Heart Rate",
+                            normalRange = "Normal: 60-100",
+                            cardValue = "${data.heartRate}" //  directly on Data
+                        )
+                        CurrentVitalCard(
+                            modifier = Modifier.weight(1f),
+                            cardName = "BP",
+                            normalRange = "Normal: 120/80",
+                            cardValue = "${data.bpSystolic}/${data.bpDiastolic}" //  directly on Data
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        CurrentVitalCard(
+                            modifier = Modifier.weight(1f),
+                            cardIcon = R.drawable.temperature,
+                            cardName = "Temperature",
+                            normalRange = "Normal: 97-99",
+                            cardValue = "${data.temperature}" //  Double
+                        )
+                        CurrentVitalCard(
+                            modifier = Modifier.weight(1f),
+                            cardIcon = R.drawable.wind,
+                            cardName = "Respiration",
+                            normalRange = "Normal: 12-20",
+                            cardValue = "${data.respiratoryRate}"
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        CurrentVitalCard(
+                            modifier = Modifier.weight(1f),
+                            cardIcon = R.drawable.blood_drop,
+                            cardName = "Oxygen",
+                            normalRange = "Normal: >95",
+                            cardValue = "${data.oxygenSaturation}"
+                        )
+                        CurrentVitalCard(
+                            modifier = Modifier.weight(1f),
+                            cardIcon = R.drawable.weight,
+                            cardName = "Weight",
+                            normalRange = "Normal: 50-80",
+                            cardValue = "${data.weight}"
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

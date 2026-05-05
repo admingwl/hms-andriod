@@ -28,6 +28,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.Prescription
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.UploadNotesRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Response.UploadNotesResponseBody
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.VitalHistory.vitalHistoryResponse
 import com.example.happydocx.Data.Repository.StartConsulting.UpdatedVersion1_Repo.StartConsultingRepo
 import com.example.happydocx.ui.uiStates.StartConsulting.AddLabResultManualUpdate1
 import com.example.happydocx.ui.uiStates.StartConsulting.AddMedicationUpdated1
@@ -554,6 +555,37 @@ class StartConsultingViewModel : ViewModel() {
     private val patientHistoryState: MutableStateFlow<PatientHistoryUiState> = MutableStateFlow(PatientHistoryUiState.Idle)
     val _patientHistoryState = patientHistoryState.asStateFlow()
 
+
+    private val patientVitalHistory: MutableStateFlow<PatientVitalHistoryUiState> = MutableStateFlow(PatientVitalHistoryUiState.Idle)
+    val _patientVitalHistory = patientVitalHistory.asStateFlow()
+
+
+    // get patient vital history
+        fun getPatientVitalHistory(
+            token: String,
+            patientId: String
+        ){
+            viewModelScope.launch {
+                patientVitalHistory.value = PatientVitalHistoryUiState.Loading
+                try {
+                    val result = repo.patientVitalHistory(
+                        token = token,
+                        patientId = patientId
+                    )
+                    result.onSuccess { response ->
+                        patientVitalHistory.value = PatientVitalHistoryUiState.Success(data = response)
+                    }.onFailure { errorMessage ->
+                        patientVitalHistory.value = PatientVitalHistoryUiState.Error(
+                            message = errorMessage.message ?: "Failed to load patient's history...."
+                        )
+                    }
+                } catch (e: Exception) {
+                    patientVitalHistory.value = PatientVitalHistoryUiState.Error(
+                        message = e.message ?: "An Unexpected error occurred"
+                    )
+                }
+            }
+        }
 
     fun getPatientHistoryDetail(
         token:String,
@@ -1229,4 +1261,12 @@ sealed class PatientHistoryUiState {
     object Loading : PatientHistoryUiState()
     data class Success(val data: PatientHistoryResponse) : PatientHistoryUiState()
     data class Error(val message: String) : PatientHistoryUiState()
+}
+
+
+sealed class PatientVitalHistoryUiState {
+    object Idle : PatientVitalHistoryUiState()
+    object Loading : PatientVitalHistoryUiState()
+    data class Success(val data: vitalHistoryResponse) : PatientVitalHistoryUiState()
+    data class Error(val message: String) : PatientVitalHistoryUiState()
 }

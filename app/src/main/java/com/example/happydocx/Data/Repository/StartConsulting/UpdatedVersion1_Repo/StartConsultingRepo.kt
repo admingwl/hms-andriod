@@ -20,6 +20,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.UploadNotesRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Response.UploadNotesResponseBody
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.VitalHistory.vitalHistoryResponse
 import com.example.happydocx.Data.Network.ApiService
 import com.example.happydocx.Utils.RetrofitInstance
 import com.example.happydocx.ui.uiStates.StartConsulting.UploadDocumentUpdate1
@@ -387,5 +388,27 @@ class StartConsultingRepo {
                 Result.failure(e)
             }
         }
+
+
+    suspend fun patientVitalHistory(
+        token:String,
+        patientId:String
+    ):Result<vitalHistoryResponse>{
+        return try{
+            val result = apiService.getPatientVitalHistory(
+                token =  "Bearer $token" ,
+                patientId = patientId
+            )
+            if (result.isSuccessful && result.body() != null) {
+                Log.d("ServerMessage", "Success: ${result.body()} and code is ${result.code()}")
+                Result.success(result.body()!!)
+            } else {
+                val errorMessage = result.errorBody()?.string() ?: "Unknown server error"
+                Result.failure(Exception(errorMessage))
+            }
+        }catch (e:Exception){
+            Result.failure(e)
+        }
+    }
 }
 

@@ -47,6 +47,7 @@ import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVer
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadDocuements.UploadDocumentResponse
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Request.UploadNotesRequestBody
 import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.UploadNotes.Response.UploadNotesResponseBody
+import com.example.happydocx.Data.Model.StartConsulting.StartConsultingUpdateVersion1_Model.VitalHistory.vitalHistoryResponse
 import com.example.happydocx.Data.Model.StartConsulting.TestAndInvestigationRequest
 import com.example.happydocx.Data.Model.StartConsulting.TestInvestigationResponse
 import com.example.happydocx.Data.Model.StartConsulting.UpdateAppointmentStatusRequestBody
@@ -363,5 +364,11 @@ interface ApiService {
         @Body requestBody: walkInRequestBody
     ): Response<walkInResponseBody>
 
+
+    @GET("api/v1/medical-record-v2/vitals-history/{patientId}")
+    suspend fun getPatientVitalHistory(
+        @Header("Authorization") token:String,
+        @Path("patientId") patientId:String
+    ): Response<vitalHistoryResponse>
 
 }
