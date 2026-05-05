@@ -568,7 +568,7 @@ fun PatientAppointmentInfoTabScreen(
                             doctorId = doctorId
                         )
 
-                        1 -> AllVitalsScreen()
+                        1 -> AllVitalsScreen(startConsultingViewModel = startConsultingViewModel)
                         2 -> AllMedicationList(
                             token = token,
                             appointmentId = appointmentId,
